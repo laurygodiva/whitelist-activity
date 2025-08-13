@@ -1,1413 +1,311 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Whitelist</title>
-  <style>
-    /* RESET BÁSICO */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: Arial, sans-serif;
-      background-color: transparent;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      min-height: 100vh;
-    }
-
-    /* BARRA DE PROGRESO (9 círculos) */
-    .progress-bar {
-      width: 600px;
-      height: 40px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin: 20px 0;
-    }
-
-    .circle {
-      width: 25px;
-      height: 25px;
-      background-color: #1f1f22;
-      /* Color inactivo */
-      border: 2px solid #1f1f22;
-      border-radius: 50%;
-      transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
-    }
-
-    .circle.active {
-      background-color: #47fccc;
-      /* Color activo */
-      border: 2px solid #47fccc;
-      /* Asegura que el borde coincida con el fondo */
-      transform: scale(1.2);
-    }
-
-    /* CONTENEDOR DE CADA PÁGINA */
-    .wrapper {
-      width: 941px;
-      min-height: 291px;
-      background-color: #1f1f22;
-      border-radius: 50px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      box-sizing: border-box;
-      margin-bottom: 80px;
-      /* Espacio para el botón fijo */
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .page {
-      display: none;
-      /* Ocultas por defecto */
-    }
-
-    .page.active {
-      display: flex;
-      /* Se muestra la página activa */
-    }
-
-    /* PÁGINA DE BIENVENIDA */
-    #welcome-page {
-      flex-direction: row;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .welcome-title {
-      font-size: 2.5em;
-      margin-bottom: 20px;
-      color: #47fccc;
-    }
-
-    .text-content {
-      text-align: center;
-      margin-left: 20px;
-    }
-
-    .text-content p {
-      margin: 10px 0;
-      font-size: 1.2em;
-    }
-
-    .image img {
-      max-width: 250px;
-      height: auto;
-    }
-
-    /* BOTONES */
-    button {
-      background-color: #47fccc;
-      color: #1f1f22;
-      border: 2px solid #1f1f22;
-      padding: 15px 25px;
-      /* Aumentado de 10px 20px a 15px 25px */
-      font-size: 1.4em;
-      /* Aumentado de 1.2em a 1.4em */
-      font-weight: bold;
-      cursor: pointer;
-      border-radius: 30px;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-
-    button:hover {
-      background-color: #3ce0b4;
-      border-color: #3ce0b4;
-    }
-
-    /* PÁGINA DE DATOS DEL USUARIO */
-    #user-data-page {
-      flex-direction: column;
-    }
-
-    .user-data-title {
-      font-size: 2.5em;
-      color: #47fccc;
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    .top-row {
-      flex: 1;
-      display: flex;
-      justify-content: space-evenly;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 20px;
-    }
-
-    .bottom-row {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-    }
-
-    .form-group {
-      text-align: center;
-      margin-bottom: 10px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .form-group label {
-      font-size: 1.1em;
-      margin-bottom: 5px;
-    }
-
-    .form-group input[type="text"] {
-      width: 150px;
-      padding: 5px;
-      border: 2px solid #47fccc;
-      border-radius: 5px;
-      font-size: 0.9em;
-      background-color: #2a2a2e;
-      color: white;
-      text-align: center;
-    }
-
-    .options {
-      display: flex;
-      flex-direction: row;
-      gap: 10px;
-    }
-
-    .options label {
-      display: flex;
-      align-items: center;
-      cursor: pointer;
-      font-size: 0.9em;
-    }
-
-    .options input[type="radio"] {
-      appearance: none;
-      width: 18px;
-      height: 18px;
-      border: 2px solid white;
-      border-radius: 50%;
-      margin-right: 5px;
-      cursor: pointer;
-      transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-
-    .options input[type="radio"]:checked {
-      background-color: #47fccc;
-      border-color: #47fccc;
-    }
-
-    select {
-      width: 150px;
-      padding: 5px;
-      border: 2px solid #47fccc;
-      border-radius: 5px;
-      background-color: #2a2a2e;
-      color: white;
-      font-size: 0.9em;
-      text-align: center;
-    }
-
-    textarea {
-      width: 300px;
-      height: 70px;
-      resize: none;
-      border: 2px solid #47fccc;
-      border-radius: 5px;
-      background-color: #2a2a2e;
-      color: white;
-      padding: 5px;
-      font-size: 1em;
-      text-align: center;
-    }
-
-    .bottom-button {
-      position: fixed;
-      bottom: 60px;
-      /* Aumentado de 20px a 60px para subir el botón */
-      display: flex;
-      justify-content: center;
-      width: 100%;
-    }
-
-    /* PÁGINAS DE CONOCIMIENTOS Y SITUACIONES */
-    #conocimientos-page,
-    #conocimientos2-page,
-    #conocimientos3-page,
-    #situaciones-page,
-    #situaciones2-page,
-    #situaciones3-page {
-      flex-direction: column;
-      width: 100%;
-    }
-
-    .answers {
-      display: flex;
-      width: 95%;
-      justify-content: space-evenly;
-      gap: 30px;
-      margin: 0;
-      padding: 0;
-    }
-
-    .column {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      width: 50%;
-    }
-
-    .quiz-option {
-      white-space: normal;
-      word-wrap: break-word;
-      margin-bottom: 5px;
-    }
-
-    .quiz-option input[type="checkbox"] {
-      margin-right: 5px;
-      accent-color: #47fccc;
-    }
-
-    .quiz-select {
-      margin-left: 5px;
-      background-color: #2a2a2e;
-      border: 2px solid #47fccc;
-      border-radius: 5px;
-      color: white;
-      padding: 2px 5px;
-      font-size: 0.9em;
-    }
-
-    /* ESTILO PARA MENSAJES IN-PAÍS */
-    .message-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background-color: rgba(31, 31, 34, 0.9);
-      color: white;
-      padding: 15px 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-      display: none;
-      z-index: 1000;
-    }
-
-    .message-container.show {
-      display: block;
-      animation: fadein 0.5s, fadeout 0.5s 4.5s;
-    }
-
-    @keyframes fadein {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    @keyframes fadeout {
-      from {
-        opacity: 1;
-      }
-
-      to {
-        opacity: 0;
-      }
-    }
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Whitelist – Proyecto RP</title>
+<style>
+  :root{
+    --bg:#0b0f14; --panel:#101823; --panel-2:#0d131d; --muted:#a4b5c6; --text:#e9eef3;
+    --brand:#69f7c1; --brand2:#4aa3ff; --accent:#7bd87e; --danger:#ff6b6b; --warn:#ffd166;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;background:radial-gradient(1200px 500px at -20% -20%, rgba(106,247,193,.12), transparent 60%), radial-gradient(1200px 500px at 120% -30%, rgba(74,163,255,.10), transparent 60%), var(--bg);color:var(--text);font:500 16px/1.5 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
+  .card{width:min(1100px,100%);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02)) , var(--panel);border:1px solid rgba(255,255,255,.08);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+  header{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.08);background:radial-gradient(900px 250px at 0% -40%, rgba(106,247,193,.25), transparent 60%),radial-gradient(900px 250px at 100% -40%, rgba(74,163,255,.25), transparent 60%)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg, var(--brand), var(--brand2));display:grid;place-items:center;color:#0b0f14;font-weight:900}
+  .title{font-size:18px;font-weight:900;letter-spacing:.3px}
+  .muted{color:var(--muted);font-weight:600;font-size:14px}
+  .content{padding:18px 18px 20px}
+  .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
+  @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+  .section{background:var(--panel-2);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:14px}
+  h3{margin:0 0 8px;font-size:16px}
+  .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.25px}
+  .input,.select,textarea{background:#0e141e;color:var(--text);border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:10px 12px;outline:none;transition:border .15s ease,box-shadow .15s ease}
+  .input:focus,.select:focus,textarea:focus{border-color:rgba(74,163,255,.6);box-shadow:0 0 0 3px rgba(74,163,255,.18)}
+  textarea{min-height:110px;resize:vertical}
+  .progress{display:flex;align-items:center;gap:6px;margin:6px 0 12px}
+  .bar{flex:1;height:8px;background:#0d141c;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
+  .bar>span{display:block;height:100%;background:linear-gradient(90deg,var(--brand),var(--brand2));width:0%}
+  .tag{font-size:12px;color:var(--muted)}
+  .q-wrap{display:flex;flex-direction:column;gap:10px}
+  .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
+  .q-head{background:rgba(255,255,255,.04);padding:10px 12px;font-weight:800}
+  .q-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  label.option{display:flex;gap:10px;align-items:flex-start;background:#0e1520;border:1px solid rgba(255,255,255,.09);border-radius:10px;padding:10px 12px;cursor:pointer;transition:border .15s ease, box-shadow .15s ease}
+  label.option:hover{border-color:rgba(74,163,255,.5);box-shadow:0 0 0 3px rgba(74,163,255,.14)}
+  .controls{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap}
+  .btn{border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;user-select:none}
+  .btn[disabled]{opacity:.55;cursor:not-allowed}
+  .btn-primary{background:linear-gradient(180deg,#4aa3ff,#3a7ed8);color:#0b0f14;border-color:transparent}
+  .btn-success{background:linear-gradient(180deg,#7bd87e,#46b34b);color:#0b0f14;border-color:transparent}
+  .btn-danger{background:linear-gradient(180deg,#ff8d8d,#ff6b6b);color:#0b0f14;border-color:transparent}
+  .note{font-size:13px;color:var(--muted)}
+  .pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:4px 8px;font-size:12px}
+  .summary{display:grid;grid-template-columns:1fr;gap:12px}
+  .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center}
+  @media (max-width:640px){ .kv{grid-template-columns:1fr} }
+</style>
 </head>
-
 <body>
-
-  <!-- Barra de Progreso -->
-  <div class="progress-bar">
-    <div class="circle active"></div> <!-- Página 1 -->
-    <div class="circle"></div> <!-- Página 2 -->
-    <div class="circle"></div> <!-- Página 3 -->
-    <div class="circle"></div> <!-- Página 4 -->
-    <div class="circle"></div> <!-- Página 5 -->
-    <div class="circle"></div> <!-- Página 6 -->
-    <div class="circle"></div> <!-- Página 7 -->
-    <div class="circle"></div> <!-- Página 8 -->
-    <div class="circle"></div> <!-- Página 9 -->
-  </div>
-
-  <!-- Contenedor para mensajes in-page -->
-  <div id="messageContainer" class="message-container"></div>
-
-  <!-- Página 1: Bienvenida -->
-  <div id="welcome-page" class="wrapper page active">
-    <div class="image">
-      <img src="https://i.postimg.cc/d3fzVDwQ/logo-png.png" alt="Logo">
-    </div>
-    <div class="text-content">
-      <h1 class="welcome-title">Bienvenido a la whitelist</h1>
-      <p>Recomendamos a todos los usuarios leer detenidamente tanto las preguntas como las respuestas.</p>
-      <p>No asuman información que no está escrita.</p>
-      <div>
-        <button onclick="showNextPage()">Comenzar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Página 2: Datos del Usuario -->
-  <div id="user-data-page" class="wrapper page">
-    <h1 class="user-data-title">Datos del usuario</h1>
-    <div class="top-row">
-      <!-- Nombre Discord -->
-      <div class="form-group">
-        <label for="discord-name">Nombre de Discord</label>
-        <input type="text" id="discord-name" placeholder="Nombre de Discord">
-      </div>
-      <!-- Mayor de edad -->
-      <div class="form-group">
-        <label>¿Eres mayor de edad?</label>
-        <div class="options">
-          <label><input type="radio" name="age" value="Sí"> Sí</label>
-          <label><input type="radio" name="age" value="No"> No</label>
+<div class="wrap">
+  <div class="card">
+    <header>
+      <div class="brand">
+        <div class="logo">WL</div>
+        <div>
+          <div class="title">Whitelist – Proyecto RP</div>
+          <div class="muted">Formulario + test de conocimientos/situaciones</div>
         </div>
       </div>
-      <!-- Experiencia -->
-      <div class="form-group">
-        <label for="experience">Experiencia en rol</label>
-        <select id="experience">
-          <option value="">Ver Opciones</option>
-          <option value="Principiante">Principiante</option>
-          <option value="Intermedio">Intermedio</option>
-          <option value="Avanzado">Avanzado</option>
-        </select>
-      </div>
-      <!-- Región -->
-      <div class="form-group">
-        <label>Región</label>
-        <div class="options">
-          <label><input type="radio" name="region" value="Europa"> Europa</label>
-          <label><input type="radio" name="region" value="América"> América</label>
+      <div class="muted" id="statusTag">Paso 1 / 3</div>
+    </header>
+    <div class="content">
+
+      <div class="grid" id="step1">
+        <div class="section">
+          <h3>Datos del jugador</h3>
+          <div class="field">
+            <label class="label" for="discord">Nombre de Discord</label>
+            <input class="input" id="discord" placeholder="Ej: Laury" />
+          </div>
+          <div class="field">
+            <label class="label" for="edad">Edad</label>
+            <input class="input" id="edad" type="number" min="14" max="99" />
+          </div>
+          <div class="field">
+            <label class="label" for="region">País/Región</label>
+            <input class="input" id="region" placeholder="Ej: España" />
+          </div>
+          <div class="field">
+            <label class="label" for="conoces">¿Cómo nos conociste?</label>
+            <input class="input" id="conoces" placeholder="Ej: TikTok, amigo, Twitch…" />
+          </div>
+          <div class="field">
+            <label class="label" for="exp">Experiencia en RP</label>
+            <textarea id="exp" placeholder="Cuéntanos tu bagaje"></textarea>
+          </div>
+        </div>
+
+        <div class="section">
+          <h3>Progreso</h3>
+          <div class="progress">
+            <div class="bar"><span id="bar"></span></div>
+            <span class="pill" id="pill">0%</span>
+          </div>
+          <p class="note">Cuando pulses “Empezar test” pasaremos a las preguntas. Se habilitará “Siguiente” solo cuando respondas.</p>
+          <div class="controls">
+            <button class="btn btn-primary" id="startBtn">Empezar test</button>
+          </div>
         </div>
       </div>
-    </div>
-    <div class="bottom-row">
-      <div class="form-group">
-        <label for="howDidYouKnowUs">¿Cómo nos has conocido?</label>
-        <textarea id="howDidYouKnowUs" placeholder="Cuéntanos..."></textarea>
+
+      <div id="step2" style="display:none">
+        <div class="section">
+          <div class="controls" style="margin-bottom:8px">
+            <span class="pill" id="catPill">—</span>
+            <span class="note" id="qIndex">Pregunta 1 de N</span>
+          </div>
+          <div class="q-wrap">
+            <div class="q-block">
+              <div class="q-head" id="qTitle">Pregunta</div>
+              <div class="q-body" id="qBody"></div>
+            </div>
+          </div>
+          <div class="controls">
+            <button class="btn" id="prevBtn">Anterior</button>
+            <div style="display:flex; gap:8px">
+              <button class="btn" id="omitBtn">Omitir</button>
+              <button class="btn btn-primary" id="nextBtn" disabled>Siguiente</button>
+            </div>
+          </div>
+        </div>
       </div>
+
+      <div id="step3" style="display:none">
+        <div class="section">
+          <h3>Resumen</h3>
+          <div class="summary">
+            <div class="kv"><div class="label">Discord</div><div id="sDiscord">—</div></div>
+            <div class="kv"><div class="label">Edad</div><div id="sEdad">—</div></div>
+            <div class="kv"><div class="label">Región</div><div id="sRegion">—</div></div>
+            <div class="kv"><div class="label">Nos conociste por</div><div id="sConoces">—</div></div>
+            <div class="kv"><div class="label">Experiencia</div><div id="sExp">—</div></div>
+            <div class="kv"><div class="label">Puntuación</div><div id="sScore">—</div></div>
+          </div>
+          <div class="controls" style="margin-top:12px">
+            <button class="btn" id="backToTest">Volver al test</button>
+            <button class="btn btn-success" id="sendBtn">Enviar whitelist</button>
+          </div>
+          <p class="note" id="sendNote">Los datos se enviarán por un Webhook al staff para revisión.</p>
+        </div>
+      </div>
+
     </div>
   </div>
-  <div id="userDataButton" class="bottom-button" style="display: none;">
-    <button onclick="validateUserData()">Siguiente</button>
-  </div>
+</div>
 
-  <!-- Página 3: Conocimientos Básicos 1 -->
-  <div id="conocimientos-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Conocimientos Básicos
-    </h1>
-    <div id="questionContainer" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 3 -->
-    </div>
-  </div>
-  <div id="conocimientosButton" class="bottom-button" style="display: none;">
-    <button onclick="checkQuizAnswer()">Siguiente</button>
-  </div>
+<script>
+const QUESTIONS = [{"category":"Conocimientos","question":"Cuál de los siguientes conceptos no es sancionable?","answers":[{"text":"CK","isCorrect":true},{"text":"MG","isCorrect":false},{"text":"RK","isCorrect":false},{"text":"PK","isCorrect":true},{"text":"IDP","isCorrect":true},{"text":"DM","isCorrect":false}]},{"category":"Conocimientos","question":"¿Cuando se permite hacer MG?","answers":[{"text":"Cuando tu personaje tenga mucha prisa.","isCorrect":false},{"text":"Cuando quieras resolver un conflicto rapidamente.","isCorrect":false},{"text":"Nunca, el metagaming está prohibido en todo momento.","isCorrect":true}]},{"category":"Conocimientos","question":"¿Cuándo se permite el RK?","answers":[{"text":"Cuando te han matado","isCorrect":false},{"text":"Nunca, excepto en casos muy contados que el staff dicte por resolución de una situación.","isCorrect":true},{"text":"Cuando quieras volver donde te ha matado un usuario y querer buscar tus cosas para recuperar tu inventario.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Qué es el PG y qué significa?","answers":[{"text":"Significa PowerGaming y se trata de evitar conductas o acciones irreales que un humano no realizaría.","isCorrect":true},{"text":"Significa PoliceGaming y es hacer roles de policía sin pertenecer al cuerpo.","isCorrect":false},{"text":"Significa PlayerGaming y consiste en usar hacks para ganar.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Qué está permitido hacer en ROL con un streamer?","answers":[{"text":"No existe ninguna norma especial por ser streamer, se trata como todos los usuarios.","isCorrect":true},{"text":"Se debe proporcionar información adicional por streaming para facilitar su rol.","isCorrect":false},{"text":"Siempre se debe favorecer al streamer.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Cuál es la forma correcta de actuar ante una situación de RDM?","answers":[{"text":"Respondes con RDM para equilibrar la situación.","isCorrect":false},{"text":"Intentas resolverlo con diálogo y, si es necesario, reportas con pruebas al staff.","isCorrect":true},{"text":"Ignoras la situación y sigues con tu rol.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Qué significa 'L' o 'W' en el contexto del rol?","answers":[{"text":"Se refiere a ganar (W) o perder (L) en una situación de rol; no deben ser el objetivo del rol.","isCorrect":true},{"text":"Es un comando del juego para lanzar dados.","isCorrect":false},{"text":"Significa 'Local' o 'World' chat.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Qué es el miedo al rol (fearRP)?","answers":[{"text":"Actuar sin tener en cuenta el peligro real para tu personaje.","isCorrect":false},{"text":"Actuar de forma coherente mostrando miedo en situaciones de riesgo real para tu personaje.","isCorrect":true},{"text":"Ignorar a las fuerzas del orden.","isCorrect":false}]},{"category":"Conocimientos","question":"¿A qué se refieren las siglas OOC?","answers":[{"text":"Se refiere a las conversaciones por voz dentro del juego.","isCorrect":false},{"text":"Se refiere a las conversaciones y acciones que están fuera de rol y no afectan la narrativa del personaje.","isCorrect":true},{"text":"Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.","isCorrect":false}]},{"category":"Conocimientos","question":"¿Qué es el RDE y qué significa?","answers":[{"text":"Significa Rol de Entorno, son ciudadanos, cámaras, etc. que son parte del entorno y sirven para realizar una interpretación correcta en la ciudad.","isCorrect":true},{"text":"Significa Roll Death Eyes, son los NPC que estan cerca","isCorrect":false},{"text":"Significa Realidad de Entorno y solo aplica en eventos.","isCorrect":false}]},{"category":"Situaciones","question":"Te encuentras en una situación en la que una persona apunta con un arma a tu personaje, ¿cómo reaccionas?","answers":[{"text":"Saco un arma y me defiendo inmediatamente.","isCorrect":false},{"text":"Coopero mostrando miedo y sigo las instrucciones para proteger la vida de mi personaje.","isCorrect":true},{"text":"Huyo corriendo ya que tengo mucha vida.","isCorrect":false}]},{"category":"Situaciones","question":"Has visto a alguien usando información fuera de rol para localizar a otro jugador, ¿qué haces?","answers":[{"text":"Lo ignoras, total no te afecta directamente.","isCorrect":false},{"text":"Se lo comunicas al staff con pruebas para que se tomen las medidas necesarias.","isCorrect":true},{"text":"Te unes para no quedarte atrás en la acción.","isCorrect":false}]},{"category":"Situaciones","question":"Te encuentras con una situación de 'tiroteo' en progreso, ¿qué haces si no estás involucrado?","answers":[{"text":"Te acercas a grabar para tu contenido.","isCorrect":false},{"text":"Mantienes distancia y evitas interferir para no romper el desarrollo del rol.","isCorrect":true},{"text":"Les gritas por el chat para que paren.","isCorrect":false}]},{"category":"Situaciones","question":"Tu personaje es detenido por la policía en un control rutinario, ¿qué actitud mantienes?","answers":[{"text":"Actúas con respeto y colaboras con el rol, aceptando las consecuencias.","isCorrect":true},{"text":"Insultas y abandonas el juego para evitar la sanción.","isCorrect":false},{"text":"Intentas huir a toda costa aunque sea irrealista.","isCorrect":false}]},{"category":"Situaciones","question":"Te toca interpretar una escena donde tu personaje está herido de gravedad, ¿cómo procedes?","answers":[{"text":"Ignoras las heridas si nadie te ve.","isCorrect":false},{"text":"Mantienes coherencia con el estado del personaje y sigues las limitaciones de movimiento.","isCorrect":true},{"text":"Sigues roleando como si nada pasara.","isCorrect":false}]},{"category":"Situaciones","question":"Has muerto en una escena de rol, ¿qué haces?","answers":[{"text":"Vuelves al lugar inmediatamente para recuperar tus pertenencias.","isCorrect":false},{"text":"Respetas el NLR/RK y no regresas al punto del rol a menos que el staff lo indique.","isCorrect":true},{"text":"Pides a un amigo que te lleve de vuelta para recuperar todo.","isCorrect":false}]},{"category":"Situaciones","question":"Estás en una persecución y decides salir del juego por lag, ¿qué haces después?","answers":[{"text":"No vuelvo porque total es un juego.","isCorrect":false},{"text":"Aviso por el canal correspondiente y regreso para continuar el rol o me reporto al staff.","isCorrect":true},{"text":"Vuelvo pero actúo como si nada hubiera pasado.","isCorrect":false}]},{"category":"Situaciones","question":"Un streamer entra en escena contigo, ¿cómo procedes?","answers":[{"text":"Lo trato como a cualquier usuario, manteniendo el rol sin favoritismos.","isCorrect":true},{"text":"Le doy ventaja para que tenga mejor contenido.","isCorrect":false},{"text":"Evito el rol porque puede ser incómodo.","isCorrect":false}]}];
 
-  <!-- Página 4: Conocimientos Básicos 2 -->
-  <div id="conocimientos2-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Conocimientos Básicos
-    </h1>
-    <div id="questionContainer2" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 4 -->
-    </div>
-  </div>
-  <div id="conocimientos2Button" class="bottom-button" style="display: none;">
-    <button onclick="checkQuizAnswer2()">Siguiente</button>
-  </div>
+const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
 
-  <!-- Página 5: Conocimientos Básicos 3 -->
-  <div id="conocimientos3-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Conocimientos Básicos
-    </h1>
-    <div id="questionContainer3" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 5 -->
-    </div>
-  </div>
-  <div id="conocimientos3Button" class="bottom-button" style="display: none;">
-    <button onclick="checkQuizAnswer3()">Siguiente</button>
-  </div>
+const state = {
+  step: 1,
+  i: 0,
+  answers: [], // each: { index, chosen: [indices], correct: boolean }
+};
 
-  <!-- Página 6: Situaciones de Rol 1 -->
-  <div id="situaciones-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Situaciones de Rol
-    </h1>
-    <div id="situacionesContainer" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 6 -->
-    </div>
-  </div>
-  <div id="situacionesButton" class="bottom-button" style="display: none;">
-    <button onclick="checkSituacionesAnswer()">Siguiente</button>
-  </div>
+const el = (s)=>document.querySelector(s);
+const bar = el("#bar"); const pill=el("#pill"); const statusTag=el("#statusTag");
+function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 
-  <!-- Página 7: Situaciones de Rol 2 -->
-  <div id="situaciones2-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Situaciones de Rol
-    </h1>
-    <div id="situaciones2Container" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 7 -->
-    </div>
-  </div>
-  <div id="situaciones2Button" class="bottom-button" style="display: none;">
-    <button onclick="checkSituaciones2Answer()">Siguiente</button>
-  </div>
+function showStep(n) {
+  state.step = n;
+  el("#step1").style.display = n===1? "block":"none";
+  el("#step2").style.display = n===2? "block":"none";
+  el("#step3").style.display = n===3? "block":"none";
+  statusTag.textContent = "Paso " + n + " / 3";
+}
 
-  <!-- Página 8: Situaciones de Rol 3 -->
-  <div id="situaciones3-page" class="wrapper page">
-    <h1 style="text-align:center; color:#47fccc; margin: 0; font-size: 2em;">
-      Situaciones de Rol
-    </h1>
-    <div id="situaciones3Container" style="flex:1; display:flex; flex-direction:column; align-items:center;">
-      <!-- Pregunta Página 8 -->
-    </div>
-  </div>
-  <div id="situaciones3Button" class="bottom-button" style="display: none;">
-    <button onclick="checkSituaciones3Answer()">Siguiente</button>
-  </div>
+function startTest(){
+  if(!el("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
+  setProgress(5); showStep(2); state.i = 0; renderQ();
+}
 
-  <!-- Página 9: Despedida -->
-  <div id="despedida-page" class="wrapper page">
-    <h1 class="welcome-title">¡Su Whitelist ha sido enviada!</h1>
-    <p>En unos minutos tu resultado será publicado en nuestro discord.</p>
-    <!-- Botón eliminado para cumplir con tu solicitud -->
-  </div>
-  <!-- Elimina completamente el div del botón en la Página 9 -->
-  <!-- <div id="despedidaButton" class="bottom-button" style="display: none;">
-    <button onclick="finalizar()">Finalizar</button>
-  </div> -->
+function renderQ(){
+  const q = QUESTIONS[state.i];
+  el("#qTitle").textContent = q.question;
+  el("#catPill").textContent = q.category;
+  el("#qIndex").textContent = "Pregunta " + (state.i+1) + " de " + QUESTIONS.length;
 
-  <script>
-    /* ============ OBJETO GLOBAL PARA RECOPILAR DATOS ============ */
-    let userData = {
-      discordName: "",
-      age: "",
-      experience: "",
-      region: "",
-      howDidYouKnowUs: "",
-      conocimientos: [],
-      situaciones: []
+  const body = el("#qBody"); body.innerHTML = "";
+  const multi = q.answers.filter(a=>a.isCorrect).length > 1;
+  q.answers.forEach((a,idx)=>{
+    const lab = document.createElement("label"); lab.className="option";
+    const input = document.createElement("input");
+    input.type = multi ? "checkbox" : "radio";
+    input.name = "q";
+    input.value = idx;
+    input.addEventListener("change",()=>{ el("#nextBtn").disabled = body.querySelectorAll("input:checked").length===0; });
+    const span = document.createElement("span"); span.textContent = a.text;
+    lab.appendChild(input); lab.appendChild(span);
+    body.appendChild(lab);
+  });
+  el("#nextBtn").disabled = true;
+  setProgress(5 + (state.i/QUESTIONS.length)*85);
+}
+
+function collectCurrentAnswer(omit=false){
+  const q = QUESTIONS[state.i];
+  const body = el("#qBody");
+  const selected = Array.from(body.querySelectorAll("input:checked")).map(i=>Number(i.value));
+  const correctSet = new Set(q.answers.map((a,i)=>a.isCorrect?i:null).filter(i=>i!==null));
+  const chosenSet = new Set(selected);
+  let correct = true;
+  if(!omit){
+    for(const i of chosenSet) if(!correctSet.has(i)) correct=false;
+    if(correct) for(const i of correctSet) if(!chosenSet.has(i)) correct=false;
+  } else {
+    correct = false;
+  }
+  state.answers[state.i] = { index: state.i, chosen: omit? [] : selected, correct };
+}
+
+function next(){
+  collectCurrentAnswer(false);
+  if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); }
+  else { showSummary(); }
+}
+function omit(){
+  collectCurrentAnswer(true);
+  if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); }
+  else { showSummary(); }
+}
+function prev(){
+  if(state.i===0) return;
+  state.i--; renderQ();
+  const saved = state.answers[state.i];
+  if(saved && saved.chosen){
+    saved.chosen.forEach(v=>{
+      const input = el("#qBody").querySelector(`input[value="${v}"]`); if(input) input.checked=true;
+    });
+    el("#nextBtn").disabled = saved.chosen.length===0;
+  }
+}
+
+function showSummary(){
+  const score = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
+  el("#sDiscord").textContent = el("#discord").value || "—";
+  el("#sEdad").textContent = el("#edad").value || "—";
+  el("#sRegion").textContent = el("#region").value || "—";
+  el("#sConoces").textContent = el("#conoces").value || "—";
+  el("#sExp").textContent = el("#exp").value || "—";
+  el("#sScore").textContent = score + " / " + QUESTIONS.length;
+  setProgress(100); showStep(3);
+}
+
+async function send(){
+  const score = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
+  const results = QUESTIONS.map((q, i)=>{
+    const saved = state.answers[i] || { chosen: [] };
+    return {
+      question: q.question,
+      chosen: saved.chosen.map(idx => q.answers[idx]?.text || ""),
+      correct: !!(state.answers[i] && state.answers[i].correct)
     };
-
-    /* ============ BARRA DE PROGRESO ============ */
-    const circles = document.querySelectorAll('.circle');
-    function updateProgress(step) {
-      circles.forEach((circle, index) => {
-        if (index === step - 1) { // Solo el círculo actual
-          circle.classList.add('active');
-        } else {
-          circle.classList.remove('active');
-        }
-      });
-    }
-    let currentStep = 1;
-
-    /* ============ FUNCION PARA MEZCLAR ARRAYS ============ */
-    function shuffleArray(array) {
-      for (let i = array.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [array[i], array[j]] = [array[j], array[i]];
-      }
-      return array;
-    }
-
-    /* ============ PÁGINA 1 -> 2 ============ */
-    const welcomePage = document.getElementById('welcome-page');
-    const userDataPage = document.getElementById('user-data-page');
-    const userDataButton = document.getElementById('userDataButton');
-
-    function showNextPage() {
-      welcomePage.classList.remove('active');
-      userDataPage.classList.add('active');
-      userDataButton.style.display = 'flex';
-      currentStep = 2;
-      updateProgress(currentStep);
-    }
-
-    function showMessage(message, isError = false) {
-      const messageContainer = document.getElementById('messageContainer');
-      messageContainer.textContent = message;
-      messageContainer.style.backgroundColor = isError ? 'rgba(255, 0, 0, 0.9)' : 'rgba(71, 252, 204, 0.9)';
-      messageContainer.classList.add('show');
-      setTimeout(() => {
-        messageContainer.classList.remove('show');
-      }, 5000); // Mensaje visible por 5 segundos
-    }
-
-    function validateUserData() {
-      const discordName = document.getElementById('discord-name').value.trim();
-      const ageRadio = document.querySelector('input[name="age"]:checked');
-      const experience = document.getElementById('experience').value;
-      const regionRadio = document.querySelector('input[name="region"]:checked');
-      const howDidYouKnowUs = document.getElementById('howDidYouKnowUs').value.trim();
-
-      if (!discordName || !ageRadio || experience === "" || !regionRadio) {
-        // alert("Por favor, rellena todos los campos obligatorios.");
-        showMessage("Por favor, rellena todos los campos obligatorios.", true);
-        return;
-      }
-
-      // Almacenar datos del usuario
-      userData.discordName = discordName;
-      userData.age = ageRadio.value;
-      userData.experience = experience;
-      userData.region = regionRadio.value;
-      userData.howDidYouKnowUs = howDidYouKnowUs;
-
-      showConocimientosPage1(); // => Página 3
-    }
-
-    /* ============ PÁGINA 3: Conocimientos Básicos 1 ============ */
-    const conocimientosPage = document.getElementById('conocimientos-page');
-    const conocimientosButton = document.getElementById('conocimientosButton');
-    let randomQuestionPage3 = null;
-
-    // Preguntas para la Página 3
-    const conocimientosQuestionsPage3 = [
-      {
-        question: "Cuál de los siguientes conceptos no es sancionable?",
-        answers: [
-          { text: "CK", isCorrect: true },
-          { text: "MG", isCorrect: false },
-          { text: "RK", isCorrect: false },
-          { text: "PK", isCorrect: true },
-          { text: "IDP", isCorrect: true },
-          { text: "DM", isCorrect: false },
-        ]
-      },
-      {
-        question: "¿Cuando se permite hacer MG?",
-        answers: [
-          { text: "Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.", isCorrect: false },
-          { text: "Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.", isCorrect: true },
-          { text: "En cualquier situación excepto en los PVP.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Qué significa IC?",
-        answers: [
-          { text: "In Conversation.", isCorrect: false },
-          { text: "In Character.", isCorrect: true },
-          { text: "In Combat.", isCorrect: false },
-          { text: "In Community.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿A qué se refieren las siglas OOC?",
-        answers: [
-          { text: "Se refiere a las conversaciones por voz dentro del juego.", isCorrect: false },
-          { text: "Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.", isCorrect: true },
-          { text: "Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Qué es el RDE y qué significa?",
-        answers: [
-          { text: "Significa Rol de Entorno, son ciudadanos, cámaras y vida en la ciudad que debemos tener en cuenta en todo momento para tener una interpretación correcta en la ciudad.", isCorrect: true },
-          { text: "Significa Roll Death Eyes, son los NPC que estan cerca de tu personaje y avisan a la policía o EMS cuando estas muerto.", isCorrect: false },
-          { text: "Significa Rol de Espera, es el tiempo que debes esperar tras la muerte de tu personaje para poder recordar como has muerto y quien fue el culpable.", isCorrect: false }
-        ]
-      }
-    ];
-
-    function showConocimientosPage1() {
-      userDataPage.classList.remove('active');
-      userDataButton.style.display = 'none';
-
-      conocimientosPage.classList.add('active');
-      conocimientosButton.style.display = 'flex';
-
-      currentStep = 3;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * conocimientosQuestionsPage3.length);
-      randomQuestionPage3 = conocimientosQuestionsPage3[randomIndex];
-      renderQuestion(randomQuestionPage3, "questionContainer");
-    }
-    function checkQuizAnswer() {
-      const checkboxes = document.querySelectorAll("#questionContainer input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomQuestionPage3.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.conocimientos.push({
-        question: randomQuestionPage3.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showConocimientosPage2(); // => Página 4
-    }
-
-    /* ============ PÁGINA 4: Conocimientos Básicos 2 ============ */
-    const conocimientos2Page = document.getElementById('conocimientos2-page');
-    const conocimientos2Button = document.getElementById('conocimientos2Button');
-    let randomQuestionPage4 = null;
-
-    // Preguntas para la Página 4
-    const conocimientosQuestionsPage4 = [
-      {
-        question: "¿Para qué se utiliza el comando /me?",
-        answers: [
-          { text: "Se utilizará para acciones que realiza nuestro personaje y no exista animación para ello.", isCorrect: true },
-          { text: "Se utilizará para especificar las acciones que tengan que ver con el entorno que nos rodea.", isCorrect: false },
-          { text: "Se utiliza para expresar las acciones y pensamientos de tu personaje.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Por qué no se permite el RK?",
-        answers: [
-          { text: "Porque después de acabar inconsciente, no recuerdas el rol que te llevó a dicho estado.", isCorrect: true },
-          { text: "Porque tengo que esperar 30 minutos para poder volver a un PVP.", isCorrect: false },
-          { text: "Si está permitido.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Cuál de los siguientes comentarios no se considera una falta de interpretación?",
-        answers: [
-          { text: "Voy a descansar un rato, luego nos vemos.", isCorrect: true },
-          { text: "¿Con qué músculo me pongo el cinturón?", isCorrect: false },
-          { text: "Voy a parpadear que no te veo los brazos.", isCorrect: false },
-          { text: "Mira qué dice la nube.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Se permiten los roles sexuales?",
-        answers: [
-          { text: "Si, siempre que exista consentimiento de los participantes.", isCorrect: false },
-          { text: "No.", isCorrect: true }
-        ]
-      },
-      {
-        question: "¿Cuál de los siguientes ejemplos no son aptos para la elección de nombre de personaje?",
-        answers: [
-          { text: "Nombres de Familiares cercanos.", isCorrect: false },
-          { text: "Nombres Reales.", isCorrect: false },
-          { text: "Nombres ofensivos o con doble sentido.", isCorrect: true },
-          { text: "Nombres de Famosos.", isCorrect: true },
-          { text: "Nombres de Personajes Ficticios.", isCorrect: true },
-          { text: "Nombres extranjeros.", isCorrect: false }
-        ]
-      }
-    ];
-
-    function showConocimientosPage2() {
-      conocimientosPage.classList.remove('active');
-      conocimientosButton.style.display = 'none';
-
-      conocimientos2Page.classList.add('active');
-      conocimientos2Button.style.display = 'flex';
-
-      currentStep = 4;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * conocimientosQuestionsPage4.length);
-      randomQuestionPage4 = conocimientosQuestionsPage4[randomIndex];
-      renderQuestion(randomQuestionPage4, "questionContainer2");
-    }
-    function checkQuizAnswer2() {
-      const checkboxes = document.querySelectorAll("#questionContainer2 input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomQuestionPage4.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.conocimientos.push({
-        question: randomQuestionPage4.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showConocimientosPage3(); // => Página 5
-    }
-
-    /* ============ PÁGINA 5: Conocimientos Básicos 3 ============ */
-    const conocimientos3Page = document.getElementById('conocimientos3-page');
-    const conocimientos3Button = document.getElementById('conocimientos3Button');
-    let randomQuestionPage5 = null;
-
-    // Preguntas para la Página 5
-    const conocimientosQuestionsPage5 = [
-      {
-        question: "¿Qué se necesita para publicar contenido sobre SOMOS ROLEPLAY?",
-        answers: [
-          { text: "Mencionar el nombre del servidor en el título del video o streaming.", isCorrect: false },
-          { text: "El permiso de Creador de Contenido.", isCorrect: true },
-          { text: "Nada.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Se permite el uso de mods en el servidor?",
-        answers: [
-          { text: "Si, unicamente los que mejoran los gráficos visuales.", isCorrect: true },
-          { text: "No, ningún tipo de mod está permitido.", isCorrect: false }
-        ]
-      },
-      {
-        question: "¿Cómo debes comunicarte con otros jugadores fuera de rol pero dentro del juego?",
-        answers: [
-          { text: "No puedes comunicarte fuera de rol.", isCorrect: false },
-          { text: "Mediante la voz IC pero sin otros jugadores cerca.", isCorrect: false },
-          { text: "Con el comando /msg o /ooc", isCorrect: true }
-        ]
-      },
-      {
-        question: "¿Qué no puede portar encima un civil?",
-        answers: [
-          { text: "Una linterna.", isCorrect: false },
-          { text: "Un teléfono.", isCorrect: false },
-          { text: "Una porra.", isCorrect: true },
-          { text: "Una SMG.", isCorrect: false },
-          { text: "Un bate.", isCorrect: false },
-          { text: "Unas Vendas.", isCorrect: false },
-          { text: "Un Quit Medico", isCorrect: true },
-        ]
-      },
-      {
-        question: "¿Cual de estas descripciones del comando /do no es correcta?",
-        answers: [
-          { text: "/do se podría leer en la nota la palabra S.O.S", isCorrect: false },
-          { text: "/do ¿habría algún arma dentro del bolso?", isCorrect: false },
-          { text: "/do pensaría en el hambre que tiene.", isCorrect: true },
-          { text: "/do se escucharía el rugir de sus tripas.", isCorrect: false },
-        ]
-      }
-    ];
-
-    function showConocimientosPage3() {
-      conocimientos2Page.classList.remove('active');
-      conocimientos2Button.style.display = 'none';
-
-      conocimientos3Page.classList.add('active');
-      conocimientos3Button.style.display = 'flex';
-
-      currentStep = 5;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * conocimientosQuestionsPage5.length);
-      randomQuestionPage5 = conocimientosQuestionsPage5[randomIndex];
-      renderQuestion(randomQuestionPage5, "questionContainer3");
-    }
-    function checkQuizAnswer3() {
-      const checkboxes = document.querySelectorAll("#questionContainer3 input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomQuestionPage5.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.conocimientos.push({
-        question: randomQuestionPage5.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showSituacionesRolPage(); // => Página 6
-    }
-
-    /* ============ PÁGINA 6: Situaciones de Rol 1 ============ */
-    const situacionesPage = document.getElementById('situaciones-page');
-    const situacionesButton = document.getElementById('situacionesButton');
-    let randomSituacionPage6 = null;
-
-    // Preguntas para la Página 6
-    const situacionesQuestionsPage6 = [
-      {
-        question: "Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
-        answers: [
-          { text: "Tratar de terminar el rol actual si existiese e ir a sala de espera.", isCorrect: true },
-          { text: "Ignorarlo y seguir roleando.", isCorrect: false },
-          { text: "Desconectarme e ignorar el mensaje.", isCorrect: false },
-          { text: "Quedarme AFK e ir a sala de espera.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Después de un día duro de trabajo y de problemas en tu vida, decides irte a tu bar de confianza a llorar tus penas y a beberte una botella de Absenta. ¿Qué no debes hacer en este rol?",
-        answers: [
-          { text: "Roleas que bebes el licor, pero no consumes el ítem y te lo guardas para después.", isCorrect: true },
-          { text: "Consumo el ítem y rolear que bebes el licor.", isCorrect: false },
-          { text: "Roleo el beber el licor y consumo el ítem pero no roleo que voy embriagad@.", isCorrect: true },
-          { text: "Roleo el beber el licor pero tiro el ítem. ", isCorrect: true }
-        ]
-      },
-      {
-        question: "¿Cuál de los siguientes roles sería el adecuado para justificar que llevas más de 15 items de un mismo objeto encima?",
-        answers: [
-          { text: "Roleas que te entregan los ítems mediante una caja y la transportan manualmente dando uso a la animación o transporte correspondiente.", isCorrect: true },
-          { text: "Roleas que lo guardas en el bolsillo sin tener ningún objeto que justifique donde pueden estar  guardados.", isCorrect: false },
-          { text: "Roleo que tengo una mochila enorme.", isCorrect: false },
-          { text: "Si llevo el accesorio visual de la mochila guardo una cantidad considerable.", isCorrect: true },
-        ]
-      },
-      {
-        question: "Estás en medio de un rol que no ha sido pactado con otro jugador y de la nada se te cae la conexión y te saca del servidor obligándote a reiniciar. ¿Cómo se ha de proceder?",
-        answers: [
-          { text: "Los demás jugadores deben frenar el rol momentáneamente quedandote afk hasta que vuelvas a entrar al servidor.", isCorrect: false },
-          { text: "Los demás jugadores deben seguir el rol excusando tu ausencia de forma ingeniosa hasta que puedas reconectar y seguir con el rol.", isCorrect: true },
-          { text: "Los demás jugadores se tienen que quedar afk para esperarte y de mientras salen de su idp y se ponen a hablar de cosas OOC .", isCorrect: false }
-        ]
-      },
-      {
-        question: "Acabas de ser secuestrado por unos enmascarados que te han maniatado y obligado a subir a un coche, sin darte tiempo de reacción te han metido a la fuerza dentro de un flecca y te han obligado a arrodillarte delante de la puerta con intención de que te vea la policía. ¿Qué haces en ese momento?",
-        answers: [
-          { text: "Tratas de hacerte valiente e intentar noquear a alguno de los enmascarados para apoderarte de su arma y tratar de huir.", isCorrect: false },
-          { text: "Haces caso a las indicaciones de los enmascarados y esperas paciente y con cautela a que la policía venga en tu ayuda.", isCorrect: true },
-          { text: "Te haces amigo de los atracadores y te unes a ellos haciendo de rehén y quedándote una parte del botín.", isCorrect: false }
-        ]
-      }
-    ];
-
-    function showSituacionesRolPage() {
-      conocimientos3Page.classList.remove('active');
-      conocimientos3Button.style.display = 'none';
-
-      situacionesPage.classList.add('active');
-      situacionesButton.style.display = 'flex';
-
-      currentStep = 6;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * situacionesQuestionsPage6.length);
-      randomSituacionPage6 = situacionesQuestionsPage6[randomIndex];
-      renderQuestion(randomSituacionPage6, "situacionesContainer");
-    }
-    function checkSituacionesAnswer() {
-      const checkboxes = document.querySelectorAll("#situacionesContainer input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomSituacionPage6.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.situaciones.push({
-        question: randomSituacionPage6.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showSituacionesPage7(); // => Página 7
-    }
-
-    /* ============ PÁGINA 7: Situaciones de Rol 2 ============ */
-    const situaciones2Page = document.getElementById('situaciones2-page');
-    const situaciones2Button = document.getElementById('situaciones2Button');
-    let randomSituacionPage7 = null;
-
-    // Preguntas para la Página 7
-    const situacionesQuestionsPage7 = [
-      {
-        question: "9 amigos excursionistas y tú habéis decidido subir al monte andando para realizar una excursión y tirarnos en paracaídas desde la cima. Estando a mitad del camino un puma los ataca dejando a más de la mitad del grupo herido.¿Como procedes a este rol?",
-        answers: [
-          { text: "Llamas al equipo de emergencia para que os intenten evacuar mediante helicóptero o camioneta para llevaros a un centro sanitario cercano a curar las heridas.", isCorrect: true },
-          { text: "Tus compañeros no heridos y tú tratas de arrastrar a los demás heridos exponiendolos a un nuevo ataque o problemas por el camino en la bajada.", isCorrect: false },
-          { text: "Tratáis de arrastrar a los heridos hasta la cima y os tirais todos juntos en paracaídas tratando de llegar a una zona donde haya un centro sanitario.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Esta última semana finalmente le has realizado un ck a tu pj. Hoy por fin te has decidido y te has creado un personaje nuevo que llega a la ciudad. Elige la respuesta correcta.",
-        answers: [
-          { text: "Camino por la ciudad con el nuevo personaje reconociendo los lugares y las personas con las que interactúe con el personaje anterior.", isCorrect: false },
-          { text: "Como el personaje es completamente nuevo no puedo acordarme de las personas o lugares que haya conocido con el anterior personaje.", isCorrect: true },
-          { text: "Voy por la ciudad conociendo todo de nuevo y me acuerdo de algunos personajes de otros jugadores porque son mis amigos.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Estás tranquilamente caminando cuando de repente recibes una llamada anónima, amenazándote y pidiéndote dinero. En medio de la llamada, reconoces que esa voz es la del dueño del casino. ¿Cómo continuarías el rol?",
-        answers: [
-          { text: "Me hago el loco y acato sus instrucciones.", isCorrect: true },
-          { text: "Le insultaría, le mencionaría su nombre y le diría que le voy a mandar cuatro sicarios al casino a partirle las piernas.", isCorrect: false },
-          { text: "Me hago el loco, espero un rato y voy al casino a preguntar a los trabajadores si han escuchado al jefe amenazar a alguien por teléfono.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.",
-        answers: [
-          { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: true },
-          { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: false },
-          { text: "Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Tu y tu amigo estás roleando con otros jugadores en GC, sin querer, en medio de un rol, tu amigo se deja el micrófono encendido y se escuchan conversaciones OC.¿Qué haces en esta situación?",
-        answers: [
-          { text: "Paramos el rol de inmediato y avisamos por voz saliendo del pj que se ha dejado el micrófono encendido.", isCorrect: false },
-          { text: "Tratáis de continuar con el rol haciendo caso omiso a lo que ha dicho tu amigo y mediante mensaje privado le avisas de que se ha dejado el micrófono abierto.posteriormente seguís el rol como si no hubiera pasado nada.", isCorrect: true },
-          { text: "Parais el rol momentáneamente y escribís por el chat oc para avisar a tu amigo. Os quedáis Afk hasta que solucione el problema hablando de vuestras cosas por discord. Posteriormente haceis regresión de rol y seguis.", isCorrect: false }
-        ]
-      }
-    ];
-
-    function showSituacionesPage7() {
-      situacionesPage.classList.remove('active');
-      situacionesButton.style.display = 'none';
-
-      situaciones2Page.classList.add('active');
-      situaciones2Button.style.display = 'flex';
-
-      currentStep = 7;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * situacionesQuestionsPage7.length);
-      randomSituacionPage7 = situacionesQuestionsPage7[randomIndex];
-      renderQuestion(randomSituacionPage7, "situaciones2Container");
-    }
-    function checkSituaciones2Answer() {
-      const checkboxes = document.querySelectorAll("#situaciones2Container input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomSituacionPage7.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.situaciones.push({
-        question: randomSituacionPage7.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showSituacionesPage8(); // => Página 8
-    }
-
-    /* ============ PÁGINA 8: Situaciones de Rol 3 ============ */
-    const situaciones3Page = document.getElementById('situaciones3-page');
-    const situaciones3Button = document.getElementById('situaciones3Button');
-    let randomSituacionPage8 = null;
-
-    // Preguntas para la Página 8
-    const situacionesQuestionsPage8 = [
-      {
-        question: "Te encuentras en un garaje sacando un vehículo, de repente aparece un enmascarado con una pistola, el cual te dice que estás secuestrado y que a la mínima tontería te pegará un tiro. ¿Cómo actuarías?",
-        answers: [
-          { text: "Sacaría una pistola y le dispararía hasta dejarlo en el suelo en coma y luego me reiria de el.", isCorrect: false },
-          { text: "Le diría IC que en el garaje no me puede robar, que se vaya o, si no, rezaría para que lo deportaran de la ciudad por intentar robarme en una zona segura.", isCorrect: false },
-          { text: "Seguiría sus indicaciones.", isCorrect: true }
-        ]
-      },
-      {
-        question: "Estas en el hospital y te percatas de que un jugador nada mas entrar en el hospital empieza a dar puñetazos a todo el mundo sin mediar palabra. ¿Cómo no deberías actuar?",
-        answers: [
-          { text: "Me uno a dar puñetazos, la culpa es del que empieza.", isCorrect: true },
-          { text: "Me escondo en algún lugar donde no pueda pegarme y aviso al staff con el comando /reporte", isCorrect: false },
-          { text: "Saco una SMG y le abro la cabeza para que deje de hacer antirol.", isCorrect: true }
-        ]
-      },
-      {
-        question: "Durante un rol de secuestro siendo tu el rehen empiezas a valorar que los secuestradores empiezan a ser excesivamente maleducados contigo ¿Cómo deberías actuar frente ese rol?",
-        answers: [
-          { text: "Tomo mala actitud por el desagrado llegando a insultar pero manteniendo la cooperación.", isCorrect: true },
-          { text: "Insisto por el chat OOC que se están pasando y si no paran me desconecto.", isCorrect: false },
-          { text: "Continuo el rol pero reporto.", isCorrect: false }
-        ]
-      },
-      {
-        question: "Tu personaje es un médico y acudes a un aviso de un jugador inconsciente, y resulta que este te cae mal en el rol. ¿Qué no puedes hacer?",
-        answers: [
-          { text: "Le atiendo pero no sin antes escupirle en la boca por payaso.", isCorrect: false },
-          { text: "Aprovecho la situación para dejar que se muera definitivamente y si puedo hago que sufra en el proceso.", isCorrect: true },
-          { text: "Le atiendo pero pongo una excusa para cobrarle 1.000$", isCorrect: false }
-        ]
-      }
-    ];
-
-    function showSituacionesPage8() {
-      situaciones2Page.classList.remove('active');
-      situaciones2Button.style.display = 'none';
-
-      situaciones3Page.classList.add('active');
-      situaciones3Button.style.display = 'flex';
-
-      currentStep = 8;
-      updateProgress(currentStep);
-
-      const randomIndex = Math.floor(Math.random() * situacionesQuestionsPage8.length);
-      randomSituacionPage8 = situacionesQuestionsPage8[randomIndex];
-      renderQuestion(randomSituacionPage8, "situaciones3Container");
-    }
-    function checkSituaciones3Answer() {
-      const checkboxes = document.querySelectorAll("#situaciones3Container input[type='checkbox']");
-      if (!Array.from(checkboxes).some(cb => cb.checked)) {
-        // alert("Por favor, selecciona al menos una respuesta.");
-        showMessage("Por favor, selecciona al menos una respuesta.", true);
-        return;
-      }
-
-      // Recopilar respuestas seleccionadas junto con su corrección
-      const selectedAnswers = [];
-      checkboxes.forEach(cb => {
-        if (cb.checked) {
-          const answerText = cb.parentElement.textContent.trim();
-          const answerObj = randomSituacionPage8.answers.find(ans => ans.text === answerText);
-          selectedAnswers.push({
-            text: answerText,
-            isCorrect: answerObj ? answerObj.isCorrect : false
-          });
-        }
-      });
-
-      userData.situaciones.push({
-        question: randomSituacionPage8.question,
-        selectedAnswers: selectedAnswers
-      });
-
-      showDespedidaPage(); // => Página 9
-    }
-
-    /* ============ PÁGINA 9: Despedida ============ */
-    const despedidaPage = document.getElementById('despedida-page');
-    // Eliminado el div del botón para evitar duplicación y cumplir con tu solicitud
-
-    function showDespedidaPage() {
-      situaciones3Page.classList.remove('active');
-      situaciones3Button.style.display = 'none';
-
-      despedidaPage.classList.add('active');
-      // despedidaButton.style.display = 'flex'; // Ya no mostramos el botón
-
-      currentStep = 9;
-      updateProgress(currentStep);
-
-      sendDataToDiscord(); // Enviar datos a Discord
-    }
-
-    /* ============ FUNCION PARA ENVIAR DATOS A DISCORD ============ */
-    function sendDataToDiscord() {
-      const webhookURL = "https://discord.com/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
-
-      // Función para evaluar una pregunta
-      function evaluarPregunta(pregunta) {
-        const respuestasCorrectas = pregunta.selectedAnswers.filter(ans => ans.isCorrect).map(ans => ans.text);
-        const respuestasSeleccionadas = pregunta.selectedAnswers.map(ans => ans.text);
-        const todasCorrectasSeleccionadas = respuestasCorrectas.every(rc => respuestasSeleccionadas.includes(rc));
-        const noRespuestasIncorrectasSeleccionadas = pregunta.selectedAnswers.every(ans => ans.isCorrect || !respuestasSeleccionadas.includes(ans.text));
-        return todasCorrectasSeleccionadas && noRespuestasIncorrectasSeleccionadas;
-      }
-
-      // Inicializar resultado como "Aprobado"
-      let resultado = "Aprobado";
-
-      // Verificar si el usuario no es mayor de edad
-      if (userData.age === "No") {
-        resultado = "Suspenso";
-      } else {
-        // Contador de errores
-        let errores = 0;
-
-        // Evaluar preguntas de conocimientos
-        userData.conocimientos.forEach(pregunta => {
-          if (!evaluarPregunta(pregunta)) {
-            errores++;
-          }
-        });
-
-        // Evaluar preguntas de situaciones
-        userData.situaciones.forEach(pregunta => {
-          if (!evaluarPregunta(pregunta)) {
-            errores++;
-          }
-        });
-
-        // Determinar resultado basado en errores
-        if (errores > 1) { // Más de un error es suspenso
-          resultado = "Suspenso";
-        }
-      }
-
-      let embedColor = resultado === "Aprobado" ? 0x47fccc : 0xff0000; // #47fccc para aprobado, rojo para suspenso
-
-
-      const embed = {
-        "username": "Corrector",
-        "embeds": [{
-          "title": "Nuevo Formulario de Whitelist",
-          "color": embedColor, // Añadido el color aquí
-          "fields": [
-            { "name": "Discord", "value": userData.discordName, "inline": true },
-            { "name": "Mayor de edad", "value": userData.age, "inline": true },
-            { "name": "Experiencia en rol", "value": userData.experience, "inline": true },
-            { "name": "Región", "value": userData.region, "inline": true },
-            { "name": "¿Cómo nos conoció?", "value": userData.howDidYouKnowUs, "inline": true },
-            { "name": "Resultado", "value": resultado, "inline": true },
-            { "name": "\u200B", "value": "―――――――――――――――――――――――――――――――――――――", "inline": false },
-
-          ],
-          "timestamp": new Date().toISOString(),
-          "footer": {
-            "text": "Proyecto Roleplay",
-            "icon_url": "https://cdn.discordapp.com/attachments/1241120109238419456/1241185909085311006/Gold_House_Real_Estate_Modern_Logo_4.png?ex=6666f1b4&is=6665a034&hm=66e4d18b2b57e06eb25202b686fb4f51cce0694b273fb2542842edd06fcc2c5c&"
-          }
-        }]
-      };
-
-      // Añadir conocimientos con información de corrección
-      userData.conocimientos.forEach((item, index) => {
-        let respuestas = "";
-        item.selectedAnswers.forEach(ans => {
-          respuestas += `• ${ans.text} - ${ans.isCorrect ? "✔️ Correcta" : "❌ Incorrecta"}\n`;
-        });
-        embed.embeds[0].fields.push({
-          "name": `Conocimientos Básicos ${index + 1}`,
-          "value": `**Pregunta:** ${item.question}\n**Respuesta:**\n${respuestas}`,
-          "inline": false
-        });
-      });
-
-      // Añadir situaciones con información de corrección
-      userData.situaciones.forEach((item, index) => {
-        let respuestas = "";
-        item.selectedAnswers.forEach(ans => {
-          respuestas += `• ${ans.text} - ${ans.isCorrect ? "✔️ Correcta" : "❌ Incorrecta"}\n`;
-        });
-        embed.embeds[0].fields.push({
-          "name": `Situaciones de Rol ${index + 1}`,
-          "value": `**Pregunta:** ${item.question}\n**Respuesta:**\n${respuestas}`,
-          "inline": false
-        });
-      });
-
-      fetch(webhookURL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(embed)
-      })
-        .then(response => {
-          if (response.ok) {
-            console.log('Datos enviados a Discord correctamente.');
-            // alert("Tus respuestas han sido enviadas exitosamente.");
-            showMessage("Tus respuestas han sido enviadas exitosamente.");
-          } else {
-            console.error('Error al enviar datos a Discord:', response.statusText);
-            // alert("Hubo un error al enviar tus respuestas. Por favor, intenta de nuevo más tarde.");
-            showMessage("Hubo un error al enviar tus respuestas. Por favor, intenta de nuevo más tarde.", true);
-          }
-        })
-        .catch(error => {
-          console.error('Error al enviar datos a Discord:', error);
-          // alert("Hubo un error al enviar tus respuestas. Por favor, intenta de nuevo más tarde.");
-          showMessage("Hubo un error al enviar tus respuestas. Por favor, intenta de nuevo más tarde.", true);
-        });
-    }
-
-
-    /* ============ RENDER GENÉRICO (CHECKBOXES) ============ */
-    function renderQuestion(q, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = "";
-
-      const questionTitle = document.createElement('h2');
-      questionTitle.textContent = q.question;
-      questionTitle.style.textAlign = "center";
-      questionTitle.style.marginBottom = "10px";
-
-      const answersWrapper = document.createElement('div');
-      answersWrapper.classList.add('answers');
-
-      // Clonar y mezclar las respuestas para aleatorizar el orden
-      let shuffledAnswers = shuffleArray([...q.answers]);
-
-      const half = Math.ceil(shuffledAnswers.length / 2);
-      const leftAnswers = shuffledAnswers.slice(0, half);
-      const rightAnswers = shuffledAnswers.slice(half);
-
-      const colLeft = document.createElement('div');
-      colLeft.classList.add('column');
-      const colRight = document.createElement('div');
-      colRight.classList.add('column');
-
-      function createOption(answer, indexGlobal) {
-        const label = document.createElement('label');
-        label.classList.add('quiz-option');
-
-        const checkbox = document.createElement('input');
-        checkbox.type = "checkbox";
-        checkbox.value = indexGlobal;
-        checkbox.name = containerId;
-
-        const textNode = document.createTextNode(" " + answer.text);
-        label.appendChild(checkbox);
-        label.appendChild(textNode);
-        return label;
-      }
-
-      leftAnswers.forEach((ans, i) => {
-        colLeft.appendChild(createOption(ans, i));
-      });
-      rightAnswers.forEach((ans, j) => {
-        colRight.appendChild(createOption(ans, j + half));
-      });
-
-      answersWrapper.appendChild(colLeft);
-      answersWrapper.appendChild(colRight);
-
-      container.appendChild(questionTitle);
-      container.appendChild(answersWrapper);
-    }
-
-    /* ============ RENDER ESPECIAL (SELECTS) ============ */
-    // Esta función está preparada para futuros usos si necesitas preguntas con selects
-    function renderQuestionSpecial(q, containerId) {
-      const container = document.getElementById(containerId);
-      container.innerHTML = "";
-
-      const questionTitle = document.createElement('h2');
-      questionTitle.textContent = q.question;
-      questionTitle.style.textAlign = "center";
-      questionTitle.style.marginBottom = "10px";
-
-      const answersWrapper = document.createElement('div');
-      answersWrapper.classList.add('answers');
-
-      // Clonar y mezclar las respuestas para aleatorizar el orden
-      let shuffledAnswers = shuffleArray([...q.answers]);
-
-      const half = Math.ceil(shuffledAnswers.length / 2);
-      const leftAnswers = shuffledAnswers.slice(0, half);
-      const rightAnswers = shuffledAnswers.slice(half);
-
-      const colLeft = document.createElement('div');
-      colLeft.classList.add('column');
-      const colRight = document.createElement('div');
-      colRight.classList.add('column');
-
-      function createSelectOption(answer, indexGlobal) {
-        const label = document.createElement('label');
-        label.classList.add('quiz-option');
-
-        const textNode = document.createElement('span');
-        textNode.textContent = " " + answer.text;
-
-        const select = document.createElement('select');
-        select.classList.add('quiz-select');
-        select.name = containerId;
-        select.id = containerId + "_" + indexGlobal;
-
-        // Opción vacía
-        const optEmpty = document.createElement('option');
-        optEmpty.value = "";
-        optEmpty.text = "Elige...";
-        select.appendChild(optEmpty);
-
-        // Opción IC
-        const optIC = document.createElement('option');
-        optIC.value = "IC";
-        optIC.text = "IC";
-        select.appendChild(optIC);
-
-        // Opción OOC
-        const optOOC = document.createElement('option');
-        optOOC.value = "OOC";
-        optOOC.text = "OOC";
-        select.appendChild(optOOC);
-
-        label.appendChild(textNode);
-        label.appendChild(select);
-
-        return label;
-      }
-
-      leftAnswers.forEach((ans, i) => {
-        colLeft.appendChild(createSelectOption(ans, i));
-      });
-      rightAnswers.forEach((ans, j) => {
-        colRight.appendChild(createSelectOption(ans, j + half));
-      });
-
-      answersWrapper.appendChild(colLeft);
-      answersWrapper.appendChild(colRight);
-
-      container.appendChild(questionTitle);
-      container.appendChild(answersWrapper);
-    }
-
-  </script>
+  });
+
+  const body = {
+    username: "Whitelist",
+    embeds: [{
+      title: "Nueva solicitud de Whitelist",
+      color: 0x4aa3ff,
+      description: (el("#exp").value || "Sin experiencia"),
+      fields: [
+        { name: "Discord", value: el("#discord").value || "—", inline: true },
+        { name: "Edad", value: el("#edad").value || "—", inline: true },
+        { name: "Región", value: el("#region").value || "—", inline: true },
+        { name: "Conociste por", value: el("#conoces").value || "—", inline: true },
+        { name: "Puntuación", value: score + " / " + QUESTIONS.length, inline: true }
+      ],
+      footer: { text: "Enviado desde Activity de Discord" },
+      timestamp: new Date().toISOString()
+    }],
+  };
+
+  try {
+    el("#sendNote").textContent = "Enviando…";
+    const r = await fetch(webhookURL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    el("#sendNote").textContent = "¡Enviado! El staff revisará tu solicitud.";
+  } catch(e) {
+    el("#sendNote").textContent = "Error al enviar. Revisa consola.";
+    console.error(e);
+  }
+}
+
+// events
+el("#startBtn").addEventListener("click", startTest);
+el("#nextBtn").addEventListener("click", next);
+el("#omitBtn").addEventListener("click", omit);
+el("#prevBtn").addEventListener("click", prev);
+el("#backToTest").addEventListener("click", ()=> showStep(2));
+el("#sendBtn").addEventListener("click", send);
+
+showStep(1); setProgress(0);
+</script>
 </body>
-
 </html>
+
 
 
