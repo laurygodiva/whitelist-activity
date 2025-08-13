@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Whitelist – Proyecto RP</title>
+  <style>
+    :root{
+      --bg: #0b0f14;
+      --card: #121821;
+      --muted: #9fb1c3;
+      --text: #e9eef3;
+      --accent: #4aa3ff;
+      --accent-2: #7bd87e;
+      --danger: #ff6b6b;
+      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 16px;
+    }
+    *{ box-sizing: border-box }
+    html,body{ height:100%; margin:0; background:var(--bg); color:var(--text); font: 500 16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial }
+    .wrap{ min-height:100%; display:grid; place-items:center; padding: 24px }
+    .card{
+      width:min(980px, 100%);
+      background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01)) , var(--card);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    header{
+      padding: 22px 24px;
+      background: radial-gradient(1200px 300px at 20% -20%, rgba(74,163,255,.25), transparent 55%),
+                  radial-gradient(800px 260px at 100% -40%, rgba(123,216,126,.2), transparent 60%);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; gap:16px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    }
+    .brand{ display:flex; align-items:center; gap:12px }
+    .logo{
+      width:42px;height:42px;border-radius:12px;
+      background: linear-gradient(135deg, #4aa3ff, #7bd87e);
+      display:grid;place-items:center;font-weight:900;color:#0b0f14
+    }
+    .title{ font-size:18px; font-weight:800; letter-spacing:.2px }
+    .muted{ color: var(--muted); font-weight:600; font-size:14px }
+    .body{ padding: 22px }
+    .grid{ display:grid; grid-template-columns: 1.2fr .8fr; gap: 18px }
+    @media (max-width: 900px){ .grid{ grid-template-columns: 1fr; } }
+
+    .section{
+      background: rgba(255,255,255,.02);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: 14px; padding: 18px;
+    }
+    .section h3{ margin:0 0 10px; font-size:16px }
+    .field{ display:flex; flex-direction:column; gap:6px; margin-bottom:12px }
+    .label{ font-size:13px; color:var(--muted); font-weight:700; letter-spacing:.3px }
+    .input, .select, textarea{
+      background:#0e141c; color:var(--text);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:10px; padding:10px 12px; outline:none;
+      transition: border .15s ease, box-shadow .15s ease, transform .02s ease;
+    }
+    .input:focus, .select:focus, textarea:focus{
+      border-color: rgba(74,163,255,.6);
+      box-shadow: 0 0 0 3px rgba(74,163,255,.18);
+    }
+    textarea{ min-height:110px; resize:vertical }
+
+    .questions{ display:flex; flex-direction:column; gap:14px; }
+    .question{
+      border:1px solid rgba(255,255,255,.07);
+      border-radius: 12px; overflow:hidden;
+    }
+    .q-head{
+      background: rgba(255,255,255,.03);
+      padding: 12px 14px; font-weight:800; font-size:14px;
+      border-bottom:1px solid rgba(255,255,255,.07);
+    }
+    .q-body{ padding: 12px 14px; display:grid; gap:8px }
+    .answer{
+      display:flex; gap:10px; align-items:flex-start; padding:10px 12px;
+      background:#0d131b; border:1px solid rgba(255,255,255,.06); border-radius:10px;
+      cursor:pointer; transition: transform .02s ease,border .2s ease, box-shadow .2s ease;
+    }
+    .answer:hover{ border-color: rgba(74,163,255,.45); box-shadow: 0 0 0 3px rgba(74,163,255,.14) }
+    .answer input{ margin-top:2px }
+    .actions{ display:flex; gap:10px; justify-content:flex-end; padding-top: 10px }
+    .btn{
+      border:1px solid rgba(255,255,255,.12);
+      border-radius: 11px; padding: 10px 14px; cursor:pointer; user-select:none;
+      background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      color: var(--text); font-weight:800; letter-spacing:.25px;
+      box-shadow: var(--shadow);
+    }
+    .btn:active{ transform: translateY(1px) }
+    .btn-primary{ background: linear-gradient(180deg, #4aa3ff, #3a7ed8); color:#0b0f14; border-color: transparent }
+    .btn-success{ background: linear-gradient(180deg, #7bd87e, #46b34b); color:#0b0f14; border-color: transparent }
+    .btn-danger{ background: linear-gradient(180deg, #ff8d8d, #ff6b6b); color:#0b0f14; border-color: transparent }
+    .footer{ padding: 16px 22px; border-top:1px solid rgba(255,255,255,.08); display:flex; gap:10px; justify-content:space-between; flex-wrap:wrap }
+    .tag{ font-size:12px; color:var(--muted) }
+    .two-col{ display:grid; grid-template-columns: 1fr 1fr; gap:10px }
+    @media (max-width: 520px){ .two-col{ grid-template-columns: 1fr } }
+    .note{ font-size:12px; color: var(--muted) }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="logo">WL</div>
+          <div>
+            <div class="title">Whitelist – Proyecto RP</div>
+            <div class="muted">Completa el formulario y envíalo para revisión del staff.</div>
+          </div>
+        </div>
+        <div class="muted">Activity de Discord</div>
+      </header>
+
+      <div class="body">
+        <form id="wlForm">
+          <div class="grid">
+            <!-- Columna izquierda: datos -->
+            <div class="section">
+              <h3>Datos del jugador</h3>
+              <div class="field">
+                <label class="label" for="discord-name">Nombre de Discord</label>
+                <input class="input" id="discord-name" name="discord_name" placeholder="Ej: Laury" required />
+              </div>
+
+              <div class="two-col">
+                <div class="field">
+                  <label class="label" for="edad">Edad</label>
+                  <input class="input" id="edad" name="edad" type="number" min="14" max="99" required />
+                </div>
+                <div class="field">
+                  <label class="label" for="pais">País</label>
+                  <input class="input" id="pais" name="pais" placeholder="Ej: España" required />
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="label" for="horario">Horario habitual</label>
+                <select id="horario" class="select" name="horario" required>
+                  <option value="" disabled selected>Selecciona una franja</option>
+                  <option value="manana">Mañana (08:00–14:00)</option>
+                  <option value="tarde">Tarde (14:00–20:00)</option>
+                  <option value="noche">Noche (20:00–01:00)</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label class="label" for="experiencia">Experiencia en RP</label>
+                <textarea id="experiencia" name="experiencia" placeholder="Cuéntanos tu experiencia"></textarea>
+              </div>
+            </div>
+
+            <!-- Columna derecha: reglas -->
+            <div class="section">
+              <h3>Conocimientos de normas</h3>
+              <div class="questions" id="questions"></div>
+            </div>
+          </div>
+
+          <div class="section" style="margin-top:14px">
+            <h3>Escena de Rol (breve)</h3>
+            <div class="field">
+              <label class="label" for="escena">Describe cómo actuarías en una situación típica de rol</label>
+              <textarea id="escena" name="escena" required></textarea>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn" id="btn-clear">Limpiar</button>
+            <button type="submit" class="btn btn-primary">Enviar whitelist</button>
+          </div>
+        </form>
+      </div>
+
+      <div class="footer">
+        <div class="tag">Los datos se enviarán al servidor para su revisión.</div>
+        <div class="tag">Versión Activity (URL proxificada para webhooks)</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // *** IMPORTANTE: versión Activity (usando path proxificado para URL Mappings) ***
+    const webhookURL = "/discord.com/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
+
+    // --- Preguntas de ejemplo (recortadas por brevedad en este bloque) ---
+    const QUESTION_BANK = [
+      {
+        question: "El metagaming consiste en...",
+        answers: [
+          { text: "Usar información fuera de rol en rol.", isCorrect: true },
+          { text: "Comprar armas a otros jugadores.", isCorrect: false },
+          { text: "Abrir el mapa y marcar una ruta.", isCorrect: false }
+        ]
+      },
+      // ... (añade aquí todas tus preguntas existentes)
+    ];
+
+    // Render de preguntas
+    const qContainer = document.getElementById("questions");
+    function renderQuestions(){
+      qContainer.innerHTML = "";
+      QUESTION_BANK.forEach((q, qi) => {
+        const box = document.createElement("div");
+        box.className = "question";
+
+        const head = document.createElement("div");
+        head.className = "q-head";
+        head.textContent = `Pregunta ${qi+1} — ${q.question}`;
+        const body = document.createElement("div");
+        body.className = "q-body";
+
+        q.answers.forEach((a, ai) => {
+          const label = document.createElement("label");
+          label.className = "answer";
+          const input = document.createElement("input");
+          input.type = "radio";
+          input.name = `q${qi}`;
+          input.value = ai;
+          const span = document.createElement("span");
+          span.textContent = a.text;
+          label.appendChild(input);
+          label.appendChild(span);
+          body.appendChild(label);
+        });
+
+        box.appendChild(head);
+        box.appendChild(body);
+        qContainer.appendChild(box);
+      });
+    }
+    renderQuestions();
+
+    // Helpers
+    function serializeForm(form){
+      const data = new FormData(form);
+      const obj = {};
+      for (const [k,v] of data.entries()) obj[k]=v;
+      return obj;
+    }
+
+    function collectAnswers(){
+      const results = QUESTION_BANK.map((q, qi) => {
+        const selected = document.querySelector(`input[name="q${qi}"]:checked`);
+        const idx = selected ? Number(selected.value) : -1;
+        return {
+          question: q.question,
+          chosen: idx >= 0 ? q.answers[idx].text : "(sin respuesta)",
+          correct: idx >= 0 ? !!q.answers[idx].isCorrect : false
+        };
+      });
+      const score = results.reduce((acc,r)=> acc + (r.correct?1:0), 0);
+      return { results, score, total: QUESTION_BANK.length };
+    }
+
+    function buildEmbed(payload, quiz){
+      const fields = [
+        { name: "Discord", value: payload.discord_name || "—", inline: true },
+        { name: "Edad", value: String(payload.edad || "—"), inline: true },
+        { name: "País", value: payload.pais || "—", inline: true },
+        { name: "Horario", value: payload.horario || "—", inline: true },
+        { name: "Puntuación Test", value: `${quiz.score}/${quiz.total}`, inline: true },
+      ];
+
+      return {
+        username: "Whitelist",
+        embeds: [{
+          title: "Nueva solicitud de Whitelist",
+          color: 0x4aa3ff,
+          description: payload.experiencia?.trim() ? `**Experiencia:**\n${payload.experiencia.trim()}` : "Sin experiencia especificada",
+          fields: [
+            ...fields,
+            ...(payload.escena?.trim() ? [{ name: "Escena de rol", value: payload.escena.trim() }] : [])
+          ],
+          footer: { text: "Enviado desde Discord Activity" },
+          timestamp: new Date().toISOString()
+        }]
+      };
+    }
+
+    async function submitToWebhook(body){
+      const r = await fetch(webhookURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      if (!r.ok) {
+        const txt = await r.text().catch(()=> "");
+        throw new Error(`Webhook error ${r.status}: ${txt}`);
+      }
+      return true;
+    }
+
+    // Acciones
+    const form = document.getElementById("wlForm");
+    const btnClear = document.getElementById("btn-clear");
+
+    btnClear.addEventListener("click", ()=>{
+      form.reset();
+      document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = false);
+    });
+
+    form.addEventListener("submit", async (ev)=>{
+      ev.preventDefault();
+      const payload = serializeForm(form);
+      const quiz = collectAnswers();
+      const embed = buildEmbed(payload, quiz);
+
+      try{
+        const pending = document.createElement("div");
+        pending.className = "note";
+        pending.textContent = "Enviando datos...";
+        form.appendChild(pending);
+
+        await submitToWebhook(embed);
+
+        pending.textContent = "¡Enviado! El staff revisará tu solicitud.";
+        pending.style.color = "#7bd87e";
+      }catch(e){
+        alert("No se pudo enviar la whitelist. Revisa la consola.");
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>
