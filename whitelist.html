@@ -6,24 +6,35 @@
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
 <style>
   :root{
+    /* base un poco más clara para “luminosidad” */
     --bg:#0b0f14;
-    --panel:#101823;
-    --panel-2:#0d131d;
+    --panel:#111b28;
+    --panel-2:#122033;
+
     --muted:#a4b5c6;
     --text:#ffffff;
+
+    /* paleta */
     --grad1:#885efc;
     --grad2:#5edae7;
     --grad3:#70a4f0;
     --grad4:#7b84f5;
+
+    /* alfas (más bajas = más luminoso) */
+    --alpha-header-1:.14;
+    --alpha-header-2:.12;
+    --alpha-section-1:.08;
+    --alpha-section-2:.06;
+
     --radius:16px;
-    --shadow:0 10px 30px rgba(0,0,0,.35);
+    --shadow:0 10px 30px rgba(0,0,0,.30);
   }
   *{box-sizing:border-box}
   html,body{
     height:100%; margin:0;
     background:
-      radial-gradient(1200px 500px at -20% -20%, rgba(136,94,252,.12), transparent 60%),
-      radial-gradient(1200px 500px at 120% -30%, rgba(94,218,231,.10), transparent 60%),
+      radial-gradient(1200px 500px at -20% -20%, color-mix(in srgb, var(--grad1) calc(var(--alpha-header-1)*100%), transparent), transparent 60%),
+      radial-gradient(1200px 500px at 120% -30%,  color-mix(in srgb, var(--grad2) calc(var(--alpha-header-2)*100%), transparent), transparent 60%),
       var(--bg);
     color:var(--text);
     font:500 16px/1.5 Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;
@@ -31,36 +42,45 @@
   .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
   .card{
     width:min(1100px,100%);
-    background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02)) , var(--panel);
+    background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015)) , var(--panel);
     border:1px solid rgba(255,255,255,.08);
     border-radius:var(--radius);
     box-shadow:var(--shadow);
     overflow:hidden;
   }
 
-  /* Header */
+  /* Header (degradado con menos opacidad) */
   header{
     display:flex;justify-content:space-between;align-items:center;gap:16px;
     padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.08);
-    background: linear-gradient(120deg, rgba(136,94,252,.25), rgba(94,218,231,.18) 40%, rgba(112,164,240,.18) 70%, rgba(123,132,245,.22) 100%);
+    background:
+      linear-gradient(120deg,
+        color-mix(in srgb, var(--grad1) calc(var(--alpha-header-1)*100%), transparent),
+        color-mix(in srgb, var(--grad2) calc(var(--alpha-header-2)*100%), transparent) 40%,
+        color-mix(in srgb, var(--grad3) calc(var(--alpha-header-2)*100%), transparent) 70%,
+        color-mix(in srgb, var(--grad4) calc(var(--alpha-header-1)*100%), transparent) 100%);
   }
   .brand{display:flex;align-items:center;gap:14px}
   .logo{
-    width:68px;height:68px;border-radius:14px;object-fit:cover;
+    width:72px;height:72px;border-radius:14px;object-fit:cover;
     background:transparent;border:none;box-shadow:none; /* sin sombra */
   }
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
   .muted{color:var(--muted);font-weight:600;font-size:14px}
-  #statusTag{display:none} /* ocultar Paso 1/3 */
+  #statusTag{display:none}
 
   .content{padding:18px 18px 20px}
   .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
   @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
 
-  /* Secciones internas con el mismo degradado */
+  /* Secciones internas con el mismo degradado y opacidad más baja */
   .section{
     background:
-      linear-gradient(135deg, rgba(136,94,252,.12), rgba(94,218,231,.10) 35%, rgba(112,164,240,.10) 70%, rgba(123,132,245,.12) 100%),
+      linear-gradient(135deg,
+        color-mix(in srgb, var(--grad1) calc(var(--alpha-section-1)*100%), transparent),
+        color-mix(in srgb, var(--grad2) calc(var(--alpha-section-2)*100%), transparent) 35%,
+        color-mix(in srgb, var(--grad3) calc(var(--alpha-section-2)*100%), transparent) 70%,
+        color-mix(in srgb, var(--grad4) calc(var(--alpha-section-1)*100%), transparent) 100%),
       var(--panel-2);
     border:1px solid rgba(255,255,255,.08);
     border-radius:14px;padding:14px;
@@ -74,14 +94,13 @@
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
   .label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.25px}
   .input,.select,textarea{
-    background:#0e141e;color:var(--text);border:1px solid rgba(255,255,255,.10);
+    background:#0f1a28;color:var(--text);border:1px solid rgba(255,255,255,.10);
     border-radius:10px;padding:10px 12px;outline:none;
     transition:border .15s ease,box-shadow .15s ease;
   }
-  /* ocultar placeholders */
   .input::placeholder, textarea::placeholder{color:transparent}
   .input:focus,.select:focus,textarea:focus{
-    border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.22)
+    border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)
   }
 
   /* Progreso */
@@ -96,7 +115,7 @@
   .q-wrap{display:flex;flex-direction:column;gap:10px}
   .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
   .q-head{
-    background:rgba(255,255,255,.04);padding:10px 12px;font-weight:900;
+    background:rgba(255,255,255,.03);padding:10px 12px;font-weight:900;
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
@@ -109,11 +128,10 @@
 
   /* Botones centrados */
   .controls{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:10px;flex-wrap:wrap}
-  .btn{border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;user-select:none}
+  .btn{border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;user-select:none}
   .btn[disabled]{opacity:.55;cursor:not-allowed}
   .btn-primary{background:linear-gradient(180deg,var(--grad3), var(--grad4));color:#0b0f14;border-color:transparent}
   .btn-success{background:linear-gradient(180deg,var(--grad2), var(--grad3));color:#0b0f14;border-color:transparent}
-  .btn-danger{background:linear-gradient(180deg,#ff8d8d,#ff6b6b);color:#0b0f14;border-color:transparent}
 
   .note{font-size:13px;color:var(--muted)}
   .summary{display:grid;grid-template-columns:1fr;gap:12px}
@@ -221,7 +239,7 @@
 </div>
 
 <script>
-/* Aquí pondremos después tus 10 preguntas (5 conceptos + 5 situaciones) con variantes aleatorias */
+/* Aquí pondremos después tus 10 preguntas con variantes aleatorias */
 const QUESTIONS = [];
 
 const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
