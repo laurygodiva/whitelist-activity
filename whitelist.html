@@ -38,7 +38,6 @@
   }
   .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
   .card{
-    /* ↓ Reducido un cuarto (1100px → 825px) */
     width:min(825px,100%);
     background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015)) , var(--panel);
     border:1px solid rgba(255,255,255,.08);
@@ -59,7 +58,6 @@
   }
   .brand{display:flex;align-items:center;gap:14px}
   .logo{
-    /* ↓ Logo un poco más grande */
     width:96px;height:96px;border-radius:14px;object-fit:cover;
     background:transparent;border:none;box-shadow:none;
   }
@@ -129,9 +127,6 @@
   .btn-success{background:linear-gradient(180deg,var(--grad2), var(--grad3));color:#0b0f14;border-color:transparent}
 
   .note{font-size:13px;color:var(--muted)}
-  .summary{display:grid;grid-template-columns:1fr;gap:12px}
-  .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center}
-  @media (max-width:640px){ .kv{grid-template-columns:1fr} }
 </style>
 </head>
 <body>
@@ -150,7 +145,7 @@
     </header>
 
     <div class="content">
-      <!-- PASO 1 -->
+      <!-- BLOQUE 1 + 2 (Bienvenida + Datos del jugador) -->
       <div class="grid" id="step1">
         <div class="section">
           <h3 class="t-center">Datos del jugador</h3>
@@ -182,18 +177,19 @@
             <div class="bar"><span id="bar"></span></div>
             <span class="pill" id="pill">0%</span>
           </div>
+          <p class="note">Al pulsar “Empezar test” inicia el bloque 3. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
           <div class="controls">
             <button class="btn btn-primary" id="startBtn">Empezar test</button>
           </div>
         </div>
       </div>
 
-      <!-- PASO 2 -->
+      <!-- BLOQUES 3–12 (Preguntas) -->
       <div id="step2" style="display:none">
         <div class="section">
           <div class="controls" style="margin-bottom:8px">
             <span class="pill" id="catPill">—</span>
-            <span class="note" id="qIndex">Pregunta 1 de N</span>
+            <span class="note" id="qIndex">Pregunta 1 de 10</span>
           </div>
           <div class="q-wrap">
             <div class="q-block">
@@ -209,23 +205,19 @@
         </div>
       </div>
 
-      <!-- PASO 3 -->
+      <!-- BLOQUE 13 (Despedida sin resultados visibles) -->
       <div id="step3" style="display:none">
         <div class="section">
-          <h3>Resumen</h3>
-          <div class="summary">
-            <div class="kv"><div class="label">Discord</div><div id="sDiscord">—</div></div>
-            <div class="kv"><div class="label">Edad</div><div id="sEdad">—</div></div>
-            <div class="kv"><div class="label">Región</div><div id="sRegion">—</div></div>
-            <div class="kv"><div class="label">Nos conociste por</div><div id="sConoces">—</div></div>
-            <div class="kv"><div class="label">Experiencia</div><div id="sExp">—</div></div>
-            <div class="kv"><div class="label">Puntuación</div><div id="sScore">—</div></div>
-          </div>
+          <h3 class="t-center">¡Gracias por completar la Whitelist!</h3>
+          <p class="note" style="text-align:center;margin:8px 0 14px">
+            Para finalizar, pulsa <b>Enviar whitelist</b>. El equipo revisará tu solicitud.
+            No se mostrarán puntuaciones ni detalles en esta pantalla.
+          </p>
           <div class="controls" style="margin-top:12px">
-            <button class="btn" id="backToTest">Volver al test</button>
+            <button class="btn" id="backToTest">Volver</button>
             <button class="btn btn-success" id="sendBtn">Enviar whitelist</button>
           </div>
-          <p class="note" id="sendNote">Los datos se enviarán al staff mediante Webhook.</p>
+          <p class="note" id="sendNote" style="text-align:center">Los datos se enviarán al staff mediante Webhook.</p>
         </div>
       </div>
 
@@ -234,97 +226,388 @@
 </div>
 
 <script>
-/* (Añadiremos luego tus 10 preguntas con variantes) */
-const QUESTIONS = [];
+/* ========== BLOQUES CON VARIANTES (3 por bloque) ========== */
+const BLOCKS = {
+  // Conocimientos (bloques 3–7)
+  C1: [
+    { q:"Cuál de los siguientes conceptos no es sancionable?",
+      answers:[
+        {text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},
+        {text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}
+      ]},
+    { q:"¿Cuando se permite hacer MG?",
+      answers:[
+        {text:"Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.",isCorrect:false},
+        {text:"Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.",isCorrect:true},
+        {text:"En cualquier situación excepto en los PVP.",isCorrect:false}
+      ]},
+    { q:"¿Qué significa IC?",
+      answers:[
+        {text:"In Conversation.",isCorrect:false},
+        {text:"In Character.",isCorrect:true},
+        {text:"In Combat.",isCorrect:false},
+        {text:"In Community.",isCorrect:false}
+      ]}
+  ],
+  C2: [
+    { q:"¿A qué se refieren las siglas OOC?",
+      answers:[
+        {text:"Se refiere a las conversaciones por voz dentro del juego.",isCorrect:false},
+        {text:"Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.",isCorrect:true},
+        {text:"Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.",isCorrect:false}
+      ]},
+    { q:"¿Qué es el RDE y qué significa?",
+      answers:[
+        {text:"Significa Rol de Entorno, son ciudadanos, cámaras y vida en la ciudad que debemos tener en cuenta en todo momento para tener una interpretación correcta en la ciudad.",isCorrect:true},
+        {text:"Significa Roll Death Eyes, son los NPC que estan cerca de tu personaje y avisan a la policía o EMS cuando estas muerto.",isCorrect:false},
+        {text:"Significa Rol de Espera, es el tiempo que debes esperar tras la muerte de tu personaje para poder recordar como has muerto y quien fue el culpable.",isCorrect:false}
+      ]},
+    { q:"¿Para qué se utiliza el comando /me?",
+      answers:[
+        {text:"Se utilizará para acciones que realiza nuestro personaje y no exista animación para ello.",isCorrect:true},
+        {text:"Se utilizará para especificar las acciones que tengan que ver con el entorno que nos rodea.",isCorrect:false},
+        {text:"Se utiliza para expresar las acciones y pensamientos de tu personaje.",isCorrect:false}
+      ]}
+  ],
+  C3: [
+    { q:"¿Por qué no se permite el RK?",
+      answers:[
+        {text:"Porque después de acabar inconsciente, no recuerdas el rol que te llevó a dicho estado.",isCorrect:true},
+        {text:"Porque tengo que esperar 30 minutos para poder volver a un PVP.",isCorrect:false},
+        {text:"Si está permitido.",isCorrect:false}
+      ]},
+    { q:"¿Cuál de los siguientes comentarios no se considera una falta de interpretación?",
+      answers:[
+        {text:"Voy a descansar un rato, luego nos vemos.",isCorrect:true},
+        {text:"¿Con qué músculo me pongo el cinturón?",isCorrect:false},
+        {text:"Voy a parpadear que no te veo los brazos.",isCorrect:false},
+        {text:"Mira qué dice la nube.",isCorrect:false}
+      ]},
+    { q:"¿Se permiten los roles sexuales?",
+      answers:[
+        {text:"Si, siempre que exista consentimiento de los participantes.",isCorrect:true},
+        {text:"No.",isCorrect:false}
+      ]}
+  ],
+  C4: [
+    { q:"¿Cuál de los siguientes ejemplos no son aptos para la elección de nombre de personaje?",
+      answers:[
+        {text:"Nombres de Familiares cercanos.",isCorrect:false},
+        {text:"Nombres Reales.",isCorrect:false},
+        {text:"Nombres ofensivos o con doble sentido.",isCorrect:true},
+        {text:"Nombres de Famosos.",isCorrect:true},
+        {text:"Nombres de Personajes Ficticios.",isCorrect:true},
+        {text:"Nombres extranjeros.",isCorrect:false}
+      ]},
+    { q:"¿Qué se necesita para publicar contenido sobre PROYECTO ROLEPLAY",
+      answers:[
+        {text:"Mencionar el nombre del servidor en el título del video o streaming.",isCorrect:false},
+        {text:"El permiso de Creador de Contenido.",isCorrect:true},
+        {text:"Nada.",isCorrect:false}
+      ]},
+    { q:"¿Se permite el uso de mods en el servidor?",
+      answers:[
+        {text:"Si, unicamente los que mejoran los gráficos visuales.",isCorrect:true},
+        {text:"No, ningún tipo de mod está permitido.",isCorrect:false}
+      ]}
+  ],
+  C5: [
+    { q:"¿Cómo debes comunicarte con otros jugadores fuera de rol pero dentro del juego?",
+      answers:[
+        {text:"No puedes comunicarte fuera de rol.",isCorrect:false},
+        {text:"Mediante la voz IC pero sin otros jugadores cerca.",isCorrect:false},
+        {text:"Con el comando /msg o /ooc",isCorrect:true}
+      ]},
+    { q:"¿Se permiten los roles de tortura?",
+      answers:[
+        {text:"Si, siempre que exista la aprobación administrativa y rol previo",isCorrect:false},
+        {text:"No, no se permiten ese tipo de roles tan increpantes",isCorrect:false},
+        {text:"Si, pero en casos de desmembramientos debes tener la aprobación OOC de la víctima",isCorrect:true}
+      ]},
+    { q:"¿Cuál de estas descripciones del comando /do no es correcta?",
+      answers:[
+        {text:"/do se podría leer en la nota la palabra S.O.S",isCorrect:false},
+        {text:"/do ¿habría algún arma dentro del bolso?",isCorrect:false},
+        {text:"/do pensaría en el hambre que tiene.",isCorrect:true},
+        {text:"/do se escucharía el rugir de sus tripas.",isCorrect:false}
+      ]}
+  ],
+
+  // Situaciones (bloques 8–12)
+  S1: [
+    { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
+      answers:[
+        {text:"Tratar de terminar el rol actual si existiese e ir a sala de espera.",isCorrect:true},
+        {text:"Ignorarlo y seguir roleando.",isCorrect:false},
+        {text:"Desconectarme e ignorar el mensaje.",isCorrect:false},
+        {text:"Quedarme AFK e ir a sala de espera.",isCorrect:false}
+      ]},
+    { q:"Después de un día duro decides ir a tu bar de confianza a beber Absenta. ¿Qué no debes hacer?",
+      answers:[
+        {text:"Roleas que bebes el licor, pero no consumes el ítem y te lo guardas para después.",isCorrect:true},
+        {text:"Consumo el ítem y rolear que bebes el licor.",isCorrect:false},
+        {text:"Roleo el beber el licor y consumo el ítem pero no roleo que voy embriagad@.",isCorrect:true},
+        {text:"Roleo el beber el licor pero tiro el ítem.",isCorrect:true}
+      ]},
+    { q:"¿Cuál de los siguientes roles justificaría llevar >15 ítems iguales encima?",
+      answers:[
+        {text:"Roleas entrega en una caja y la transportas con animación o acción correspondiente.",isCorrect:true},
+        {text:"Roleas bolsillo sin objeto que justifique dónde van guardados.",isCorrect:false},
+        {text:"Roleo que tengo una mochila enorme.",isCorrect:false},
+        {text:"Si llevo accesorio visual de mochila, guardo una cantidad considerable.",isCorrect:true}
+      ]}
+  ],
+    S2: [
+    { q:"Estás en medio de un rol no pactado y se te cae la conexión. ¿Cómo proceder?",
+      answers:[
+        {text:"Los demás quedan AFK esperando y hablan OOC por chat.",isCorrect:false},
+        {text:"Los demás continúan roleando justificando tu ausencia hasta que reconectes.",isCorrect:true},
+        {text:"Los demás frenan el rol y te esperan en silencio.",isCorrect:false}
+      ]},
+    { q:"Te secuestran enmascarados y te usan de rehén en un flecca. ¿Qué haces?",
+      answers:[
+        {text:"Intento noquear a uno para robarle el arma y huir.",isCorrect:false},
+        {text:"Obedezco indicaciones y espero a la policía con cautela.",isCorrect:true},
+        {text:"Me hago amigo de los atracadores para quedarme botín.",isCorrect:false}
+      ]},
+    { q:"Excursión al monte: un puma hiere a la mitad del grupo. ¿Cómo procedes?",
+      answers:[
+        {text:"Aviso a emergencias para evacuar y trasladar a centro sanitario.",isCorrect:true},
+        {text:"Arrastramos a los heridos exponiéndolos a nuevos riesgos.",isCorrect:false},
+        {text:"Arrastramos a los heridos a la cima y saltamos en paracaídas.",isCorrect:false}
+      ]}
+  ],
+  S3: [
+    { q:"Esta semana hiciste CK a tu PJ y creas uno nuevo. Elige la correcta.",
+      answers:[
+        {text:"Reconozco lugares y personas del PJ anterior.",isCorrect:false},
+        {text:"No puedo recordar personas/lugares del PJ anterior.",isCorrect:true},
+        {text:"Recuerdo a amigos de otros jugadores porque son mis amigos.",isCorrect:false}
+      ]},
+    { q:"Recibes llamada anónima amenazante y reconoces la voz del dueño del casino. ¿Cómo sigues?",
+      answers:[
+        {text:"Me hago el loco y acato sus instrucciones.",isCorrect:true},
+        {text:"Le insulto y amenazo con enviar sicarios al casino.",isCorrect:false},
+        {text:"Voy al casino a preguntar si han oído amenazas del jefe.",isCorrect:false}
+      ]},
+    { q:"Rol de pareja: propones rol sexual.",
+      answers:[
+        {text:"No se puede, está prohibido realizar roles sexuales.",isCorrect:true},
+        {text:"Se puede si ambos están de acuerdo.",isCorrect:false},
+        {text:"Fuerzo indirectamente sin consentimiento.",isCorrect:false}
+      ]}
+  ],
+  S4: [
+    { q:"En GC tu amigo deja el micro abierto y se oye OOC. ¿Qué haces?",
+      answers:[
+        {text:"Paro el rol y aviso por voz saliendo de PJ.",isCorrect:false},
+        {text:"Sigo el rol ignorando el OOC y le aviso por privado; continuamos sin regresión.",isCorrect:true},
+        {text:"Paro el rol, chateo OOC y hago regresión luego.",isCorrect:false}
+      ]},
+    { q:"En un garaje un enmascarado te apunta: “estás secuestrado”. ¿Cómo actúas?",
+      answers:[
+        {text:"Le disparo y me río de él.",isCorrect:false},
+        {text:"Le digo IC que es zona segura y que lo deportarán.",isCorrect:false},
+        {text:"Sigo sus indicaciones.",isCorrect:true}
+      ]},
+    { q:"Estás en el hospital y alguien pega a todos sin mediar palabra. ¿Cómo NO actuar?",
+      answers:[
+        {text:"Me uno a pegar; la culpa es suya.",isCorrect:true},
+        {text:"Me resguardo y reporto con /reporte.",isCorrect:false},
+        {text:"Saco una SMG y lo dejo en coma.",isCorrect:true}
+      ]}
+  ],
+  S5: [
+    { q:"Secuestro: como rehén percibes excesiva mala educación hacia ti. ¿Cómo deberías actuar?",
+      answers:[
+        {text:"Tomo mala actitud e insulto, pero coopero.",isCorrect:true},
+        {text:"Insisto por OOC que se pasan y si no, me desconecto.",isCorrect:false},
+        {text:"Continúo el rol y reporto.",isCorrect:false}
+      ]},
+    { q:"Eres médico y atiendes a alguien que te cae mal. ¿Qué no puedes hacer?",
+      answers:[
+        {text:"Le atiendo pero antes le escupo.",isCorrect:false},
+        {text:"Dejo que muera y hago que sufra.",isCorrect:true},
+        {text:"Le atiendo y busco excusa para cobrarle 1.000$",isCorrect:false}
+      ]},
+    { q:"En el metro un jugador canta pidiendo limosna; tus ideales racistas te incomodan. ¿Qué acción NO tendría consecuencias OOC?",
+      answers:[
+        {text:"Batalla de miradas y al subir al tren le gritas: “cierra el pico chimpancé”.",isCorrect:true},
+        {text:"Dejo 500$ junto a las vías y le doy una patada para que lo atropellen.",isCorrect:false},
+        {text:"Le pongo un cuchillo al cuello y le hiero.",isCorrect:false},
+        {text:"Cualquier acción o discurso racista IC está permitida.",isCorrect:false}
+      ]}
+  ],
+};
+
+/* ====== Selección aleatoria: 1 variante por bloque (C1..C5 + S1..S5) ====== */
+function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function shuffled(arr){ return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
+
+let QUESTIONS = []; // se llena al empezar
+const CATS = ["Conocimientos","Situaciones"];
+
+/* ====== Lógica de UI y envío ====== */
 const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
 
-const state = { step: 1, i: 0, answers: [] };
+const state = { step: 1, i: 0, answers: [] }; // answers[i] = {chosen: [idx], correct: bool}
 const $ = s=>document.querySelector(s);
 const bar = $("#bar"), pill=$("#pill");
 
 function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
 
+/* Bloques 1-2 -> 3-12 preguntas -> 13 despedida */
 function startTest(){
   if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
-  setProgress(5); showStep(2); state.i=0; renderQ();
+
+  // Construye los 10 slots: C1..C5 + S1..S5
+  const selected = [
+    pickOne(BLOCKS.C1), pickOne(BLOCKS.C2), pickOne(BLOCKS.C3), pickOne(BLOCKS.C4), pickOne(BLOCKS.C5),
+    pickOne(BLOCKS.S1), pickOne(BLOCKS.S2), pickOne(BLOCKS.S3), pickOne(BLOCKS.S4), pickOne(BLOCKS.S5),
+  ];
+
+  // Enriquecer con categoría y barajar respuestas
+  QUESTIONS = selected.map((q, idx) => {
+    const category = idx < 5 ? CATS[0] : CATS[1];
+    const answers = shuffled(q.answers.map(a => ({...a})));
+    return { category, question: q.q, answers };
+  });
+
+  state.i=0; state.answers = new Array(QUESTIONS.length);
+  setProgress(5); showStep(2); renderQ();
 }
+
 function renderQ(){
-  const q = QUESTIONS[state.i] || {question:"(Aún sin preguntas definidas)", answers:[{text:"Ejemplo",isCorrect:true}]};
+  const total = QUESTIONS.length || 10;
+  const q = QUESTIONS[state.i];
   $("#qTitle").textContent = q.question;
-  $("#catPill").textContent = q.category || "—";
-  $("#qIndex").textContent = "Pregunta " + (state.i+1) + " de " + (QUESTIONS.length||1);
+  $("#catPill").textContent = q.category + (state.i<5 ? " (Bloque "+(state.i+3)+")" : " (Bloque "+(state.i-5+8)+")");
+  $("#qIndex").textContent = "Pregunta " + (state.i+1) + " de " + total;
 
   const body = $("#qBody"); body.innerHTML="";
   const multi = q.answers.filter(a=>a.isCorrect).length>1;
   q.answers.forEach((a,idx)=>{
     const lab=document.createElement("label"); lab.className="option";
-    const input=document.createElement("input");
-    input.type=multi?"checkbox":"radio"; input.name="q"; input.value=idx;
+    const input=document.createElement("input"); input.type=multi?"checkbox":"radio"; input.name="q"; input.value=idx;
     input.addEventListener("change",()=>{ $("#nextBtn").disabled = body.querySelectorAll("input:checked").length===0; });
     const span=document.createElement("span"); span.textContent=a.text;
     lab.appendChild(input); lab.appendChild(span); body.appendChild(lab);
   });
 
-  $("#nextBtn").disabled=true;
-  setProgress(5+(state.i/Math.max(1,QUESTIONS.length))*85);
+  // si había respuesta guardada, la restauramos
+  const saved = state.answers[state.i];
+  if(saved && saved.chosen){
+    saved.chosen.forEach(v=>{
+      const input = body.querySelector(`input[value="${v}"]`); if(input) input.checked=true;
+    });
+    $("#nextBtn").disabled = saved.chosen.length===0;
+  } else {
+    $("#nextBtn").disabled=true;
+  }
+
+  setProgress(5 + (state.i/total)*85);
 }
+
 function collectCurrentAnswer(omit=false){
-  const q = QUESTIONS[state.i]; if(!q) return;
+  const q = QUESTIONS[state.i];
   const body=$("#qBody");
   const sel=[...body.querySelectorAll("input:checked")].map(i=>Number(i.value));
   const correctSet=new Set(q.answers.map((a,i)=>a.isCorrect?i:null).filter(i=>i!==null));
-  const chosenSet=new Set(sel); let correct=true;
-  if(!omit){
-    for(const i of chosenSet) if(!correctSet.has(i)) correct=false;
-    if(correct) for(const i of correctSet) if(!chosenSet.has(i)) correct=false;
-  } else correct=false;
-  state.answers[state.i]={ index: state.i, chosen: omit?[]:sel, correct };
-}
-function next(){ collectCurrentAnswer(false); if(state.i < (QUESTIONS.length-1)){ state.i++; renderQ(); } else { showSummary(); } }
-function omit(){ collectCurrentAnswer(true); if(state.i < (QUESTIONS.length-1)){ state.i++; renderQ(); } else { showSummary(); } }
-function prev(){ if(state.i===0) return; state.i--; renderQ(); const s=state.answers[state.i]; if(s&&s.chosen){ s.chosen.forEach(v=>{ const i=$("#qBody").querySelector(`input[value="${v}"]`); if(i) i.checked=true; }); $("#nextBtn").disabled=s.chosen.length===0; } }
+  const chosenSet=new Set(sel);
+  let correct=true;
 
-function showSummary(){
-  const score = state.answers.reduce((a,b)=> a + (b && b.correct ? 1 : 0), 0);
-  $("#sDiscord").textContent=$("#discord").value||"—";
-  $("#sEdad").textContent=$("#edad").value||"—";
-  $("#sRegion").textContent=$("#region").value||"—";
-  $("#sConoces").textContent=$("#conoces").value||"—";
-  $("#sExp").textContent=$("#exp").value||"—";
-  $("#sScore").textContent= score + " / " + (QUESTIONS.length||0);
-  setProgress(100); showStep(3);
+  if(!omit){
+    // no marcar ninguna incorrecta
+    for(const i of chosenSet) if(!correctSet.has(i)) { correct=false; break; }
+    // y marcar todas las correctas
+    if(correct) for(const i of correctSet) if(!chosenSet.has(i)) { correct=false; break; }
+  } else {
+    correct=false;
+  }
+  state.answers[state.i] = { index: state.i, chosen: omit? [] : sel, correct };
+}
+
+function next(){
+  collectCurrentAnswer(false);
+  if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); }
+  else { setProgress(100); showStep(3); }
+}
+function omit(){
+  collectCurrentAnswer(true);
+  if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); }
+  else { setProgress(100); showStep(3); }
+}
+function prev(){
+  if(state.i===0) return;
+  state.i--; renderQ();
+}
+
+function computeScore(){
+  const total = QUESTIONS.length;
+  const correct = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
+  const wrong = total - correct;
+  const passed = wrong <= 3; // máximo 3 fallos
+  return { total, correct, wrong, passed };
 }
 
 async function send(){
-  const score = state.answers.reduce((a,b)=> a + (b && b.correct ? 1 : 0), 0);
+  const {total, correct, wrong, passed} = computeScore();
+
+  // Preparar detalle por pregunta
+  const detail = QUESTIONS.map((q, i)=>{
+    const saved = state.answers[i] || { chosen: [] , correct: false};
+    return {
+      bloque: (i<5 ? ("C"+(i+1)) : ("S"+(i-5+1))),
+      category: q.category,
+      question: q.question,
+      chosen: saved.chosen.map(idx => q.answers[idx]?.text || ""),
+      correct: !!saved.correct
+    };
+  });
+
   const body = {
     username:"Whitelist",
     embeds:[{
       title:"Nueva solicitud de Whitelist",
-      color: 0x70a4f0,
-      description: ($("#exp").value || "Sin experiencia"),
-      fields:[
-        { name:"Discord", value: $("#discord").value||"—", inline:true },
-        { name:"Edad", value: $("#edad").value||"—", inline:true },
-        { name:"Región", value: $("#region").value||"—", inline:true },
-        { name:"Conociste por", value: $("#conoces").value||"—", inline:true },
-        { name:"Puntuación", value: String(score), inline:true }
+      color: passed ? 0x46b34b : 0xff6b6b,
+      description: "Solicitud enviada desde la Activity.",
+      fields: [
+        { name: "Discord", value: $("#discord").value || "—", inline: true },
+        { name: "Edad", value: $("#edad").value || "—", inline: true },
+        { name: "Región", value: $("#region").value || "—", inline: true },
+        { name: "Conociste por", value: $("#conoces").value || "—", inline: true },
+        { name: "Experiencia", value: ($("#exp").value || "Sin experiencia").slice(0,1024), inline: false },
+        { name: "Resultado", value: `Score: ${correct}/${total} • Wrong: ${wrong} • Passed: ${passed ? "Sí" : "No"}`, inline: false }
       ],
-      footer:{ text:"Enviado desde Activity de Discord" },
+      footer:{ text:"Proyecto Roleplay – Sistema de Whitelist" },
       timestamp:new Date().toISOString()
-    }]
+    }],
   };
-  try{
-    $("#sendNote").textContent="Enviando…";
-    const r=await fetch(webhookURL,{ method:"POST", headers:{ "Content-Type":"application/json" }, body:JSON.stringify(body) });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    $("#sendNote").textContent="¡Enviado! El staff revisará tu solicitud.";
-  }catch(e){
-    $("#sendNote").textContent="Error al enviar. Revisa consola."; console.error(e);
+
+  // Adjuntar el detalle como JSON en un segundo embed (truncado si hiciera falta)
+  const pretty = "```json\n" + JSON.stringify(detail, null, 2).slice(0, 3900) + "\n```";
+  body.embeds.push({
+    title: "Detalle de respuestas (por bloque)",
+    color: 0x70a4f0,
+    description: pretty
+  });
+
+  try {
+    $("#sendNote").textContent = "Enviando…";
+    const r = await fetch(webhookURL, {
+      method: "POST", headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(body)
+    });
+    if(!r.ok) throw new Error("HTTP " + r.status);
+    $("#sendNote").textContent = "¡Enviado! El staff revisará tu solicitud.";
+  } catch(e) {
+    $("#sendNote").textContent = "Error al enviar. Revisa consola.";
+    console.error(e);
   }
 }
 
+/* Eventos */
 $("#startBtn").addEventListener("click", startTest);
 $("#nextBtn").addEventListener("click", next);
 $("#omitBtn").addEventListener("click", omit);
@@ -336,4 +619,3 @@ showStep(1); setProgress(0);
 </script>
 </body>
 </html>
-
