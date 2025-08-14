@@ -6,7 +6,7 @@
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
 <style>
   :root{
-    /* base un poco más clara para “luminosidad” */
+    /* base más luminosa */
     --bg:#0b0f14;
     --panel:#111b28;
     --panel-2:#122033;
@@ -20,7 +20,7 @@
     --grad3:#70a4f0;
     --grad4:#7b84f5;
 
-    /* alfas (más bajas = más luminoso) */
+    /* opacidades de los degradados */
     --alpha-header-1:.14;
     --alpha-header-2:.12;
     --alpha-section-1:.08;
@@ -62,7 +62,7 @@
   }
   .brand{display:flex;align-items:center;gap:14px}
   .logo{
-    width:72px;height:72px;border-radius:14px;object-fit:cover;
+    width:84px;height:84px;border-radius:14px;object-fit:cover;
     background:transparent;border:none;box-shadow:none; /* sin sombra */
   }
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
@@ -90,6 +90,7 @@
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
+  .t-center{text-align:center;}
 
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
   .label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.25px}
@@ -158,7 +159,7 @@
       <!-- PASO 1 -->
       <div class="grid" id="step1">
         <div class="section">
-          <h3>Datos del jugador</h3>
+          <h3 class="t-center">Datos del jugador</h3>
           <div class="field">
             <label class="label" for="discord">Nombre de Discord</label>
             <input class="input" id="discord"/>
