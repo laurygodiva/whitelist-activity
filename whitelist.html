@@ -38,7 +38,7 @@
   }
   .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
   .card{
-    width:min(825px,100%); /* 1100px -> 825px (25% menos) */
+    width:min(825px,100%);
     background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015)) , var(--panel);
     border:1px solid rgba(255,255,255,.08);
     border-radius:var(--radius);
@@ -134,23 +134,20 @@
   .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center}
   @media (max-width:640px){ .kv{grid-template-columns:1fr} }
 
-  /* ---- Nueva UI: inputs + avatar a la derecha ---- */
-  .id-row{
+  /* === NUEVO: avatar a la derecha de los 2 primeros campos, sin caja extra === */
+  .id-inline{
     display:grid;
-    grid-template-columns: 1.2fr 120px; /* inputs izquierda, avatar derecha */
+    grid-template-columns: 1fr auto; /* campos izq, avatar der */
     gap:12px; align-items:start; margin-bottom:10px;
   }
-  .avatar-card{
-    display:flex; flex-direction:column; align-items:center; gap:6px;
-    background:rgba(255,255,255,.03);
-    border:1px solid rgba(255,255,255,.08);
-    border-radius:12px; padding:10px;
-  }
-  .avatar-card img{
+  .avatar-inline{
     width:96px; height:96px; border-radius:50%; object-fit:cover;
-    background:#0e1520;
+    background:#0e1520; display:none; /* se muestra cuando haya avatar */
   }
-  .avatar-card small{ color:var(--muted); font-weight:700; }
+  @media (max-width: 560px){
+    .id-inline{ grid-template-columns: 1fr; }
+    .avatar-inline{ margin-top:8px; }
+  }
 </style>
 </head>
 <body>
@@ -174,7 +171,7 @@
         <div class="section">
           <h3 class="t-center">Datos del jugador</h3>
 
-          <div class="id-row">
+          <div class="id-inline">
             <div>
               <div class="field">
                 <label class="label" for="discord">Nombre de Discord</label>
@@ -185,12 +182,7 @@
                 <input class="input" id="edad" type="number" min="14" max="99"/>
               </div>
             </div>
-
-            <div class="avatar-card" id="avatarBox" style="display:none">
-              <img id="avatarImg" alt="Avatar"/>
-              <small>ID:</small>
-              <div id="avatarId" class="label" style="color:#fff">—</div>
-            </div>
+            <img id="avatarImg" class="avatar-inline" alt="Avatar"/>
           </div>
 
           <div class="field">
@@ -358,50 +350,36 @@ async function send(){
 }
 </script>
 
-<!-- ====== Opción 2: SIN BACKEND (avatar/ID vía participants) ====== -->
+<!-- Avatar desde la Activity (sin backend) -->
 <script type="module">
   import { DiscordSDK } from 'https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.2.0/output/index.mjs';
+  const CLIENT_ID = 'TU_CLIENT_ID_AQUI'; // <- cambia esto
 
-  // ⚠️ Sustituye por tu CLIENT ID de la app (Developer Portal)
-  const CLIENT_ID = 'TU_CLIENT_ID_AQUI';
-
-  const avatarBox = document.getElementById('avatarBox');
   const avatarImg = document.getElementById('avatarImg');
-  const avatarId  = document.getElementById('avatarId');
 
   async function tryShowDiscordAvatar(){
     try{
       const sdk = new DiscordSDK(CLIENT_ID);
       await sdk.ready();
 
-      // Participantes conectados a la instancia de la Activity
       const { participants } = await sdk.commands.getInstanceConnectedParticipants();
-
-      // Heurística: el primer participante suele ser el propio usuario si está solo
       const me = Array.isArray(participants) && participants.length ? participants[0] : null;
 
       if(me && me.id){
-        // Prefill del nombre si está vacío
         const nameInput = document.getElementById('discord');
         if(nameInput && !nameInput.value){
           nameInput.value = me.global_name || me.username || '';
         }
-
-        // URL de avatar (fallback a default si no tiene)
         const url = me.avatar
           ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128`
           : `https://cdn.discordapp.com/embed/avatars/0.png`;
-
         avatarImg.src = url;
-        avatarId.textContent = me.id;
-        avatarBox.style.display = 'flex';
+        avatarImg.style.display = 'block';
       }
     }catch(err){
-      // Fuera de Discord o sin permisos -> no mostramos avatar
-      // console.debug('Discord SDK no disponible o sin participants', err);
+      // fuera de Discord o sin SDK: avatar oculto
     }
   }
-
   tryShowDiscordAvatar();
 </script>
 </body>
