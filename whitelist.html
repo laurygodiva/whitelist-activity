@@ -5,7 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
 
-<!-- Discord Activities SDK (opcional, si ejecutas dentro de la Activity) -->
+<!-- APP_ID inyectado por el bot -->
+<script src="/config.js"></script>
+<!-- Discord Activities SDK -->
 <script src="https://sdk.discord.com/embed.js"></script>
 
 <style>
@@ -46,7 +48,7 @@
         color-mix(in srgb, var(--grad4) calc(var(--alpha-header-1)*100%), transparent) 100%);
   }
   .brand{display:flex;align-items:center;gap:14px}
-  .logo{width:96px;height:96px;border-radius:14px;object-fit:cover;background:transparent;border:none;box-shadow:none}
+  .logo{width:116px;height:116px;border-radius:16px;object-fit:cover;background:transparent;border:none;box-shadow:none}
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
   .muted{color:var(--muted);font-weight:600;font-size:14px}
   #statusTag{display:none}
@@ -65,11 +67,10 @@
     border-radius:14px;padding:14px;
   }
   h3{
-    margin:0 0 8px;font-size:16px;
+    margin:0 0 8px;font-size:16px;text-align:center;
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
-  .t-center{text-align:center;}
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
   .label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.25px}
   .input,.select,textarea{
@@ -118,21 +119,10 @@
     </header>
 
     <div class="content">
-      <!-- BLOQUE 1 + 2 (Bienvenida + Datos del jugador) -->
+      <!-- Bloques 1-2 -->
       <div class="grid" id="step1">
         <div class="section">
-          <h3 class="t-center">Datos del jugador</h3>
-
-          <!-- Fallback visible solo si no se puede detectar el user_id automáticamente -->
-          <div id="idAlert" class="alert" style="display:none">
-            No pudimos identificar tu cuenta de Discord automáticamente.
-            Si estás probando fuera de la Activity, añade <code>?user_id=TU_ID</code> en la URL o pega tu ID de Discord aquí.
-            <div class="field" style="margin-top:8px">
-              <label class="label" for="userIdInput">Discord User ID</label>
-              <input class="input" id="userIdInput" placeholder="123456789012345678"/>
-            </div>
-          </div>
-
+          <h3>Datos del jugador</h3>
           <div class="field">
             <label class="label" for="discord">Nombre de Discord</label>
             <input class="input" id="discord"/>
@@ -161,7 +151,7 @@
             <div class="bar"><span id="bar"></span></div>
             <span class="pill" id="pill">0%</span>
           </div>
-          <p class="note"></p>
+          <p class="note">Pulsa “Empezar test” para iniciar. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
           <div id="cooldownBox" class="alert" style="display:none"></div>
           <div class="controls">
             <button class="btn btn-primary" id="startBtn" disabled>Empezar test</button>
@@ -169,7 +159,7 @@
         </div>
       </div>
 
-      <!-- BLOQUES 3–12 -->
+      <!-- Bloques 3–12 -->
       <div id="step2" style="display:none">
         <div class="section">
           <div class="controls" style="margin-bottom:8px">
@@ -190,19 +180,18 @@
         </div>
       </div>
 
-      <!-- BLOQUE 13 (Despedida sin resultados visibles) -->
+      <!-- Bloque 13 -->
       <div id="step3" style="display:none">
         <div class="section">
-          <h3 class="t-center">¡Gracias por completar la Whitelist!</h3>
+          <h3>¡Gracias por completar la Whitelist!</h3>
           <p class="note" style="text-align:center;margin:8px 0 14px">
-            Para finalizar, pulsa <b>Enviar whitelist</b>. El equipo revisará tu solicitud.
-            No se mostrarán puntuaciones ni detalles en esta pantalla.
+            Pulsa <b>Enviar whitelist</b> para finalizar. El equipo revisará tu solicitud.
           </p>
           <div class="controls" style="margin-top:12px">
             <button class="btn" id="backToTest">Volver</button>
             <button class="btn btn-success" id="sendBtn">Enviar whitelist</button>
           </div>
-          <p class="note" id="sendNote" style="text-align:center">Los datos se enviarán al bot para su revisión.</p>
+          <p class="note" id="sendNote" style="text-align:center">No se mostrarán puntuaciones en pantalla.</p>
         </div>
       </div>
     </div>
@@ -210,30 +199,91 @@
 </div>
 
 <script>
-/* ========= Config flexible por querystring =========
-   - api:   ?api=https://midominio.com (si la API no está en el mismo host)
-   - app_id: para usar DiscordSDK y resolver userId (Activities)
-   - user_id: para pruebas fuera de Discord
-*/
-const qs   = new URLSearchParams(location.search);
-const API_BASE = (qs.get('api') || '').replace(/\/$/,'');
-const APP_ID   = qs.get('app_id') || window.DISCORD_APP_ID || null;
-let   USER_ID  = qs.get('user_id') || null;
+/* ================== Config e identidad automática ================== */
+const API_BASE = '';                 // misma origin (lo sirve el bot)
+const APP_ID   = window.APP_ID || ''; // /config.js
+let   USER_ID  = null;
 let   DISCORD_NAME = null;
 
-function api(url){ return (API_BASE ? API_BASE : '') + url; }
+function api(url){ return API_BASE + url; }
 function fmtES(ms){
-  if(!ms) return '';
-  const d = new Date(ms);
+  if(!ms) return ''; const d = new Date(ms);
   return new Intl.DateTimeFormat('es-ES',{
     year:'numeric', month:'2-digit', day:'2-digit',
     hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/Madrid'
   }).format(d).replace(',', '');
 }
+function showFatal(msg){
+  const box = document.querySelector('#cooldownBox');
+  if (box) { box.style.display = 'block'; box.innerHTML = msg; }
+  const btn = document.querySelector('#startBtn');
+  if (btn) btn.disabled = true;
+}
 
-/* ========== Banco de preguntas (exacto) ========== */
+async function initIdentityAndStatus(){
+  if (!APP_ID) { showFatal('Falta configurar DISCORD_APP_ID en el servidor.'); return; }
+  if (!window.DiscordSDK) { showFatal('Abre la whitelist como <b>Actividad de Discord</b>.'); return; }
+
+  try {
+    const sdk = new window.DiscordSDK(APP_ID);
+    await sdk.ready();
+
+    const { code } = await sdk.commands.authorize({
+      client_id: APP_ID, response_type: 'code', scope: ['identify']
+    });
+    const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
+
+    const me = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: 'Bearer ' + access_token }
+    }).then(r => r.json());
+
+    if (!me?.id) throw new Error('No se pudo resolver /users/@me');
+
+    USER_ID = String(me.id);
+    DISCORD_NAME = me.global_name || me.username || null;
+
+    const nameInput = document.querySelector('#discord');
+    if (nameInput && !nameInput.value && DISCORD_NAME) nameInput.value = DISCORD_NAME;
+
+    const tag = document.querySelector('#statusTag');
+    if (tag) { tag.style.display = 'block'; tag.textContent = `Sesión: ${DISCORD_NAME || USER_ID}`; }
+
+    await checkStatus();
+  } catch (e) {
+    console.error('initIdentity error', e);
+    showFatal('No se pudo identificar automáticamente. Abre la whitelist como <b>Actividad de Discord</b>.');
+  }
+}
+
+async function checkStatus(){
+  if (!USER_ID) return;
+  try{
+    const url = api(`/api/whitelist/status?user_id=${encodeURIComponent(USER_ID)}&discord_name=${encodeURIComponent(document.querySelector('#discord').value || DISCORD_NAME || '')}`);
+    const r = await fetch(url);
+    const data = await r.json();
+    const box = document.querySelector('#cooldownBox');
+
+    if (data.status === 'blocked') {
+      const mins = Math.ceil((data.secondsRemaining||0)/60);
+      const until = Date.now() + (data.secondsRemaining||0)*1000;
+      box.style.display = 'block';
+      box.innerHTML = `No puedes repetir todavía. Te faltan ~${mins} minutos. Podrás reintentar el <b>${fmtES(until)}</b>.`;
+      document.querySelector('#startBtn').disabled = true;
+    } else {
+      box.style.display = 'none';
+      document.querySelector('#startBtn').disabled = false;
+    }
+  }catch(e){
+    console.error('status fetch error', e);
+    const box = document.querySelector('#cooldownBox');
+    box.style.display = 'block';
+    box.textContent = 'No se pudo verificar el estado. Intenta de nuevo más tarde.';
+    document.querySelector('#startBtn').disabled = true;
+  }
+}
+
+/* ================== Banco de preguntas EXACTO ================== */
 const BLOCKS = {
-  /* Conocimientos: bloques 3–7 -> C1..C5 */
   C1: [
     { q:"Cuál de los siguientes conceptos no es sancionable?",
       answers:[
@@ -262,7 +312,7 @@ const BLOCKS = {
     { q:"¿A qué se refieren las siglas OOC?",
       answers:[
         { text: "Se refiere a las conversaciones por voz dentro del juego.", isCorrect: false },
-        { text: "Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.", isCorrect: true },
+        { text: "Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del el personaje.", isCorrect: true },
         { text: "Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.", isCorrect: false }
       ]},
     { q:"¿Qué es el RDE y qué significa?",
@@ -341,7 +391,6 @@ const BLOCKS = {
         { text: "/do se escucharía el rugir de sus tripas.", isCorrect: false }
       ]}
   ],
-  /* Situaciones: bloques 8–12 -> S1..S5 */
   S1: [
     { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
       answers:[
@@ -448,96 +497,21 @@ const BLOCKS = {
   ],
 };
 
-/* ====== Selección aleatoria: 1 variante por bloque (C1..C5 + S1..S5) ====== */
 function pickOne(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
 function shuffled(arr){ return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
 
-let QUESTIONS = []; // se llena al empezar
+let QUESTIONS = [];
 const CATS = ["Conocimientos","Situaciones"];
 
-/* ====== Lógica UI ====== */
-const state = { step: 1, i: 0, answers: [] }; // answers[i] = {chosen: [idx], correct: bool}
+const state = { step: 1, i: 0, answers: [] };
 const $ = s=>document.querySelector(s);
 const bar = $("#bar"), pill=$("#pill");
 function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
 
-/* ====== Identidad (SDK o querystring) y chequeo cooldown ====== */
-async function initIdentityAndStatus(){
-  try {
-    // 1) Intento SDK (si hay APP_ID)
-    if (!USER_ID && APP_ID && window.DiscordSDK) {
-      const sdk = new window.DiscordSDK(APP_ID);
-      await sdk.ready();
-      const { code } = await sdk.commands.authorize({
-        client_id: APP_ID, response_type: 'code', scope: ['identify']
-      });
-      const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
-      // Resuelve userId desde Discord API
-      const me = await fetch('https://discord.com/api/users/@me', {
-        headers: { Authorization: 'Bearer ' + access_token }
-      }).then(r => r.json());
-      if (me?.id) {
-        USER_ID = String(me.id);
-        DISCORD_NAME = me.global_name || (me.username ? (me.username + (me.discriminator && me.discriminator !== '0' ? '#' + me.discriminator : '')) : null);
-        if (!$("#discord").value && DISCORD_NAME) $("#discord").value = DISCORD_NAME;
-      }
-    }
-
-    // 2) Fallback por querystring o input manual
-    if (!USER_ID) {
-      $("#idAlert").style.display = "block";
-      $("#startBtn").disabled = true;
-      $("#userIdInput").addEventListener('input', e=>{
-        USER_ID = e.target.value.trim();
-        maybeEnableStart();
-      });
-    }
-
-    await checkStatus(); // si tenemos userId, consulta al bot
-  } catch (e) {
-    console.error('initIdentity error', e);
-    // si falla, al menos deja al usuario poner su ID manual
-    $("#idAlert").style.display = "block";
-  }
-}
-
-async function checkStatus(){
-  if (!USER_ID) return; // esperaremos a que lo ponga manualmente
-  try{
-    const url = api(`/api/whitelist/status?user_id=${encodeURIComponent(USER_ID)}&discord_name=${encodeURIComponent($("#discord").value || DISCORD_NAME || '')}`);
-    const r = await fetch(url);
-    const data = await r.json();
-    const box = $("#cooldownBox");
-
-    if (data.status === 'blocked') {
-      const mins = Math.ceil((data.secondsRemaining||0)/60);
-      const until = Date.now() + (data.secondsRemaining||0)*1000;
-      box.style.display = 'block';
-      box.innerHTML = `No puedes repetir todavía. Te faltan ~${mins} minutos. Podrás reintentar el <b>${fmtES(until)}</b>.`;
-      $("#startBtn").disabled = true;
-    } else {
-      box.style.display = 'none';
-      $("#startBtn").disabled = false;
-    }
-  }catch(e){
-    console.error('status fetch error', e);
-    // en fallo de red, por seguridad, no permitir empezar
-    $("#cooldownBox").style.display = 'block';
-    $("#cooldownBox").textContent = 'No se pudo verificar el estado. Intenta de nuevo más tarde.';
-    $("#startBtn").disabled = true;
-  }
-}
-
-function maybeEnableStart(){
-  if (USER_ID) {
-    checkStatus(); // reintenta cada vez que el usuario pega su ID
-  }
-}
-
-/* ====== Test ====== */
+/* ================== Lógica del test ================== */
 function startTest(){
-  if (!USER_ID) { alert("Necesitamos tu ID de Discord para continuar."); return; }
+  if (!USER_ID) { alert("No se pudo identificar tu cuenta de Discord."); return; }
   if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
 
   const selected = [
@@ -588,7 +562,6 @@ function collectCurrentAnswer(omit=false){
   } else { correct=false; }
   state.answers[state.i] = { index: state.i, chosen: omit? [] : sel, correct };
 }
-
 function next(){ collectCurrentAnswer(false); if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
 function omit(){ collectCurrentAnswer(true); if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
 function prev(){ if(state.i===0) return; state.i--; renderQ(); }
@@ -600,11 +573,9 @@ function computeScore(){
   return { total, correct, wrong };
 }
 
-/* ====== Envío al BOT (no más webhook en el frontend) ====== */
+/* ================== Envío al bot ================== */
 async function send(){
   const { total, correct } = computeScore();
-
-  // Construimos el detalle exacto que espera el bot (respuestas y elegidas por texto)
   const detail = QUESTIONS.map((q, i)=>{
     const saved = state.answers[i] || { chosen: [] , correct: false};
     return {
@@ -626,8 +597,7 @@ async function send(){
   try {
     $("#sendNote").textContent = "Enviando al bot…";
     const r = await fetch(api('/api/whitelist/submit'), {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
+      method: "POST", headers: { "Content-Type":"application/json" },
       body: JSON.stringify(payload)
     });
     const out = await r.json();
@@ -641,12 +611,10 @@ async function send(){
       }
       return;
     }
-
-    // Respuesta OK del bot
     if (out.verdict === 'suspenso' && out.cooldownUntil) {
       $("#sendNote").textContent = `Recibido. Tu intento ha sido registrado y tienes cooldown hasta ${fmtES(out.cooldownUntil)}.`;
     } else {
-      $("#sendNote").textContent = "¡Enviado! El staff realizará los pasos siguientes automáticamente.";
+      $("#sendNote").textContent = "¡Enviado! El staff continuará el proceso automáticamente.";
     }
   } catch(e) {
     $("#sendNote").textContent = "Error de red al contactar con el bot.";
@@ -654,22 +622,18 @@ async function send(){
   }
 }
 
-/* Eventos */
+/* ================== Wiring ================== */
+const $d = document;
 $("#startBtn").addEventListener("click", startTest);
 $("#nextBtn").addEventListener("click", next);
 $("#omitBtn").addEventListener("click", omit);
 $("#prevBtn").addEventListener("click", prev);
 $("#backToTest").addEventListener("click", ()=> showStep(2));
 $("#sendBtn").addEventListener("click", send);
-
-// Al escribir el nombre, reintentamos status (para registrar nombre en el bot)
 $("#discord").addEventListener('change', () => { if (USER_ID) checkStatus(); });
 
 showStep(1); setProgress(0);
-// Arranque: resolver identidad y consultar status
 initIdentityAndStatus();
 </script>
 </body>
 </html>
-
-
