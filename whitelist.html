@@ -6,7 +6,6 @@
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
 <style>
   :root{
-    /* base más luminosa */
     --bg:#0b0f14;
     --panel:#111b28;
     --panel-2:#122033;
@@ -14,13 +13,11 @@
     --muted:#a4b5c6;
     --text:#ffffff;
 
-    /* paleta */
     --grad1:#885efc;
     --grad2:#5edae7;
     --grad3:#70a4f0;
     --grad4:#7b84f5;
 
-    /* opacidades de los degradados */
     --alpha-header-1:.14;
     --alpha-header-2:.12;
     --alpha-section-1:.08;
@@ -41,7 +38,8 @@
   }
   .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
   .card{
-    width:min(1100px,100%);
+    /* ↓ Reducido un cuarto (1100px → 825px) */
+    width:min(825px,100%);
     background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015)) , var(--panel);
     border:1px solid rgba(255,255,255,.08);
     border-radius:var(--radius);
@@ -49,7 +47,6 @@
     overflow:hidden;
   }
 
-  /* Header (degradado con menos opacidad) */
   header{
     display:flex;justify-content:space-between;align-items:center;gap:16px;
     padding:18px 22px;border-bottom:1px solid rgba(255,255,255,.08);
@@ -62,8 +59,9 @@
   }
   .brand{display:flex;align-items:center;gap:14px}
   .logo{
-    width:84px;height:84px;border-radius:14px;object-fit:cover;
-    background:transparent;border:none;box-shadow:none; /* sin sombra */
+    /* ↓ Logo un poco más grande */
+    width:96px;height:96px;border-radius:14px;object-fit:cover;
+    background:transparent;border:none;box-shadow:none;
   }
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
   .muted{color:var(--muted);font-weight:600;font-size:14px}
@@ -73,7 +71,6 @@
   .grid{display:grid;grid-template-columns:1fr 1.1fr;gap:16px}
   @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
 
-  /* Secciones internas con el mismo degradado y opacidad más baja */
   .section{
     background:
       linear-gradient(135deg,
@@ -104,7 +101,6 @@
     border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)
   }
 
-  /* Progreso */
   .progress{display:flex;align-items:center;gap:8px;margin:6px 0 12px}
   .bar{flex:1;height:8px;background:#0d141c;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
   .bar>span{display:block;height:100%;
@@ -112,7 +108,6 @@
     width:0%}
   .pill{font-size:12px;color:var(--muted);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:4px 8px}
 
-  /* Preguntas */
   .q-wrap{display:flex;flex-direction:column;gap:10px}
   .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
   .q-head{
@@ -127,7 +122,6 @@
   }
   label.option:hover{border-color:rgba(112,164,240,.6);box-shadow:0 0 0 3px rgba(112,164,240,.18)}
 
-  /* Botones centrados */
   .controls{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:10px;flex-wrap:wrap}
   .btn{border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;user-select:none}
   .btn[disabled]{opacity:.55;cursor:not-allowed}
@@ -240,14 +234,13 @@
 </div>
 
 <script>
-/* Aquí pondremos después tus 10 preguntas con variantes aleatorias */
+/* (Añadiremos luego tus 10 preguntas con variantes) */
 const QUESTIONS = [];
-
 const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
 
 const state = { step: 1, i: 0, answers: [] };
 const $ = s=>document.querySelector(s);
-const bar = $("#bar"); const pill=$("#pill");
+const bar = $("#bar"), pill=$("#pill");
 
 function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
