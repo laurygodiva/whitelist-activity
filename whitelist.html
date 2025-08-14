@@ -221,7 +221,7 @@ function showFatal(msg){
 }
 
 async function initIdentityAndStatus(){
-  if (!APP_ID) { showFatal('Falta configurar DISCORD_APP_ID en el servidor.'); return; }
+  if (!APP_ID) { showFatal(''); return; }
   if (!window.DiscordSDK) { showFatal('Abre la whitelist como <b>Actividad de Discord</b>.'); return; }
 
   try {
@@ -637,3 +637,4 @@ initIdentityAndStatus();
 </script>
 </body>
 </html>
+
