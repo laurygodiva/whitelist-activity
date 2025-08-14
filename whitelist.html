@@ -38,8 +38,7 @@
   }
   .wrap{min-height:100%;padding:20px;display:grid;place-items:center}
   .card{
-    /* ↓ Reducido un cuarto (1100px → 825px) */
-    width:min(825px,100%);
+    width:min(825px,100%); /* 1100px -> 825px (25% menos) */
     background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015)) , var(--panel);
     border:1px solid rgba(255,255,255,.08);
     border-radius:var(--radius);
@@ -59,7 +58,6 @@
   }
   .brand{display:flex;align-items:center;gap:14px}
   .logo{
-    /* ↓ Logo un poco más grande */
     width:96px;height:96px;border-radius:14px;object-fit:cover;
     background:transparent;border:none;box-shadow:none;
   }
@@ -101,6 +99,7 @@
     border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)
   }
 
+  /* Progreso */
   .progress{display:flex;align-items:center;gap:8px;margin:6px 0 12px}
   .bar{flex:1;height:8px;background:#0d141c;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
   .bar>span{display:block;height:100%;
@@ -108,6 +107,7 @@
     width:0%}
   .pill{font-size:12px;color:var(--muted);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:4px 8px}
 
+  /* Opciones/preguntas */
   .q-wrap{display:flex;flex-direction:column;gap:10px}
   .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
   .q-head{
@@ -122,6 +122,7 @@
   }
   label.option:hover{border-color:rgba(112,164,240,.6);box-shadow:0 0 0 3px rgba(112,164,240,.18)}
 
+  /* Botones centrados */
   .controls{display:flex;gap:8px;justify-content:center;align-items:center;margin-top:10px;flex-wrap:wrap}
   .btn{border:1px solid rgba(255,255,255,.12);border-radius:11px;padding:10px 14px;background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));color:var(--text);font-weight:800;cursor:pointer;user-select:none}
   .btn[disabled]{opacity:.55;cursor:not-allowed}
@@ -132,6 +133,24 @@
   .summary{display:grid;grid-template-columns:1fr;gap:12px}
   .kv{display:grid;grid-template-columns:160px 1fr;gap:10px;align-items:center}
   @media (max-width:640px){ .kv{grid-template-columns:1fr} }
+
+  /* ---- Nueva UI: inputs + avatar a la derecha ---- */
+  .id-row{
+    display:grid;
+    grid-template-columns: 1.2fr 120px; /* inputs izquierda, avatar derecha */
+    gap:12px; align-items:start; margin-bottom:10px;
+  }
+  .avatar-card{
+    display:flex; flex-direction:column; align-items:center; gap:6px;
+    background:rgba(255,255,255,.03);
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:12px; padding:10px;
+  }
+  .avatar-card img{
+    width:96px; height:96px; border-radius:50%; object-fit:cover;
+    background:#0e1520;
+  }
+  .avatar-card small{ color:var(--muted); font-weight:700; }
 </style>
 </head>
 <body>
@@ -154,14 +173,26 @@
       <div class="grid" id="step1">
         <div class="section">
           <h3 class="t-center">Datos del jugador</h3>
-          <div class="field">
-            <label class="label" for="discord">Nombre de Discord</label>
-            <input class="input" id="discord"/>
+
+          <div class="id-row">
+            <div>
+              <div class="field">
+                <label class="label" for="discord">Nombre de Discord</label>
+                <input class="input" id="discord"/>
+              </div>
+              <div class="field">
+                <label class="label" for="edad">Edad</label>
+                <input class="input" id="edad" type="number" min="14" max="99"/>
+              </div>
+            </div>
+
+            <div class="avatar-card" id="avatarBox" style="display:none">
+              <img id="avatarImg" alt="Avatar"/>
+              <small>ID:</small>
+              <div id="avatarId" class="label" style="color:#fff">—</div>
+            </div>
           </div>
-          <div class="field">
-            <label class="label" for="edad">Edad</label>
-            <input class="input" id="edad" type="number" min="14" max="99"/>
-          </div>
+
           <div class="field">
             <label class="label" for="region">País/Región</label>
             <input class="input" id="region"/>
@@ -234,13 +265,14 @@
 </div>
 
 <script>
-/* (Añadiremos luego tus 10 preguntas con variantes) */
+/* Aquí pondremos después tus 10 preguntas con variantes aleatorias */
 const QUESTIONS = [];
+
 const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
 
 const state = { step: 1, i: 0, answers: [] };
 const $ = s=>document.querySelector(s);
-const bar = $("#bar"), pill=$("#pill");
+const bar = $("#bar"); const pill=$("#pill");
 
 function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
@@ -324,15 +356,53 @@ async function send(){
     $("#sendNote").textContent="Error al enviar. Revisa consola."; console.error(e);
   }
 }
+</script>
 
-$("#startBtn").addEventListener("click", startTest);
-$("#nextBtn").addEventListener("click", next);
-$("#omitBtn").addEventListener("click", omit);
-$("#prevBtn").addEventListener("click", prev);
-$("#backToTest").addEventListener("click", ()=> showStep(2));
-$("#sendBtn").addEventListener("click", send);
+<!-- ====== Opción 2: SIN BACKEND (avatar/ID vía participants) ====== -->
+<script type="module">
+  import { DiscordSDK } from 'https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@2.2.0/output/index.mjs';
 
-showStep(1); setProgress(0);
+  // ⚠️ Sustituye por tu CLIENT ID de la app (Developer Portal)
+  const CLIENT_ID = 'TU_CLIENT_ID_AQUI';
+
+  const avatarBox = document.getElementById('avatarBox');
+  const avatarImg = document.getElementById('avatarImg');
+  const avatarId  = document.getElementById('avatarId');
+
+  async function tryShowDiscordAvatar(){
+    try{
+      const sdk = new DiscordSDK(CLIENT_ID);
+      await sdk.ready();
+
+      // Participantes conectados a la instancia de la Activity
+      const { participants } = await sdk.commands.getInstanceConnectedParticipants();
+
+      // Heurística: el primer participante suele ser el propio usuario si está solo
+      const me = Array.isArray(participants) && participants.length ? participants[0] : null;
+
+      if(me && me.id){
+        // Prefill del nombre si está vacío
+        const nameInput = document.getElementById('discord');
+        if(nameInput && !nameInput.value){
+          nameInput.value = me.global_name || me.username || '';
+        }
+
+        // URL de avatar (fallback a default si no tiene)
+        const url = me.avatar
+          ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png?size=128`
+          : `https://cdn.discordapp.com/embed/avatars/0.png`;
+
+        avatarImg.src = url;
+        avatarId.textContent = me.id;
+        avatarBox.style.display = 'flex';
+      }
+    }catch(err){
+      // Fuera de Discord o sin permisos -> no mostramos avatar
+      // console.debug('Discord SDK no disponible o sin participants', err);
+    }
+  }
+
+  tryShowDiscordAvatar();
 </script>
 </body>
 </html>
