@@ -4,23 +4,17 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
+
+<!-- Discord Activities SDK (opcional, si ejecutas dentro de la Activity) -->
+<script src="https://sdk.discord.com/embed.js"></script>
+
 <style>
   :root{
-    --bg:#0b0f14;
-    --panel:#111b28;
-    --panel-2:#122033;
-    --muted:#a4b5c6;
-    --text:#ffffff;
-    --grad1:#885efc;
-    --grad2:#5edae7;
-    --grad3:#70a4f0;
-    --grad4:#7b84f5;
-    --alpha-header-1:.14;
-    --alpha-header-2:.12;
-    --alpha-section-1:.08;
-    --alpha-section-2:.06;
-    --radius:16px;
-    --shadow:0 10px 30px rgba(0,0,0,.30);
+    --bg:#0b0f14; --panel:#111b28; --panel-2:#122033;
+    --muted:#a4b5c6; --text:#ffffff;
+    --grad1:#885efc; --grad2:#5edae7; --grad3:#70a4f0; --grad4:#7b84f5;
+    --alpha-header-1:.14; --alpha-header-2:.12; --alpha-section-1:.08; --alpha-section-2:.06;
+    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.30);
   }
   *{box-sizing:border-box}
   html,body{
@@ -83,21 +77,16 @@
     border-radius:10px;padding:10px 12px;outline:none;transition:border .15s ease,box-shadow .15s ease;
   }
   .input::placeholder, textarea::placeholder{color:transparent}
-  .input:focus,.select:focus,textarea:focus{
-    border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)
-  }
+  .input:focus,.select:focus,textarea:focus{border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)}
   .progress{display:flex;align-items:center;gap:8px;margin:6px 0 12px}
   .bar{flex:1;height:8px;background:#0d141c;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
-  .bar>span{display:block;height:100%;
-    background: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4)); width:0%}
+  .bar>span{display:block;height:100%;background: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4)); width:0%}
   .pill{font-size:12px;color:var(--muted);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:4px 8px}
   .q-wrap{display:flex;flex-direction:column;gap:10px}
   .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
-  .q-head{
-    background:rgba(255,255,255,.03);padding:10px 12px;font-weight:900;
+  .q-head{background:rgba(255,255,255,.03);padding:10px 12px;font-weight:900;
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
-    -webkit-background-clip: text; background-clip: text; color: transparent;
-  }
+    -webkit-background-clip: text; background-clip: text; color: transparent;}
   .q-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
   label.option{
     display:flex;gap:10px;align-items:flex-start;background:#0e1520;border:1px solid rgba(255,255,255,.09);
@@ -110,6 +99,7 @@
   .btn-primary{background:linear-gradient(180deg,var(--grad3), var(--grad4));color:#0b0f14;border-color:transparent}
   .btn-success{background:linear-gradient(180deg,var(--grad2), var(--grad3));color:#0b0f14;border-color:transparent}
   .note{font-size:13px;color:var(--muted)}
+  .alert{border:1px solid rgba(255,255,255,.25);background:#111a25;border-radius:10px;padding:10px 12px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -132,6 +122,17 @@
       <div class="grid" id="step1">
         <div class="section">
           <h3 class="t-center">Datos del jugador</h3>
+
+          <!-- Fallback visible solo si no se puede detectar el user_id automáticamente -->
+          <div id="idAlert" class="alert" style="display:none">
+            No pudimos identificar tu cuenta de Discord automáticamente.
+            Si estás probando fuera de la Activity, añade <code>?user_id=TU_ID</code> en la URL o pega tu ID de Discord aquí.
+            <div class="field" style="margin-top:8px">
+              <label class="label" for="userIdInput">Discord User ID</label>
+              <input class="input" id="userIdInput" placeholder="123456789012345678"/>
+            </div>
+          </div>
+
           <div class="field">
             <label class="label" for="discord">Nombre de Discord</label>
             <input class="input" id="discord"/>
@@ -161,8 +162,9 @@
             <span class="pill" id="pill">0%</span>
           </div>
           <p class="note">Al pulsar “Empezar test” inicia el bloque 3. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
+          <div id="cooldownBox" class="alert" style="display:none"></div>
           <div class="controls">
-            <button class="btn btn-primary" id="startBtn">Empezar test</button>
+            <button class="btn btn-primary" id="startBtn" disabled>Empezar test</button>
           </div>
         </div>
       </div>
@@ -200,7 +202,7 @@
             <button class="btn" id="backToTest">Volver</button>
             <button class="btn btn-success" id="sendBtn">Enviar whitelist</button>
           </div>
-          <p class="note" id="sendNote" style="text-align:center">Los datos se enviarán al staff mediante Webhook.</p>
+          <p class="note" id="sendNote" style="text-align:center">Los datos se enviarán al bot para su revisión.</p>
         </div>
       </div>
     </div>
@@ -208,7 +210,28 @@
 </div>
 
 <script>
-/* ========== TUS PREGUNTAS EXACTAS, POR BLOQUES Y VARIANTES (3 por bloque) ========== */
+/* ========= Config flexible por querystring =========
+   - api:   ?api=https://midominio.com (si la API no está en el mismo host)
+   - app_id: para usar DiscordSDK y resolver userId (Activities)
+   - user_id: para pruebas fuera de Discord
+*/
+const qs   = new URLSearchParams(location.search);
+const API_BASE = (qs.get('api') || '').replace(/\/$/,'');
+const APP_ID   = qs.get('app_id') || window.DISCORD_APP_ID || null;
+let   USER_ID  = qs.get('user_id') || null;
+let   DISCORD_NAME = null;
+
+function api(url){ return (API_BASE ? API_BASE : '') + url; }
+function fmtES(ms){
+  if(!ms) return '';
+  const d = new Date(ms);
+  return new Intl.DateTimeFormat('es-ES',{
+    year:'numeric', month:'2-digit', day:'2-digit',
+    hour:'2-digit', minute:'2-digit', hour12:false, timeZone:'Europe/Madrid'
+  }).format(d).replace(',', '');
+}
+
+/* ========== Banco de preguntas (exacto) ========== */
 const BLOCKS = {
   /* Conocimientos: bloques 3–7 -> C1..C5 */
   C1: [
@@ -318,7 +341,6 @@ const BLOCKS = {
         { text: "/do se escucharía el rugir de sus tripas.", isCorrect: false }
       ]}
   ],
-
   /* Situaciones: bloques 8–12 -> S1..S5 */
   S1: [
     { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
@@ -378,8 +400,8 @@ const BLOCKS = {
       ]},
     { q:"Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.",
       answers:[
-        { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: false },
-        { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: true },
+        { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: true },
+        { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: false },
         { text: "Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.", isCorrect: false }
       ]}
   ],
@@ -433,17 +455,91 @@ function shuffled(arr){ return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.
 let QUESTIONS = []; // se llena al empezar
 const CATS = ["Conocimientos","Situaciones"];
 
-/* ====== Lógica UI y scoring oculto ====== */
-const webhookURL = "/discord/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e";
+/* ====== Lógica UI ====== */
 const state = { step: 1, i: 0, answers: [] }; // answers[i] = {chosen: [idx], correct: bool}
 const $ = s=>document.querySelector(s);
 const bar = $("#bar"), pill=$("#pill");
-
 function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
 function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
 
+/* ====== Identidad (SDK o querystring) y chequeo cooldown ====== */
+async function initIdentityAndStatus(){
+  try {
+    // 1) Intento SDK (si hay APP_ID)
+    if (!USER_ID && APP_ID && window.DiscordSDK) {
+      const sdk = new window.DiscordSDK(APP_ID);
+      await sdk.ready();
+      const { code } = await sdk.commands.authorize({
+        client_id: APP_ID, response_type: 'code', scope: ['identify']
+      });
+      const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
+      // Resuelve userId desde Discord API
+      const me = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: 'Bearer ' + access_token }
+      }).then(r => r.json());
+      if (me?.id) {
+        USER_ID = String(me.id);
+        DISCORD_NAME = me.global_name || (me.username ? (me.username + (me.discriminator && me.discriminator !== '0' ? '#' + me.discriminator : '')) : null);
+        if (!$("#discord").value && DISCORD_NAME) $("#discord").value = DISCORD_NAME;
+      }
+    }
+
+    // 2) Fallback por querystring o input manual
+    if (!USER_ID) {
+      $("#idAlert").style.display = "block";
+      $("#startBtn").disabled = true;
+      $("#userIdInput").addEventListener('input', e=>{
+        USER_ID = e.target.value.trim();
+        maybeEnableStart();
+      });
+    }
+
+    await checkStatus(); // si tenemos userId, consulta al bot
+  } catch (e) {
+    console.error('initIdentity error', e);
+    // si falla, al menos deja al usuario poner su ID manual
+    $("#idAlert").style.display = "block";
+  }
+}
+
+async function checkStatus(){
+  if (!USER_ID) return; // esperaremos a que lo ponga manualmente
+  try{
+    const url = api(`/api/whitelist/status?user_id=${encodeURIComponent(USER_ID)}&discord_name=${encodeURIComponent($("#discord").value || DISCORD_NAME || '')}`);
+    const r = await fetch(url);
+    const data = await r.json();
+    const box = $("#cooldownBox");
+
+    if (data.status === 'blocked') {
+      const mins = Math.ceil((data.secondsRemaining||0)/60);
+      const until = Date.now() + (data.secondsRemaining||0)*1000;
+      box.style.display = 'block';
+      box.innerHTML = `No puedes repetir todavía. Te faltan ~${mins} minutos. Podrás reintentar el <b>${fmtES(until)}</b>.`;
+      $("#startBtn").disabled = true;
+    } else {
+      box.style.display = 'none';
+      $("#startBtn").disabled = false;
+    }
+  }catch(e){
+    console.error('status fetch error', e);
+    // en fallo de red, por seguridad, no permitir empezar
+    $("#cooldownBox").style.display = 'block';
+    $("#cooldownBox").textContent = 'No se pudo verificar el estado. Intenta de nuevo más tarde.';
+    $("#startBtn").disabled = true;
+  }
+}
+
+function maybeEnableStart(){
+  if (USER_ID) {
+    checkStatus(); // reintenta cada vez que el usuario pega su ID
+  }
+}
+
+/* ====== Test ====== */
 function startTest(){
+  if (!USER_ID) { alert("Necesitamos tu ID de Discord para continuar."); return; }
   if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
+
   const selected = [
     pickOne(BLOCKS.C1), pickOne(BLOCKS.C2), pickOne(BLOCKS.C3), pickOne(BLOCKS.C4), pickOne(BLOCKS.C5),
     pickOne(BLOCKS.S1), pickOne(BLOCKS.S2), pickOne(BLOCKS.S3), pickOne(BLOCKS.S4), pickOne(BLOCKS.S5),
@@ -501,57 +597,59 @@ function computeScore(){
   const total = QUESTIONS.length;
   const correct = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
   const wrong = total - correct;
-  const passed = wrong <= 3; // máximo 3 fallos
-  return { total, correct, wrong, passed };
+  return { total, correct, wrong };
 }
 
+/* ====== Envío al BOT (no más webhook en el frontend) ====== */
 async function send(){
-  const {total, correct, wrong, passed} = computeScore();
+  const { total, correct } = computeScore();
+
+  // Construimos el detalle exacto que espera el bot (respuestas y elegidas por texto)
   const detail = QUESTIONS.map((q, i)=>{
     const saved = state.answers[i] || { chosen: [] , correct: false};
     return {
       bloque: (i<5 ? ("C"+(i+1)) : ("S"+(i-5+1))),
-      category: q.category,
       question: q.question,
-      chosen: saved.chosen.map(idx => q.answers[idx]?.text || ""),
-      correct: !!saved.correct
+      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })),
+      chosen: saved.chosen.map(idx => q.answers[idx]?.text || "")
     };
   });
 
-  const body = {
-    username:"Whitelist",
-    embeds:[{
-      title:"Nueva solicitud de Whitelist",
-      color: passed ? 0x46b34b : 0xff6b6b,
-      description: "Solicitud enviada desde la Activity.",
-      fields: [
-        { name: "Discord", value: $("#discord").value || "—", inline: true },
-        { name: "Edad", value: $("#edad").value || "—", inline: true },
-        { name: "Región", value: $("#region").value || "—", inline: true },
-        { name: "Conociste por", value: $("#conoces").value || "—", inline: true },
-        { name: "Experiencia", value: ($("#exp").value || "Sin experiencia").slice(0,1024), inline: false },
-        { name: "Resultado", value: `Score: ${correct}/${total} • Wrong: ${wrong} • Passed: ${passed ? "Sí" : "No"}`, inline: false }
-      ],
-      footer:{ text:"Proyecto Roleplay – Sistema de Whitelist" },
-      timestamp:new Date().toISOString()
-    },
-    {
-      title:"Detalle de respuestas (por bloque)",
-      color:0x70a4f0,
-      description:"```json\n"+ JSON.stringify(detail, null, 2).slice(0,3900) +"\n```"
-    }]
+  const payload = {
+    userId: USER_ID,
+    discordName: $("#discord").value || DISCORD_NAME || "",
+    score: correct,
+    total,
+    detail
   };
 
   try {
-    $("#sendNote").textContent = "Enviando…";
-    const r = await fetch(webhookURL, {
-      method: "POST", headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(body)
+    $("#sendNote").textContent = "Enviando al bot…";
+    const r = await fetch(api('/api/whitelist/submit'), {
+      method: "POST",
+      headers: { "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
     });
-    if(!r.ok) throw new Error("HTTP " + r.status);
-    $("#sendNote").textContent = "¡Enviado! El staff revisará tu solicitud.";
+    const out = await r.json();
+
+    if (!r.ok) {
+      if (out && out.error === 'cooldown_active') {
+        const until = Date.now() + (out.secondsRemaining||0)*1000;
+        $("#sendNote").textContent = `Tienes un cooldown activo. Podrás reintentar el ${fmtES(until)}.`;
+      } else {
+        $("#sendNote").textContent = "Error al enviar al bot. Inténtalo más tarde.";
+      }
+      return;
+    }
+
+    // Respuesta OK del bot
+    if (out.verdict === 'suspenso' && out.cooldownUntil) {
+      $("#sendNote").textContent = `Recibido. Tu intento ha sido registrado y tienes cooldown hasta ${fmtES(out.cooldownUntil)}.`;
+    } else {
+      $("#sendNote").textContent = "¡Enviado! El staff realizará los pasos siguientes automáticamente.";
+    }
   } catch(e) {
-    $("#sendNote").textContent = "Error al enviar. Revisa consola.";
+    $("#sendNote").textContent = "Error de red al contactar con el bot.";
     console.error(e);
   }
 }
@@ -564,7 +662,12 @@ $("#prevBtn").addEventListener("click", prev);
 $("#backToTest").addEventListener("click", ()=> showStep(2));
 $("#sendBtn").addEventListener("click", send);
 
+// Al escribir el nombre, reintentamos status (para registrar nombre en el bot)
+$("#discord").addEventListener('change', () => { if (USER_ID) checkStatus(); });
+
 showStep(1); setProgress(0);
+// Arranque: resolver identidad y consultar status
+initIdentityAndStatus();
 </script>
 </body>
 </html>
