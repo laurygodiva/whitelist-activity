@@ -27,14 +27,14 @@
   </div>
 
   <script type="module">
-    const CLIENT_ID = "1383517896747126987"; // tu App ID
+    const CLIENT_ID = "1383517896747126987";
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
     const spinnerEl = document.getElementById("spinner");
     const cdn = (p) => `/cdn${p}`;
 
-    const ok = (u) => {
+    const ok  = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
       let avatar = cdn(`/embed/avatars/0.png`);
       if (u?.avatar) avatar = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
@@ -46,15 +46,23 @@
     const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
 
     async function importSDK() {
-      // El SDK lo servimos desde el Worker vía /api/sdk (sin depender de CDNs en el cliente)
-      const mod = await import("/api/sdk");
+      // ping previo para mostrar status si el mapping está mal
+      const ping = await fetch(`/api/sdk?ping=${Date.now()}`, { cache: "no-store" });
+      if (!ping.ok) throw new Error(`sdk_ping_${ping.status}`);
+      // import real (cache-buster)
+      const mod = await import(`/api/sdk?v=${Date.now()}`);
       return mod.DiscordSDK ?? mod.default?.DiscordSDK ?? mod;
     }
 
     (async () => {
       let DiscordSDK;
       try { DiscordSDK = await importSDK(); }
-      catch { return err("No carga el SDK", "Revisa el mapping <code>/api → TU_WORKER</code> y que el Worker expone <code>/sdk</code>."); }
+      catch (e) {
+        return err("No carga el SDK", [
+          "Revisa el mapping <code>/api → whitelist-activity-api.22-laurygodiva.workers.dev</code>.",
+          `Detalle: <code>${e?.message || e}</code>`
+        ].join("<br>"));
+      }
 
       hintEl.textContent = "Esperando handshake de Discord…";
       const sdk = new DiscordSDK(CLIENT_ID);
@@ -90,7 +98,7 @@
         ok(me);
       } catch (e) {
         console.error(e);
-        err("Fallo de autorización", "Revisa el Worker y las variables <code>DISCORD_CLIENT_ID</code> y <code>DISCORD_CLIENT_SECRET</code>.");
+        err("Fallo de autorización", "Confirma <code>DISCORD_CLIENT_ID</code> y <code>DISCORD_CLIENT_SECRET</code> en el Worker.");
       }
     })();
   </script>
