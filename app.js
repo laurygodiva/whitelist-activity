@@ -1,6 +1,6 @@
 import DiscordSDKWrapper from './sdk.js';
 
-const CLIENT_ID = 'TU_CLIENT_ID_REAL'; // Obtener del portal de desarrolladores
+const CLIENT_ID = '1383517896747126987'; // Obtener del portal de desarrolladores
 
 document.addEventListener('DOMContentLoaded', async () => {
   try {
