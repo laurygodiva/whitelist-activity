@@ -1,31 +1,130 @@
 <!doctype html>
 <html lang="es">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Discord Activity — Perfil</title>
-    <style>
-      :root { color-scheme: dark; }
-      body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
-      .card { width:320px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
-      img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 12px; }
-      h1 { font-size:18px; margin:8px 0 0; color:#e2e8f0; }
-      p  { font-size:13px; margin:6px 0 0; color:#94a3b8; }
-      .spinner { width:24px; height:24px; border:3px solid #334155; border-top-color:#60a5fa; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
-      @keyframes spin { to { transform:rotate(360deg) } }
-      .err { color:#fca5a5 }
-      .ok  { color:#86efac }
-      code { background:#111827; padding:0 6px; border-radius:6px; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <img id="avatar" alt="Avatar" src="" />
-      <h1 id="name">Cargando…</h1>
-      <p id="hint">Iniciando SDK</p>
-      <div class="spinner" id="spinner"></div>
-    </div>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Discord Activity — Perfil</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
+  .card { width:320px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
+  img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 12px; }
+  h1 { font-size:18px; margin:8px 0 0; color:#e2e8f0; }
+  p  { font-size:13px; margin:6px 0 0; color:#94a3b8; }
+  .spinner { width:24px; height:24px; border:3px solid #334155; border-top-color:#60a5fa; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg) } }
+  .err { color:#fca5a5 }
+  .ok  { color:#86efac }
+  code { background:#111827; padding:0 6px; border-radius:6px; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <img id="avatar" alt="Avatar" src="" />
+    <h1 id="name">Cargando…</h1>
+    <p id="hint">Iniciando SDK</p>
+    <div class="spinner" id="spinner"></div>
+  </div>
 
-    <script type="module" src="./main.mjs"></script>
-  </body>
+  <!-- Script ÚNICO, inline, como ES Module -->
+  <script type="module">
+    const CLIENT_ID = "1383517896747126987"; // tu app id
+
+    const avatarEl  = document.getElementById("avatar");
+    const nameEl    = document.getElementById("name");
+    const hintEl    = document.getElementById("hint");
+    const spinnerEl = document.getElementById("spinner");
+
+    const cdn = (path) => `/cdn${path}`;
+    const setOK = (u) => {
+      const display = u?.global_name || u?.username || "Usuario";
+      let avatar = cdn(`/embed/avatars/0.png`);
+      if (u?.avatar) avatar = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
+      avatarEl.src = avatar;
+      nameEl.textContent = display;
+      hintEl.innerHTML = `<span class="ok">OK</span> ID: ${u?.id ?? "desconocido"}`;
+      spinnerEl.style.display = "none";
+    };
+    const setERR = (title, details) => {
+      nameEl.textContent = title;
+      hintEl.innerHTML = details;
+      hintEl.classList.add("err");
+      spinnerEl.style.display = "none";
+    };
+
+    // Captura de errores no controlados
+    window.addEventListener("error", (e) => {
+      setERR("Error de ejecución", (e?.error?.message || e?.message || "Desconocido"));
+    });
+
+    (async () => {
+      // 0) Verifica que los mappings responden correctamente
+      try {
+        const ping = await fetch("/npm/@discord/embedded-app-sdk@2.2.0?ping=" + Date.now(), { cache:"no-store" });
+        if (!ping.ok) throw new Error("bad_response");
+      } catch {
+        return setERR(
+          "No carga el SDK",
+          [
+            "Revisa URL Mappings con <b>https://</b>:",
+            "• <code>/ → https://laurygodiva.github.io/whitelist-activity/</code>",
+            "• <code>/npm → https://esm.sh</code>",
+            "• <code>/cdn → https://cdn.discordapp.com</code>"
+          ].join("<br>")
+        );
+      }
+
+      // 1) Import dinámico (si falla, es mapping /npm)
+      let DiscordSDK;
+      try {
+        ({ DiscordSDK } = await import("/npm/@discord/embedded-app-sdk@2.2.0?target=es2020&v=2"));
+      } catch (e) {
+        return setERR("Error importando el SDK", "El proxy <code>/npm</code> no está resolviendo (asegúrate del esquema https).");
+      }
+
+      // 2) Handshake con Discord (timeout 8s)
+      hintEl.textContent = "Esperando handshake de Discord…";
+      const sdk = new DiscordSDK(CLIENT_ID);
+      const ready = sdk.ready();
+      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("sdk_ready_timeout")), 8000));
+      try { await Promise.race([ready, timeout]); }
+      catch {
+        return setERR(
+          "Sin handshake con Discord",
+          [
+            "Abre esto como <b>Embedded Activity</b> de <b>esta misma app</b>.",
+            "Comprueba que Embedded App está activado y el Root Mapping apunta a GitHub Pages.",
+          ].join("<br>")
+        );
+      }
+
+      // 3) Ruta estática: getUser (sin OAuth)
+      hintEl.textContent = "Obteniendo usuario…";
+      let me = null;
+      try {
+        const r1 = await sdk.commands.getUser?.();
+        me = r1?.user ?? r1 ?? null;
+      } catch {}
+      if (!me) {
+        try {
+          const r2 = await sdk.commands.getUser?.({ id: "me" });
+          me = r2?.user ?? r2 ?? null;
+        } catch {}
+      }
+
+      if (me) return setOK(me);
+
+      // 4) Cliente sin getUser → indica siguiente paso
+      return setERR(
+        "El cliente no soporta getUser",
+        [
+          "Tu build de Discord aún no expone <code>sdk.commands.getUser</code>.",
+          "Opciones:",
+          "• Prueba en el cliente Desktop actualizado.",
+          "• O pasamos a la Opción B (OAuth con Worker) añadiendo el mapping <code>/api</code>."
+        ].join("<br>")
+      );
+    })();
+  </script>
+</body>
 </html>
