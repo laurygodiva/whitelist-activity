@@ -1,0 +1,19 @@
+{
+  "name": "discord-activity-user-identify",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "start": "node server.mjs",
+    "dev": "vite build --watch & node server.mjs"
+  },
+  "dependencies": {
+    "@discord/embedded-app-sdk": "^2.2.0",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "vite": "^5.4.1"
+  }
+}
