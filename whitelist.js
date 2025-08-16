@@ -70,7 +70,7 @@ const BLOCKS = {
         { text: "Porque tengo que esperar 30 minutos para poder volver a un PVP.", isCorrect: false },
         { text: "Si está permitido.", isCorrect: false }
       ]},
-    { q:"¿Cuál de los siguientes comentarios no se considera una falta de interpretación?",
+    { q:"Cuál de los siguientes comentarios no se considera una falta de interpretación?",
       answers:[
         { text: "Voy a descansar un rato, luego nos vemos.", isCorrect: true },
         { text: "¿Con qué músculo me pongo el cinturón?", isCorrect: false },
@@ -416,7 +416,9 @@ async function initIdentity(){
       client_id: APP_ID, response_type: 'code', scope: ['identify']
     });
     const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
-    const me = await fetch('https://discord.com/api/users/@me', {
+
+    // IMPORTANTE: usar el proxy /discord-api en la Activity (URL Mapping)
+    const me = await fetch('/discord-api/users/@me', {
       headers: { Authorization: 'Bearer ' + access_token }
     }).then(r => r.json());
 
