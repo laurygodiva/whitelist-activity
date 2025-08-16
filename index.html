@@ -3,105 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Whitelist Activity</title>
+    <title>Verificación de Usuario Discord</title>
     <style>
+        :root {
+            --discord-blurple: #5865F2;
+            --discord-green: #57F287;
+            --discord-yellow: #FEE75C;
+            --discord-red: #ED4245;
+            --discord-dark: #36393F;
+            --discord-darker: #2F3136;
+        }
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background-color: #36393f;
+            background-color: var(--discord-dark);
             color: white;
-            text-align: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
             padding: 20px;
+            text-align: center;
         }
         .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background-color: #2f3136;
+            background-color: var(--discord-darker);
             border-radius: 8px;
-            padding: 20px;
+            padding: 30px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 100%;
         }
-        .status {
+        .status-box {
             padding: 15px;
-            border-radius: 5px;
+            border-radius: 4px;
             margin: 20px 0;
             font-weight: bold;
         }
-        .loading { background-color: #faa61a; }
-        .error { background-color: #ed4245; }
-        .success { background-color: #3ba55c; }
-        .user-info {
+        .loading { background-color: var(--discord-yellow); color: black; }
+        .error { background-color: var(--discord-red); }
+        .success { background-color: var(--discord-green); color: black; }
+        .user-card {
             margin-top: 20px;
-            padding: 15px;
-            background-color: #40444b;
-            border-radius: 5px;
+            padding: 20px;
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            display: none;
         }
         .avatar {
-            width: 100px;
-            height: 100px;
+            width: 120px;
+            height: 120px;
             border-radius: 50%;
-            margin: 10px auto;
+            margin: 0 auto 15px;
             display: block;
+            border: 4px solid var(--discord-blurple);
+        }
+        .debug-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(0, 0, 0, 0.3);
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            text-align: left;
+            display: none;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Sistema de Whitelist</h1>
-        <div id="status" class="status loading">Inicializando actividad...</div>
+        <h1>Verificación de Usuario Discord</h1>
+        <div id="status" class="status-box loading">Inicializando...</div>
         
-        <div id="userDisplay" class="user-info" style="display: none;">
-            <img id="userAvatar" class="avatar" src="" alt="Avatar">
+        <div id="userCard" class="user-card">
+            <img id="userAvatar" class="avatar" src="" alt="Avatar del usuario">
             <h2 id="userName"></h2>
-            <p>ID: <span id="userId"></span></p>
+            <p><strong>ID:</strong> <span id="userId"></span></p>
+        </div>
+
+        <div id="debugInfo" class="debug-info">
+            <h3>Información de Depuración</h3>
+            <p><strong>URL:</strong> <span id="debugUrl"></span></p>
+            <p><strong>SDK Cargado:</strong> <span id="sdkStatus"></span></p>
+            <p><strong>Entorno Discord:</strong> <span id="envStatus"></span></p>
+            <p><strong>Error:</strong> <span id="errorDetail"></span></p>
         </div>
     </div>
 
+    <!-- Implementación definitiva según documentación oficial -->
     <script>
-        // 1. Configuración básica
-        const APP_ID = '1383517896747126987';
+        // 1. Configuración esencial
+        const APP_ID = '1383517896747126987'; // Reemplaza con tu Application ID
+        const SDK_VERSION = '1.5.0'; // Versión estable más reciente
+
+        // 2. Elementos del DOM
         const statusElement = document.getElementById('status');
-        
-        // 2. Función para actualizar estado
+        const userCard = document.getElementById('userCard');
+        const debugInfo = document.getElementById('debugInfo');
+
+        // 3. Actualizar estado visual
         function updateStatus(message, type = 'loading') {
             statusElement.textContent = message;
-            statusElement.className = `status ${type}`;
+            statusElement.className = `status-box ${type}`;
+            updateDebugInfo();
         }
-        
-        // 3. Cargar el SDK de Discord
-        function loadDiscordSdk() {
+
+        // 4. Mostrar información de depuración
+        function updateDebugInfo(error = null) {
+            document.getElementById('debugUrl').textContent = window.location.href;
+            document.getElementById('sdkStatus').textContent = window.DiscordSDK ? 'Cargado' : 'No cargado';
+            document.getElementById('envStatus').textContent = 
+                window.location !== window.parent.location ? 'En cliente Discord' : 'Fuera de Discord';
+            document.getElementById('errorDetail').textContent = error ? error.message || error.toString() : 'Ninguno';
+            
+            // Mostrar debug info si hay error
+            if (error) {
+                debugInfo.style.display = 'block';
+            }
+        }
+
+        // 5. Carga robusta del SDK
+        async function loadDiscordSdk() {
             return new Promise((resolve, reject) => {
+                // Intentar cargar desde el mapping configurado
                 const script = document.createElement('script');
-                script.src = '/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js';
-                script.onload = () => window.DiscordSDK ? resolve() : reject('SDK no cargado');
-                script.onerror = () => reject('Error al cargar SDK');
+                script.src = `/discord-sdk/npm/@discord/embedded-app-sdk@${SDK_VERSION}/dist/embedded.js`;
+                
+                script.onload = () => {
+                    if (window.DiscordSDK) {
+                        resolve();
+                    } else {
+                        reject(new Error('El objeto DiscordSDK no está disponible después de cargar'));
+                    }
+                };
+                
+                script.onerror = () => {
+                    reject(new Error('Error al cargar el SDK desde el mapping, intentando CDN directo...'));
+                    
+                    // Fallback a CDN directo
+                    const fallbackScript = document.createElement('script');
+                    fallbackScript.src = `https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@${SDK_VERSION}/dist/embedded.js`;
+                    
+                    fallbackScript.onload = () => {
+                        if (window.DiscordSDK) {
+                            resolve();
+                        } else {
+                            reject(new Error('Fallback también falló: DiscordSDK no disponible'));
+                        }
+                    };
+                    
+                    fallbackScript.onerror = () => {
+                        reject(new Error('Error al cargar el SDK desde CDN'));
+                    };
+                    
+                    document.head.appendChild(fallbackScript);
+                };
+                
                 document.head.appendChild(script);
             });
         }
-        
-        // 4. Inicializar la actividad
-        async function initActivity() {
+
+        // 6. Inicialización de la actividad
+        async function initializeActivity() {
             try {
-                // Verificar si estamos en Discord
+                // Verificar si estamos en el cliente de Discord
                 if (window.location === window.parent.location) {
-                    updateStatus('Por favor abre esta aplicación como Actividad en Discord', 'error');
-                    return;
+                    throw new Error('Esta aplicación debe ejecutarse dentro del cliente de Discord como una actividad');
                 }
-                
-                // Cargar SDK
+
                 updateStatus('Cargando SDK de Discord...');
                 await loadDiscordSdk();
-                
-                // Inicializar SDK
-                updateStatus('Conectando con Discord...');
+
+                updateStatus('Inicializando SDK...');
                 const discordSdk = new DiscordSDK(APP_ID);
+
+                // Esperar a que el SDK esté listo
                 await discordSdk.ready();
+                console.log('Discord SDK listo:', discordSdk);
+
+                updateStatus('Obteniendo información del usuario...');
                 
-                // Obtener usuario
-                updateStatus('Autenticando...');
+                // Método oficial para obtener usuario en actividades
                 const { user } = await discordSdk.commands.getCurrentUser();
                 
-                if (!user?.id) throw new Error('Usuario no disponible');
-                
+                if (!user?.id) {
+                    throw new Error('No se pudo obtener información del usuario');
+                }
+
                 // Mostrar información del usuario
                 document.getElementById('userAvatar').src = user.avatar 
                     ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`
@@ -109,18 +196,24 @@
                 
                 document.getElementById('userName').textContent = user.global_name || user.username;
                 document.getElementById('userId').textContent = user.id;
-                document.getElementById('userDisplay').style.display = 'block';
-                
-                updateStatus('¡Conectado correctamente!', 'success');
+                userCard.style.display = 'block';
+
+                updateStatus('¡Usuario verificado correctamente!', 'success');
                 
             } catch (error) {
-                console.error('Error:', error);
-                updateStatus(`Error: ${error.message || error}`, 'error');
+                console.error('Error en la actividad:', error);
+                updateStatus(`Error: ${error.message}`, 'error');
+                updateDebugInfo(error);
+                
+                // Mostrar instrucciones específicas si no está en Discord
+                if (window.location === window.parent.location) {
+                    statusElement.innerHTML += `<p style="margin-top:10px;">Por favor, abre esta aplicación como una Actividad de Discord:<br>1. Únete a un canal de voz<br>2. Haz clic en "Actividades" (ícono de cohete)<br>3. Selecciona esta aplicación</p>`;
+                }
             }
         }
-        
-        // Iniciar todo cuando se cargue la página
-        window.addEventListener('load', initActivity);
+
+        // Iniciar la aplicación cuando se cargue la página
+        document.addEventListener('DOMContentLoaded', initializeActivity);
     </script>
 </body>
 </html>
