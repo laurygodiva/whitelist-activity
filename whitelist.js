@@ -1,88 +1,23 @@
-// ===== Config & identidad =====
-const API_BASE = '';                   // Importantísimo: rutas relativas → /api/...
-const APP_ID   = window.APP_ID || '';
+// ====== Identidad y utilidades ======
+const APP_ID      = window.APP_ID || '';
+const GUILD_ID    = window.GUILD_ID || '';
+const WEBHOOK_URL = window.WEBHOOK_URL || '';
+
 let USER_ID = null;
 let DISCORD_NAME = null;
 
-function api(u){ return API_BASE + u; }
-function fmtES(ms){
-  if(!ms) return '';
-  const d = new Date(ms);
-  return new Intl.DateTimeFormat('es-ES',{
-    year:'numeric',month:'2-digit',day:'2-digit',
-    hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Europe/Madrid'
-  }).format(d).replace(',', '');
-}
-function showFatal(msg){
-  const box = document.querySelector('#cooldownBox');
-  if (box) { box.style.display='block'; box.innerHTML = msg; }
-  const btn = document.querySelector('#startBtn');
-  if (btn) btn.disabled = true;
-}
+const $ = s => document.querySelector(s);
+const bar = $("#bar"), pill = $("#pill");
 
-async function initIdentityAndStatus(){
-  if (!APP_ID) { showFatal('Falta configurar APP_ID en el HTML.'); return; }
-  if (!window.DiscordSDK) { showFatal('Abre la whitelist como <b>Actividad de Discord</b>.'); return; }
+function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
+function showStep(n){ $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
+function shuffled(arr){ return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
+function pickOneWithIndex(arr){ const idx = Math.floor(Math.random()*arr.length); return { item: arr[idx], idx }; }
+function uuidv4(){ return (crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+  const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8); return v.toString(16);
+})); }
 
-  try {
-    const sdk = new window.DiscordSDK(APP_ID);
-    await sdk.ready();
-
-    const { code } = await sdk.commands.authorize({
-      client_id: APP_ID, response_type: 'code', scope: ['identify']
-    });
-    const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
-
-    const me = await fetch('https://discord.com/api/users/@me', {
-      headers: { Authorization: 'Bearer ' + access_token }
-    }).then(r => r.json());
-
-    if (!me?.id) throw new Error('No se pudo resolver /users/@me');
-
-    USER_ID = String(me.id);
-    DISCORD_NAME = me.global_name || me.username || null;
-
-    const nameInput = document.querySelector('#discord');
-    if (nameInput && !nameInput.value && DISCORD_NAME) nameInput.value = DISCORD_NAME;
-
-    const tag = document.querySelector('#statusTag');
-    if (tag) { tag.style.display = 'block'; tag.textContent = `Sesión: ${DISCORD_NAME || USER_ID}`; }
-
-    await checkStatus();
-  } catch (e) {
-    console.error('initIdentity error', e);
-    showFatal('No se pudo identificar automáticamente. Abre la whitelist como <b>Actividad de Discord</b>.');
-  }
-}
-
-async function checkStatus(){
-  if (!USER_ID) return;
-  try{
-    const url = api(`/api/whitelist/status?user_id=${encodeURIComponent(USER_ID)}&discord_name=${encodeURIComponent(document.querySelector('#discord').value || DISCORD_NAME || '')}`);
-    const r = await fetch(url);
-    const data = await r.json();
-    const box = document.querySelector('#cooldownBox');
-
-    if (data.status === 'blocked') {
-      const mins = Math.ceil((data.secondsRemaining||0)/60);
-      const until = Date.now() + (data.secondsRemaining||0)*1000;
-      box.style.display = 'block';
-      box.innerHTML = `No puedes repetir todavía. Te faltan ~${mins} minutos. Podrás reintentar el <b>${fmtES(until)}</b>.`;
-      document.querySelector('#startBtn').disabled = true;
-    } else {
-      box.style.display = 'none';
-      document.querySelector('#startBtn').disabled = false;
-    }
-  }catch(e){
-    console.error('status fetch error', e);
-    const box = document.querySelector('#cooldownBox');
-    box.style.display = 'block';
-    box.textContent = 'No se pudo verificar el estado. Intenta de nuevo más tarde.';
-    document.querySelector('#startBtn').disabled = true;
-  }
-}
-
-// ===== Banco de preguntas EXACTO =====
+// ====== Banco de preguntas EXACTO (C1..C5, S1..S5) ======
 const BLOCKS = {
   C1: [
     { q:"Cuál de los siguientes conceptos no es sancionable?",
@@ -112,7 +47,7 @@ const BLOCKS = {
     { q:"¿A qué se refieren las siglas OOC?",
       answers:[
         { text: "Se refiere a las conversaciones por voz dentro del juego.", isCorrect: false },
-        { text: "Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del el personaje.", isCorrect: true },
+        { text: "Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.", isCorrect: true },
         { text: "Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.", isCorrect: false }
       ]},
     { q:"¿Qué es el RDE y qué significa?",
@@ -191,6 +126,8 @@ const BLOCKS = {
         { text: "/do se escucharía el rugir de sus tripas.", isCorrect: false }
       ]}
   ],
+
+  // Situaciones
   S1: [
     { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
       answers:[
@@ -249,8 +186,8 @@ const BLOCKS = {
       ]},
     { q:"Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.",
       answers:[
-        { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: true },
-        { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: false },
+        { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: false },
+        { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: true },
         { text: "Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.", isCorrect: false }
       ]}
   ],
@@ -297,139 +234,217 @@ const BLOCKS = {
   ],
 };
 
-function pickOne(a){ return a[Math.floor(Math.random()*a.length)]; }
-function shuffled(arr){ return arr.map(v=>({v, r:Math.random()})).sort((a,b)=>a.r-b.r).map(o=>o.v); }
-
-let QUESTIONS = [];
+// ====== Estado y flujo ======
 const CATS = ["Conocimientos","Situaciones"];
+let QUESTIONS = []; // [{id,bloque,category,question,answers:[{text,isCorrect}], multi}]
+const state = { i: 0, answers: [] }; // answers[i] = { chosenIdx:[...], correct:boolean }
 
-const state = { step: 1, i: 0, answers: [] };
-const $ = s=>document.querySelector(s);
-const bar = $("#bar"), pill=$("#pill");
-function setProgress(p){ bar.style.width = p + "%"; pill.textContent = Math.round(p)+"%"; }
-function showStep(n){ state.step=n; $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
-
-// ===== Test flow =====
 function startTest(){
-  if (!USER_ID) { alert("No se pudo identificar tu cuenta de Discord."); return; }
-  if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
+  if (!USER_ID) { alert("No se pudo identificar tu cuenta de Discord. Abre la whitelist como Actividad."); return; }
+  if (!$("#discord").value.trim()) { alert("Pon tu nombre de Discord."); return; }
 
-  const selected = [
-    pickOne(BLOCKS.C1), pickOne(BLOCKS.C2), pickOne(BLOCKS.C3), pickOne(BLOCKS.C4), pickOne(BLOCKS.C5),
-    pickOne(BLOCKS.S1), pickOne(BLOCKS.S2), pickOne(BLOCKS.S3), pickOne(BLOCKS.S4), pickOne(BLOCKS.S5),
-  ];
-  QUESTIONS = selected.map((q, idx) => {
+  // Elegimos 1 variante por bloque (C1..C5 + S1..S5), y barajamos respuestas de cada pregunta
+  const blockKeys = ["C1","C2","C3","C4","C5","S1","S2","S3","S4","S5"];
+  QUESTIONS = blockKeys.map((bk, idx) => {
+    const { item, idx: varIdx } = pickOneWithIndex(BLOCKS[bk]);
+    const answers = shuffled(item.answers.map(a => ({...a})));
     const category = idx < 5 ? CATS[0] : CATS[1];
-    const answers = shuffled(q.answers.map(a => ({...a})));
-    return { category, question: q.q, answers };
+    return { id:`${bk}-${varIdx+1}`, bloque: bk, category, question: item.q, answers,
+             multi: item.answers.filter(a=>a.isCorrect).length>1 };
   });
-  state.i=0; state.answers = new Array(QUESTIONS.length);
-  setProgress(5); showStep(2); renderQ();
+
+  state.i = 0;
+  state.answers = new Array(QUESTIONS.length);
+  setProgress(5);
+  showStep(2);
+  renderQ();
 }
 
 function renderQ(){
   const total = QUESTIONS.length || 10;
   const q = QUESTIONS[state.i];
   $("#qTitle").textContent = q.question;
-  $("#catPill").textContent = q.category + (state.i<5 ? " (Bloque "+(state.i+3)+")" : " (Bloque "+(state.i-5+8)+")");
-  $("#qIndex").textContent = "Pregunta " + (state.i+1) + " de " + total;
+  $("#catPill").textContent = q.category + (state.i<5 ? ` (Bloque ${state.i+3})` : ` (Bloque ${state.i-5+8})`);
+  $("#qIndex").textContent = `Pregunta ${state.i+1} de ${total}`;
+
   const body = $("#qBody"); body.innerHTML="";
-  const multi = q.answers.filter(a=>a.isCorrect).length>1;
   q.answers.forEach((a,idx)=>{
-    const lab=document.createElement("label"); lab.className="option";
-    const input=document.createElement("input"); input.type=multi?"checkbox":"radio"; input.name="q"; input.value=idx;
+    const lab = document.createElement("label"); lab.className="option";
+    const input = document.createElement("input");
+    input.type = q.multi ? "checkbox" : "radio";
+    input.name = "q"; input.value = idx;
     input.addEventListener("change",()=>{ $("#nextBtn").disabled = body.querySelectorAll("input:checked").length===0; });
-    const span=document.createElement("span"); span.textContent=a.text;
+    const span = document.createElement("span"); span.textContent = a.text;
     lab.appendChild(input); lab.appendChild(span); body.appendChild(lab);
   });
+
   const saved = state.answers[state.i];
-  if(saved && saved.chosen){
-    saved.chosen.forEach(v=>{ const input = body.querySelector(`input[value="${v}"]`); if(input) input.checked=true; });
-    $("#nextBtn").disabled = saved.chosen.length===0;
-  } else { $("#nextBtn").disabled=true; }
+  if (saved && saved.chosenIdx) {
+    saved.chosenIdx.forEach(v => { const el = body.querySelector(`input[value="${v}"]`); if (el) el.checked = true; });
+    $("#nextBtn").disabled = saved.chosenIdx.length===0;
+  } else {
+    $("#nextBtn").disabled = true;
+  }
   setProgress(5 + (state.i/total)*85);
 }
 
 function collectCurrentAnswer(omit=false){
-  const q = QUESTIONS[state.i]; const body=$("#qBody");
-  const sel=[...body.querySelectorAll("input:checked")].map(i=>Number(i.value));
-  const correctSet=new Set(q.answers.map((a,i)=>a.isCorrect?i:null).filter(i=>i!==null));
-  const chosenSet=new Set(sel);
-  let correct=true;
-  if(!omit){
-    for(const i of chosenSet) if(!correctSet.has(i)) { correct=false; break; }
-    if(correct) for(const i of correctSet) if(!chosenSet.has(i)) { correct=false; break; }
-  } else { correct=false; }
-  state.answers[state.i] = { index: state.i, chosen: omit? [] : sel, correct };
-}
-function next(){ collectCurrentAnswer(false); if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
-function omit(){ collectCurrentAnswer(true); if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
-function prev(){ if(state.i===0) return; state.i--; renderQ(); }
+  const q = QUESTIONS[state.i];
+  const body = $("#qBody");
+  const sel = [...body.querySelectorAll("input:checked")].map(i=>Number(i.value));
+  const correctSet = new Set(q.answers.map((a,i)=> a.isCorrect ? i : null).filter(i=>i!==null));
+  const chosenSet  = new Set(sel);
 
-function computeScore(){
+  let correct = true;
+  if (omit || sel.length === 0) correct = false;
+  else {
+    // Multi ⇒ debe seleccionar TODAS las correctas y NINGUNA incorrecta
+    for (const i of chosenSet) if (!correctSet.has(i)) { correct=false; break; }
+    if (correct) for (const i of correctSet) if (!chosenSet.has(i)) { correct=false; break; }
+  }
+
+  state.answers[state.i] = { chosenIdx: omit? [] : sel, correct };
+}
+
+function next(){ collectCurrentAnswer(false); if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
+function omit(){ collectCurrentAnswer(true);  if(state.i < QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
+function prev(){ if (state.i===0) return; state.i--; renderQ(); }
+
+function computeProvisional(){
   const total = QUESTIONS.length;
   const correct = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
   const wrong = total - correct;
-  return { total, correct, wrong };
+  // Regla de Laury: con 3 fallos ⇒ SUSPENSO
+  const passed = wrong <= 2;
+  return { total, correct, wrong, passed };
 }
 
-// ===== Envío al bot =====
+// ====== Envío al webhook (embed + adjunto JSON) ======
 async function send(){
-  const { total, correct } = computeScore();
+  const { total, correct, wrong, passed } = computeProvisional();
+
+  const submissionId = uuidv4();
+  const clientTs = Date.now();
+
   const detail = QUESTIONS.map((q, i)=>{
-    const saved = state.answers[i] || { chosen: [] , correct: false};
+    const saved = state.answers[i] || { chosenIdx: [] , correct: false};
     return {
-      bloque: (i<5 ? ("C"+(i+1)) : ("S"+(i-5+1))),
+      id: q.id,
+      bloque: q.bloque,
+      category: q.category,
       question: q.question,
-      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })),
-      chosen: saved.chosen.map(idx => q.answers[idx]?.text || "")
+      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })), // para que el bot pueda recalcular
+      chosenIdx: saved.chosenIdx,
+      chosenText: saved.chosenIdx.map(idx => q.answers[idx]?.text || ""),
+      multi: q.multi
     };
   });
 
-  const payload = {
+  const playerData = {
+    discordName: $("#discord").value || DISCORD_NAME || "",
+    edad: $("#edad").value || "",
+    region: $("#region").value || "",
+    conoces: $("#conoces").value || "",
+    exp: ($("#exp").value || "").slice(0, 1000)
+  };
+
+  // Archivo JSON adjunto (para que el bot lo lea fácil)
+  const attachment = {
+    submissionId,
     userId: USER_ID,
-    discordName: document.querySelector('#discord').value || DISCORD_NAME || "",
-    score: correct,
-    total,
-    detail
+    guildId: GUILD_ID,
+    clientTs,
+    provisional: { score: correct, total, wrong, passed },
+    detail,
+    playerData
+  };
+
+  // Embed resumen para lectura rápida del staff
+  const embed = {
+    title: "Nueva solicitud de Whitelist",
+    description: "Solicitud enviada desde la Activity.",
+    color: passed ? 0x46b34b : 0xff6b6b,
+    fields: [
+      { name: "Usuario", value: `<@${USER_ID}> \`${USER_ID}\``, inline: false },
+      { name: "Discord", value: playerData.discordName || "—", inline: true },
+      { name: "Edad", value: playerData.edad || "—", inline: true },
+      { name: "Región", value: playerData.region || "—", inline: true },
+      { name: "Conociste por", value: playerData.conoces || "—", inline: true },
+      { name: "Resultado provisional", value: `Score: ${correct}/${total} • Fallos: ${wrong} • ${passed ? "APROBADO" : "SUSPENSO"}`, inline: false }
+    ],
+    footer: { text: "Proyecto Roleplay – Sistema de Whitelist" },
+    timestamp: new Date(clientTs).toISOString()
   };
 
   try {
-    document.querySelector('#sendNote').textContent = "Enviando al bot…";
-    const r = await fetch(api('/api/whitelist/submit'), {
-      method: "POST", headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
-    });
-    const out = await r.json();
+    $("#sendNote").textContent = "Enviando…";
+    const fd = new FormData();
+    fd.append("payload_json", JSON.stringify({
+      username: "Whitelist (Actividad)",
+      embeds: [embed],
+      allowed_mentions: { parse: [] }
+    }));
+    const blob = new Blob([JSON.stringify(attachment, null, 2)], { type: "application/json" });
+    fd.append("files[0]", blob, "submission.json");
 
-    if (!r.ok) {
-      if (out && out.error === 'cooldown_active') {
-        const until = Date.now() + (out.secondsRemaining||0)*1000;
-        document.querySelector('#sendNote').textContent = `Tienes un cooldown activo. Podrás reintentar el ${fmtES(until)}.`;
-      } else {
-        document.querySelector('#sendNote').textContent = "Error al enviar al bot. Inténtalo más tarde.";
-      }
-      return;
-    }
-    if (out.verdict === 'suspenso' && out.cooldownUntil) {
-      document.querySelector('#sendNote').textContent = `Recibido. Tu intento ha sido registrado y tienes cooldown hasta ${fmtES(out.cooldownUntil)}.`;
-    } else {
-      document.querySelector('#sendNote').textContent = "¡Enviado! El staff continuará el proceso automáticamente.";
-    }
-  } catch(e) {
-    document.querySelector('#sendNote').textContent = "Error de red al contactar con el bot.";
+    const r = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
+    if (!r.ok) throw new Error("HTTP " + r.status);
+
+    $("#sendNote").textContent = "¡Enviado! El staff procesará tu solicitud.";
+  } catch (e) {
     console.error(e);
+    $("#sendNote").textContent = "Error al enviar. Reintenta más tarde.";
   }
 }
 
-// ===== Wiring =====
-document.querySelector('#startBtn').addEventListener('click', startTest);
-document.querySelector('#nextBtn').addEventListener('click', next);
-document.querySelector('#omitBtn').addEventListener('click', omit);
-document.querySelector('#prevBtn').addEventListener('click', prev);
-document.querySelector('#backToTest').addEventListener('click', ()=> showStep(2));
-document.querySelector('#sendBtn').addEventListener('click', send);
-document.querySelector('#discord').addEventListener('change', () => { if (USER_ID) checkStatus(); });
+// ====== Identidad (SDK embebido) ======
+function showFatal(msg){
+  const tag = $("#statusTag");
+  tag.style.display='block';
+  tag.innerHTML = msg;
+  $("#startBtn").disabled = true;
+}
+async function initIdentity(){
+  if (!APP_ID) { showFatal("Falta configurar APP_ID en el HTML."); return; }
+  if (!window.DiscordSDK) { showFatal("Abre la whitelist como <b>Actividad de Discord</b>."); return; }
 
-showStep(1); setProgress(0);
-initIdentityAndStatus();
+  try {
+    const sdk = new window.DiscordSDK(APP_ID);
+    await sdk.ready();
+
+    const { code } = await sdk.commands.authorize({
+      client_id: APP_ID, response_type: 'code', scope: ['identify']
+    });
+    const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
+    const me = await fetch('https://discord.com/api/users/@me', {
+      headers: { Authorization: 'Bearer ' + access_token }
+    }).then(r => r.json());
+
+    if (!me?.id) throw new Error('No se pudo resolver /users/@me');
+
+    USER_ID = String(me.id);
+    DISCORD_NAME = me.global_name || me.username || null;
+
+    const nameInput = $('#discord');
+    if (nameInput && !nameInput.value && DISCORD_NAME) nameInput.value = DISCORD_NAME;
+
+    const tag = $('#statusTag');
+    tag.style.display = 'block';
+    tag.textContent = `Sesión: ${DISCORD_NAME || USER_ID}`;
+    $("#startBtn").disabled = false;
+  } catch (e) {
+    console.error('initIdentity error', e);
+    showFatal('No se pudo identificar automáticamente. Abre la whitelist como <b>Actividad de Discord</b>.');
+  }
+}
+
+// ====== Wiring inicial ======
+$("#startBtn").addEventListener("click", startTest);
+$("#nextBtn").addEventListener("click", next);
+$("#omitBtn").addEventListener("click", omit);
+$("#prevBtn").addEventListener("click", prev);
+$("#backToTest").addEventListener("click", ()=> showStep(2));
+$("#sendBtn").addEventListener("click", send);
+
+showStep(1); setProgress(0); $("#startBtn").disabled = true;
+initIdentity();
