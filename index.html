@@ -26,13 +26,12 @@
     <div class="spinner" id="spinner"></div>
   </div>
 
-  <!-- 1) Cargamos el SDK; el Worker lo deja en window.DiscordSDK -->
-  <script src="/api/sdk?v=1"></script>
+  <!-- 1) Carga del SDK como MÓDULO (ESM). Importantísimo el type="module". -->
+  <script type="module" src="/api/sdk?v=3" id="sdk"></script>
 
-  <!-- 2) Lógica de la Activity -->
+  <!-- 2) Lógica: esperamos a que el módulo termine (evento load del <script>) -->
   <script>
     const CLIENT_ID = "1383517896747126987";
-
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
@@ -50,10 +49,14 @@
     };
     const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
 
-    (async () => {
+    const sdkScript = document.getElementById("sdk");
+    sdkScript.addEventListener("error", () => {
+      err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk</code> responde 200.");
+    });
+    sdkScript.addEventListener("load", async () => {
       try {
         if (!window.DiscordSDK) {
-          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> en /api/sdk.");
+          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> (línea añadida en /api/sdk).");
         }
         const { DiscordSDK } = window;
 
@@ -89,10 +92,10 @@
         if (String(e?.message).includes("timeout")) {
           err("Sin handshake con Discord", "Ábrelo como <b>Embedded Activity</b> de esta app.");
         } else {
-          err("Fallo de autorización", "Revisa mapping <code>/api</code> y las variables del Worker.");
+          err("Fallo de autorización", "Confirma <code>CLIENT_ID</code>/<code>CLIENT_SECRET</code> en el Worker.");
         }
       }
-    })();
+    });
   </script>
 </body>
 </html>
