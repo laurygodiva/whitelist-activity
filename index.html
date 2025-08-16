@@ -26,10 +26,6 @@
     <div class="spinner" id="spinner"></div>
   </div>
 
-  <!-- Carga del SDK como módulo desde el Worker -->
-  <script type="module" src="/api/sdk" id="sdk"></script>
-
-  <!-- Lógica de la Activity -->
   <script>
     const CLIENT_ID = "1383517896747126987";
 
@@ -50,21 +46,38 @@
     };
     const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
 
-    // Espera a que cargue el módulo del SDK
-    const sdkScript = document.getElementById("sdk");
-    sdkScript.addEventListener("error", () => {
-      err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk</code> responda 200.");
-    });
-    sdkScript.addEventListener("load", async () => {
+    async function loadDiscordSDK() {
+      // 1) Bajamos el bundle del SDK (ESM) desde el Worker
+      const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache: "no-store" });
+      if (!r.ok) throw new Error(`sdk_src_${r.status}`);
+      const code = await r.text();
+
+      // 2) Creamos un Blob URL y lo importamos como MÓDULO
+      const blob = new Blob([code], { type: "text/javascript" });
+      const url  = URL.createObjectURL(blob);
       try {
-        if (!window.DiscordSDK) {
-          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> en <code>/api/sdk</code>.");
-        }
-        const { DiscordSDK } = window;
+        const mod = await import(/* webpackIgnore: true */ url);
+        URL.revokeObjectURL(url);
+        // El bundle exporta DiscordSDK como export nombrado o como default
+        return mod.DiscordSDK || (mod.default?.DiscordSDK || mod.default) || mod;
+      } catch (e) {
+        URL.revokeObjectURL(url);
+        throw new Error(`sdk_import_failed: ${e?.message || e}`);
+      }
+    }
+
+    (async () => {
+      try {
+        hintEl.textContent = "Cargando SDK…";
+        const DiscordSDK = await loadDiscordSDK();
+        if (!DiscordSDK) throw new Error("sdk_not_found");
 
         hintEl.textContent = "Esperando handshake de Discord…";
         const sdk = new DiscordSDK(CLIENT_ID);
-        await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),8000)) ]);
+        await Promise.race([
+          sdk.ready(),
+          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout_ready")), 8000))
+        ]);
 
         hintEl.textContent = "Autorizando…";
         const { code } = await sdk.commands.authorize({
@@ -91,13 +104,16 @@
         ok(me);
       } catch (e) {
         console.error(e);
-        if (String(e?.message).includes("timeout")) {
+        const msg = String(e?.message || e);
+        if (msg.includes("sdk_src_")) {
+          err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk-src</code> responda 200.");
+        } else if (msg.includes("timeout_ready")) {
           err("Sin handshake con Discord", "Ábrelo como <b>Embedded Activity</b> de esta app.");
         } else {
-          err("Fallo de autorización", "Confirma <code>CLIENT_ID</code>/<code>CLIENT_SECRET</code> en el Worker.");
+          err("Fallo de autorización o SDK", "Confirma el mapping <code>/api</code> y las variables del Worker.");
         }
       }
-    });
+    })();
   </script>
 </body>
 </html>
