@@ -4,21 +4,23 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Sistema de Whitelist de Proyecto Roleplay</title>
-
-<!-- Discord Activities SDK -->
-<script src="https://sdk.discord.com/embed.js"></script>
-<!-- MISMA app (bot + activity) -->
-<script>
-  window.APP_ID = '1383517896747126987';
-</script>
-
 <style>
   :root{
-    --bg:#0b0f14; --panel:#111b28; --panel-2:#122033;
-    --muted:#a4b5c6; --text:#ffffff;
-    --grad1:#885efc; --grad2:#5edae7; --grad3:#70a4f0; --grad4:#7b84f5;
-    --alpha-header-1:.14; --alpha-header-2:.12; --alpha-section-1:.08; --alpha-section-2:.06;
-    --radius:16px; --shadow:0 10px 30px rgba(0,0,0,.30);
+    --bg:#0b0f14;
+    --panel:#111b28;
+    --panel-2:#122033;
+    --muted:#a4b5c6;
+    --text:#ffffff;
+    --grad1:#885efc;
+    --grad2:#5edae7;
+    --grad3:#70a4f0;
+    --grad4:#7b84f5;
+    --alpha-header-1:.14;
+    --alpha-header-2:.12;
+    --alpha-section-1:.08;
+    --alpha-section-2:.06;
+    --radius:16px;
+    --shadow:0 10px 30px rgba(0,0,0,.30);
   }
   *{box-sizing:border-box}
   html,body{
@@ -50,7 +52,7 @@
         color-mix(in srgb, var(--grad4) calc(var(--alpha-header-1)*100%), transparent) 100%);
   }
   .brand{display:flex;align-items:center;gap:14px}
-  .logo{width:116px;height:116px;border-radius:16px;object-fit:cover;background:transparent;border:none;box-shadow:none}
+  .logo{width:96px;height:96px;border-radius:14px;object-fit:cover;background:transparent;border:none;box-shadow:none}
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
   .muted{color:var(--muted);font-weight:600;font-size:14px}
   #statusTag{display:none}
@@ -69,10 +71,11 @@
     border-radius:14px;padding:14px;
   }
   h3{
-    margin:0 0 8px;font-size:16px;text-align:center;
+    margin:0 0 8px;font-size:16px;
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
     -webkit-background-clip: text; background-clip: text; color: transparent;
   }
+  .t-center{text-align:center;}
   .field{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
   .label{font-size:13px;color:var(--muted);font-weight:800;letter-spacing:.25px}
   .input,.select,textarea{
@@ -80,16 +83,21 @@
     border-radius:10px;padding:10px 12px;outline:none;transition:border .15s ease,box-shadow .15s ease;
   }
   .input::placeholder, textarea::placeholder{color:transparent}
-  .input:focus,.select:focus,textarea:focus{border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)}
+  .input:focus,.select:focus,textarea:focus{
+    border-color:rgba(112,164,240,.7);box-shadow:0 0 0 3px rgba(112,164,240,.20)
+  }
   .progress{display:flex;align-items:center;gap:8px;margin:6px 0 12px}
   .bar{flex:1;height:8px;background:#0d141c;border:1px solid rgba(255,255,255,.08);border-radius:999px;overflow:hidden}
-  .bar>span{display:block;height:100%;background: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4)); width:0%}
+  .bar>span{display:block;height:100%;
+    background: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4)); width:0%}
   .pill{font-size:12px;color:var(--muted);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);border-radius:999px;padding:4px 8px}
   .q-wrap{display:flex;flex-direction:column;gap:10px}
   .q-block{border:1px solid rgba(255,255,255,.10);border-radius:12px;overflow:hidden}
-  .q-head{background:rgba(255,255,255,.03);padding:10px 12px;font-weight:900;
+  .q-head{
+    background:rgba(255,255,255,.03);padding:10px 12px;font-weight:900;
     background-image: linear-gradient(90deg, var(--grad1), var(--grad2), var(--grad3), var(--grad4));
-    -webkit-background-clip: text; background-clip: text; color: transparent;}
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   .q-body{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
   label.option{
     display:flex;gap:10px;align-items:flex-start;background:#0e1520;border:1px solid rgba(255,255,255,.09);
@@ -102,7 +110,6 @@
   .btn-primary{background:linear-gradient(180deg,var(--grad3), var(--grad4));color:#0b0f14;border-color:transparent}
   .btn-success{background:linear-gradient(180deg,var(--grad2), var(--grad3));color:#0b0f14;border-color:transparent}
   .note{font-size:13px;color:var(--muted)}
-  .alert{border:1px solid rgba(255,255,255,.25);background:#111a25;border-radius:10px;padding:10px 12px;margin:8px 0}
 </style>
 </head>
 <body>
@@ -121,10 +128,10 @@
     </header>
 
     <div class="content">
-      <!-- Paso 1: datos -->
+      <!-- BLOQUE 1 + 2 (Bienvenida + Datos del jugador) -->
       <div class="grid" id="step1">
         <div class="section">
-          <h3>Datos del jugador</h3>
+          <h3 class="t-center">Datos del jugador</h3>
           <div class="field">
             <label class="label" for="discord">Nombre de Discord</label>
             <input class="input" id="discord"/>
@@ -143,7 +150,7 @@
           </div>
           <div class="field">
             <label class="label" for="exp">Experiencia en RP</label>
-            <textarea id="exp"></textarea>
+            <textarea id="exp" placeholder=""></textarea>
           </div>
         </div>
 
@@ -153,15 +160,14 @@
             <div class="bar"><span id="bar"></span></div>
             <span class="pill" id="pill">0%</span>
           </div>
-          <p class="note">Pulsa “Empezar test” para iniciar. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
-          <div id="cooldownBox" class="alert" style="display:none"></div>
+          <p class="note">Al pulsar “Empezar test” inicia el bloque 3. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
           <div class="controls">
-            <button class="btn btn-primary" id="startBtn" disabled>Empezar test</button>
+            <button class="btn btn-primary" id="startBtn">Empezar test</button>
           </div>
         </div>
       </div>
 
-      <!-- Paso 2: preguntas -->
+      <!-- BLOQUES 3–12 -->
       <div id="step2" style="display:none">
         <div class="section">
           <div class="controls" style="margin-bottom:8px">
@@ -182,25 +188,35 @@
         </div>
       </div>
 
-      <!-- Paso 3: envío -->
+      <!-- BLOQUE 13 (Enviar) -->
       <div id="step3" style="display:none">
         <div class="section">
-          <h3>¡Gracias por completar la Whitelist!</h3>
+          <h3 class="t-center">¡Gracias por completar la Whitelist!</h3>
           <p class="note" style="text-align:center;margin:8px 0 14px">
-            Pulsa <b>Enviar whitelist</b> para finalizar. El equipo revisará tu solicitud.
+            Para finalizar, pulsa <b>Enviar whitelist</b>. El equipo revisará tu solicitud.
+            No se mostrarán puntuaciones ni detalles en esta pantalla.
           </p>
           <div class="controls" style="margin-top:12px">
             <button class="btn" id="backToTest">Volver</button>
             <button class="btn btn-success" id="sendBtn">Enviar whitelist</button>
           </div>
-          <p class="note" id="sendNote" style="text-align:center">No se mostrarán puntuaciones en pantalla.</p>
+          <p class="note" id="sendNote" style="text-align:center">Los datos se enviarán al staff mediante Webhook.</p>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Lógica del test -->
-<script src="whitelist.js?v=9"></script>
+<!-- Config de la actividad -->
+<script>
+  window.APP_ID     = '1383517896747126987';    /* CLIENT_ID de tu app */
+  window.GUILD_ID   = '1383503690136162337';
+  window.WEBHOOK_URL = 'https://discord.com/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e';
+</script>
+<!-- SDK embebido -->
+<script src="https://sdk.discord.com/embed.js"></script>
+<!-- Lógica de la whitelist -->
+<script src="./whitelist.js"></script>
 </body>
 </html>
+
