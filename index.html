@@ -3,14 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Discord Activity — Perfil</title>
+<title>Discord Activity — Perfil (debug)</title>
 <style>
   :root { color-scheme: dark; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
-  .card { width:340px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
+  .card { width:380px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
   img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 12px; }
   h1 { font-size:18px; margin:8px 0 0; color:#e2e8f0; }
   p  { font-size:13px; margin:6px 0 0; color:#94a3b8; }
+  pre { text-align:left; white-space:pre-wrap; word-break:break-word; background:#0b1220; border:1px solid #1e293b; padding:10px; border-radius:10px; color:#cbd5e1; font-size:12px; max-height:180px; overflow:auto; }
   .spinner { width:24px; height:24px; border:3px solid #334155; border-top-color:#60a5fa; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg) } }
   .err { color:#fca5a5 }
@@ -24,6 +25,7 @@
     <h1 id="name">Cargando…</h1>
     <p id="hint">Iniciando SDK</p>
     <div class="spinner" id="spinner"></div>
+    <pre id="log" style="display:none"></pre>
   </div>
 
   <script>
@@ -33,7 +35,14 @@
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
     const spinnerEl = document.getElementById("spinner");
+    const logEl     = document.getElementById("log");
     const cdn = (p) => `/cdn${p}`;
+
+    const showLog = (title, obj) => {
+      logEl.style.display = "block";
+      logEl.textContent = `[${new Date().toISOString()}] ${title}\n` +
+        (typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
+    };
 
     const ok = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
@@ -44,21 +53,23 @@
       hintEl.innerHTML = `<span class="ok">OK</span> ID: ${u?.id ?? "desconocido"}`;
       spinnerEl.style.display = "none";
     };
-    const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
+    const err = (t, d, dbg=null) => {
+      nameEl.textContent = t;
+      hintEl.innerHTML = d;
+      hintEl.classList.add("err");
+      spinnerEl.style.display = "none";
+      if (dbg) showLog(t, dbg);
+    };
 
-    async function loadDiscordSDK() {
-      // 1) Bajamos el bundle del SDK (ESM) desde el Worker
+    async function loadSDKViaBlob() {
+      hintEl.textContent = "Descargando SDK…";
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache: "no-store" });
-      if (!r.ok) throw new Error(`sdk_src_${r.status}`);
-      const code = await r.text();
-
-      // 2) Creamos un Blob URL y lo importamos como MÓDULO
-      const blob = new Blob([code], { type: "text/javascript" });
-      const url  = URL.createObjectURL(blob);
+      const txt = await r.text();
+      if (!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,200)}`);
+      const url = URL.createObjectURL(new Blob([txt], { type: "text/javascript" }));
       try {
         const mod = await import(/* webpackIgnore: true */ url);
         URL.revokeObjectURL(url);
-        // El bundle exporta DiscordSDK como export nombrado o como default
         return mod.DiscordSDK || (mod.default?.DiscordSDK || mod.default) || mod;
       } catch (e) {
         URL.revokeObjectURL(url);
@@ -68,50 +79,75 @@
 
     (async () => {
       try {
-        hintEl.textContent = "Cargando SDK…";
-        const DiscordSDK = await loadDiscordSDK();
-        if (!DiscordSDK) throw new Error("sdk_not_found");
-
-        hintEl.textContent = "Esperando handshake de Discord…";
+        const DiscordSDK = await loadSDKViaBlob();
+        hintEl.textContent = "Handshake con Discord…";
         const sdk = new DiscordSDK(CLIENT_ID);
-        await Promise.race([
-          sdk.ready(),
-          new Promise((_, rej) => setTimeout(() => rej(new Error("timeout_ready")), 8000))
-        ]);
 
-        hintEl.textContent = "Autorizando…";
-        const { code } = await sdk.commands.authorize({
-          client_id: CLIENT_ID,
-          response_type: "code",
-          state: "",
-          prompt: "none",
-          scope: ["identify"]
-        });
+        try {
+          await Promise.race([
+            sdk.ready(),
+            new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000))
+          ]);
+        } catch (e) {
+          return err("Sin handshake con Discord",
+            "Asegúrate de abrirlo como <b>Embedded Activity</b> de <b>esta app</b>.",
+            e?.message || e);
+        }
 
+        hintEl.textContent = "Solicitando código OAuth…";
+        let auth;
+        try {
+          auth = await sdk.commands.authorize({
+            client_id: CLIENT_ID,
+            response_type: "code",
+            state: "",
+            prompt: "none",
+            scope: ["identify"]
+          });
+        } catch (e) {
+          return err("Fallo en authorize()", "El cliente no devolvió código (scope: <code>identify</code>).", e?.message || e);
+        }
+        if (!auth?.code) {
+          return err("Authorize sin código", "No se recibió <code>code</code> del cliente.", auth);
+        }
+        showLog("authorize()", auth);
+
+        hintEl.textContent = "Intercambiando token…";
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code: auth.code })
         });
-        const t = await tres.json();
-        if (!tres.ok || !t?.access_token) throw new Error("token_exchange_failed");
+        const tokBodyText = await tres.text();
+        let tok;
+        try { tok = JSON.parse(tokBodyText); } catch { tok = { raw: tokBodyText }; }
+        showLog("POST /api/token", { status: tres.status, body: tok });
+        if (!tres.ok || !tok?.access_token) {
+          return err("token_exchange_failed",
+            "Revisa el <b>DISCORD_CLIENT_SECRET</b> del Worker (rota el secreto en el portal y actualiza el Worker).",
+            { status: tres.status, tok });
+        }
 
-        await sdk.commands.authenticate({ access_token: t.access_token });
+        hintEl.textContent = "Autenticando con el SDK…";
+        try {
+          await sdk.commands.authenticate({ access_token: tok.access_token });
+        } catch (e) {
+          return err("authenticate() falló", "El cliente no aceptó el access_token.", e?.message || e);
+        }
 
-        const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${t.access_token}` } });
-        const me = await meRes.json();
-        if (!meRes.ok) throw new Error("me_failed");
+        hintEl.textContent = "Cargando tu perfil…";
+        const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${tok.access_token}` } });
+        const meText = await meRes.text();
+        let me; try { me = JSON.parse(meText); } catch { me = { raw: meText }; }
+        showLog("GET /api/@me", { status: meRes.status, body: me });
+        if (!meRes.ok) {
+          return err("Error en /@me", "El token no es válido para <code>users/@me</code>.", { status: meRes.status, me });
+        }
+
         ok(me);
       } catch (e) {
         console.error(e);
-        const msg = String(e?.message || e);
-        if (msg.includes("sdk_src_")) {
-          err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk-src</code> responda 200.");
-        } else if (msg.includes("timeout_ready")) {
-          err("Sin handshake con Discord", "Ábrelo como <b>Embedded Activity</b> de esta app.");
-        } else {
-          err("Fallo de autorización o SDK", "Confirma el mapping <code>/api</code> y las variables del Worker.");
-        }
+        err("Error inesperado", "Revisa la consola de la Activity (Ctrl/Cmd+Shift+I).", e?.message || e);
       }
     })();
   </script>
