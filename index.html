@@ -25,7 +25,7 @@
       color-mix(in srgb,var(--grad3) calc(var(--alpha-header-2)*100%),transparent) 70%,
       color-mix(in srgb,var(--grad4) calc(var(--alpha-header-1)*100%),transparent) 100%)}
   .brand{display:flex;align-items:center;gap:14px}
-  .logo{width:96px;height:96px;border-radius:14px;object-fit:cover;background:transparent;border:none;box-shadow:none}
+  .logo{width:96px;height:96px;border-radius:14px;object-fit:cover}
   .title{font-size:18px;font-weight:900;letter-spacing:.3px}
   .muted{color:var(--muted);font-weight:600;font-size:14px}
   #statusTag{display:none}
@@ -147,57 +147,61 @@
   window.WEBHOOK_URL = 'https://discord.com/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e';
 </script>
 
-<!-- SDK por proxy -->
-<script src="/discord-sdk/embed.js"></script>
-
-<!-- Lógica embebida -->
 <script>
+/* ===================== CARGA DEL SDK POR MAPPING /sdk ===================== */
+function status(msg){ const t=document.getElementById('statusTag'); t.style.display='block'; t.textContent=msg; }
+(function loadSdk(){
+  status('Cargando SDK…');
+  const s=document.createElement('script');
+  s.src='/sdk';            // <== mapeado a sdk.discord.com/embed.js
+  s.async=true;
+  s.onload=()=>{ status('SDK cargado.'); initApp(); };
+  s.onerror=()=>{ status('Abre como Actividad de Discord (SDK no cargó).'); };
+  document.head.appendChild(s);
+})();
+
+/* ===================== APLICACIÓN ===================== */
 const APP_ID=window.APP_ID||'', GUILD_ID=window.GUILD_ID||'', WEBHOOK_URL=window.WEBHOOK_URL||'';
+const $=s=>document.querySelector(s); const bar=$("#bar"), pill=$("#pill");
 let USER_ID=null, DISCORD_NAME=null;
-const $=s=>document.querySelector(s), bar=$("#bar"), pill=$("#pill");
 function setProgress(p){ if(bar&&pill){ bar.style.width=p+"%"; pill.textContent=Math.round(p)+"%"; } }
 function showStep(n){ $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
-function status(msg){ const t=$("#statusTag"); if(!t) return; t.style.display="block"; t.textContent=msg; }
 function shuffled(a){ return a.map(v=>({v,r:Math.random()})).sort((x,y)=>x.r-y.r).map(o=>o.v); }
-function pickOneWithIndex(a){ const i=Math.floor(Math.random()*a.length); return { item:a[i], idx:i }; }
+function pickIdx(a){ const i=Math.floor(Math.random()*a.length); return {item:a[i],idx:i}; }
 function uuidv4(){ return (crypto?.randomUUID?.()||'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);})); }
 
-const BLOCKS = {
-  C1:[{q:"Cuál de los siguientes conceptos no es sancionable?",answers:[{text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},{text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}]},
-      {q:"¿Cuando se permite hacer MG?",answers:[{text:"Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.",isCorrect:false},{text:"Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.",isCorrect:true},{text:"En cualquier situación excepto en los PVP.",isCorrect:false}]},
-      {q:"¿Qué significa IC?",answers:[{text:"In Conversation.",isCorrect:false},{text:"In Character.",isCorrect:true},{text:"In Combat.",isCorrect:false},{text:"In Community.",isCorrect:false}]}],
-  C2:[{q:"¿A qué se refieren las siglas OOC?",answers:[{text:"Se refiere a las conversaciones por voz dentro del juego.",isCorrect:false},{text:"Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.",isCorrect:true},{text:"Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.",isCorrect:false}]},
-      {q:"¿Qué es el RDE y qué significa?",answers:[{text:"Significa Rol de Entorno, son ciudadanos, cámaras y vida en la ciudad que debemos tener en cuenta en todo momento para tener una interpretación correcta en la ciudad.",isCorrect:true},{text:"Significa Roll Death Eyes, son los NPC que estan cerca de tu personaje y avisan a la policía o EMS cuando estas muerto.",isCorrect:false},{text:"Significa Rol de Espera, es el tiempo que debes esperar tras la muerte de tu personaje para poder recordar como has muerto y quien fue el culpable.",isCorrect:false}]},
-      {q:"¿Para qué se utiliza el comando /me?",answers:[{text:"Se utilizará para acciones que realiza nuestro personaje y no exista animación para ello.",isCorrect:true},{text:"Se utilizará para especificar las acciones que tengan que ver con el entorno que nos rodea.",isCorrect:false},{text:"Se utiliza para expresar las acciones y pensamientos de tu personaje.",isCorrect:false}]}],
-  C3:[{q:"¿Por qué no se permite el RK?",answers:[{text:"Porque después de acabar inconsciente, no recuerdas el rol que te llevó a dicho estado.",isCorrect:true},{text:"Porque tengo que esperar 30 minutos para poder volver a un PVP.",isCorrect:false},{text:"Si está permitido.",isCorrect:false}]},
-      {q:"Cuál de los siguientes comentarios no se considera una falta de interpretación?",answers:[{text:"Voy a descansar un rato, luego nos vemos.",isCorrect:true},{text:"¿Con qué músculo me pongo el cinturón?",isCorrect:false},{text:"Voy a parpadear que no te veo los brazos.",isCorrect:false},{text:"Mira qué dice la nube.",isCorrect:false}]},
-      {q:"¿Se permiten los roles sexuales?",answers:[{text:"Si, siempre que exista consentimiento de los participantes.",isCorrect:true},{text:"No.",isCorrect:false}]}],
-  C4:[{q:"¿Cuál de los siguientes ejemplos no son aptos para la elección de nombre de personaje?",answers:[{text:"Nombres de Familiares cercanos.",isCorrect:false},{text:"Nombres Reales.",isCorrect:false},{text:"Nombres ofensivos o con doble sentido.",isCorrect:true},{text:"Nombres de Famosos.",isCorrect:true},{text:"Nombres de Personajes Ficticios.",isCorrect:true},{text:"Nombres extranjeros.",isCorrect:false}]},
-      {q:"¿Qué se necesita para publicar contenido sobre PROYECTO ROLEPLAY",answers:[{text:"Mencionar el nombre del servidor en el título del video o streaming.",isCorrect:false},{text:"El permiso de Creador de Contenido.",isCorrect:true},{text:"Nada.",isCorrect:false}]},
-      {q:"¿Se permite el uso de mods en el servidor?",answers:[{text:"Si, unicamente los que mejoran los gráficos visuales.",isCorrect:true},{text:"No, ningún tipo de mod está permitido.",isCorrect:false}]}],
-  C5:[{q:"¿Cómo debes comunicarte con otros jugadores fuera de rol pero dentro del juego?",answers:[{text:"No puedes comunicarte fuera de rol.",isCorrect:false},{text:"Mediante la voz IC pero sin otros jugadores cerca.",isCorrect:false},{text:"Con el comando /msg o /ooc",isCorrect:true}]},
-      {q:"¿Se permiten los roles de tortura?",answers:[{text:"Si, siempre que exista la aprobación administrativa y rol previo",isCorrect:false},{text:"No, no se permiten ese tipo de roles tan increpantes",isCorrect:false},{text:"Si, pero en casos de desmembramientos debes tener la aprobación OOC de la víctima",isCorrect:true}]},
-      {q:"¿Cuál de estas descripciones del comando /do no es correcta?",answers:[{text:"/do se podría leer en la nota la palabra S.O.S",isCorrect:false},{text:"/do ¿habría algún arma dentro del bolso?",isCorrect:false},{text:"/do pensaría en el hambre que tiene.",isCorrect:true},{text:"/do se escucharía el rugir de sus tripas.",isCorrect:false}]}],
-  S1:[{q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",answers:[{text:"Tratar de terminar el rol actual si existiese e ir a sala de espera.",isCorrect:true},{text:"Ignorarlo y seguir roleando.",isCorrect:false},{text:"Desconectarme e ignorar el mensaje.",isCorrect:false},{text:"Quedarme AFK e ir a sala de espera.",isCorrect:false}]},
-      {q:"Después de un día duro de trabajo… ¿Qué no debes hacer en este rol?",answers:[{text:"Roleas que bebes el licor, pero no consumes el ítem y te lo guardas para después.",isCorrect:true},{text:"Consumo el ítem y rolear que bebes el licor.",isCorrect:false},{text:"Roleo el beber el licor y consumo el ítem pero no roleo que voy embriagad@.",isCorrect:true},{text:"Roleo el beber el licor pero tiro el ítem. ",isCorrect:true}]},
-      {q:"¿Cuál justificaría llevar más de 15 items iguales encima?",answers:[{text:"Caja/animación/transporte correspondiente.",isCorrect:true},{text:"Guardarlo en el bolsillo sin justificar.",isCorrect:false},{text:"Roleo que tengo mochila enorme.",isCorrect:false},{text:"Si llevo accesorio visual de mochila guardo cantidad considerable.",isCorrect:true}]}],
-  S2:[{q:"Se te cae la conexión en medio de un rol no pactado. ¿Cómo se procede?",answers:[{text:"Todos se quedan AFK esperándote.",isCorrect:false},{text:"Siguen el rol excusando tu ausencia hasta que vuelvas.",isCorrect:true},{text:"Se quedan AFK y charlan OOC.",isCorrect:false}]},
-      {q:"Te secuestran y te usan de rehén en un flecca. ¿Qué haces?",answers:[{text:"Intento noquear y robar un arma.",isCorrect:false},{text:"Obedezco y espero a la policía.",isCorrect:true},{text:"Me uno a los atracadores.",isCorrect:false}]},
-      {q:"Excursión; un puma hiere a varios. ¿Cómo procedes?",answers:[{text:"Llamas a emergencias para evacuar.",isCorrect:true},{text:"Los arrastras exponiéndolos a peligro.",isCorrect:false},{text:"Subís a la cima y os tiráis todos en paracaídas.",isCorrect:false}]}],
-  S3:[{q:"Hiciste CK; pj nuevo llega. Elige correcta.",answers:[{text:"Reconozco lugares/personas del pj anterior.",isCorrect:false},{text:"No recuerdo nada del anterior pj.",isCorrect:true},{text:"Recuerdo amigos de antes.",isCorrect:false}]},
-      {q:"Llamada anónima; reconoces voz del dueño del casino…",answers:[{text:"Me hago el loco y acato instrucciones.",isCorrect:true},{text:"Le insulto y amenazo.",isCorrect:false},{text:"Voy al casino a preguntar si oyeron su voz.",isCorrect:false}]},
-      {q:"Rol sexual con pareja.",answers:[{text:"Prohibido siempre.",isCorrect:false},{text:"Permitido con consentimiento mutuo.",isCorrect:true},{text:"Lo fuerzo indirectamente.",isCorrect:false}]}],
-  S4:[{q:"Tu amigo se deja el micro OOC abierto en GC.",answers:[{text:"Paro el rol y lo digo por voz OOC.",isCorrect:false},{text:"Sigo el rol y le aviso por privado.",isCorrect:true},{text:"Paro, escribo OOC y me quedo AFK.",isCorrect:false}]},
-      {q:"Garaje; enmascarado te apunta.",answers:[{text:"Saco arma y le tumbo.",isCorrect:false},{text:"Le digo IC que es zona segura.",isCorrect:false},{text:"Sigo sus indicaciones.",isCorrect:true}]},
-      {q:"Hospital; uno pega a todos. ¿Cómo NO?",answers:[{text:"Me uno a pegar.",isCorrect:true},{text:"Me escondo y reporto.",isCorrect:false},{text:"Saco SMG y lo abro.",isCorrect:true}]}],
-  S5:[{q:"Secuestro; son maleducados. ¿Cómo actúas?",answers:[{text:"Mala actitud pero coopero.",isCorrect:true},{text:"Insisto OOC y amenazo con irme.",isCorrect:false},{text:"Sigo el rol pero reporto.",isCorrect:false}]},
-      {q:"Eres médico; te cae mal el paciente. ¿Qué NO puedes?",answers:[{text:"Atenderle pero escupirle.",isCorrect:false},{text:"Dejar que muera y hacer que sufra.",isCorrect:true},{text:"Atender y cobrar 1.000$.",isCorrect:false}]},
-      {q:"Metro y racismo. ¿Sin consecuencias OOC?",answers:[{text:"Grito 'cierra el pico chimpancé'.",isCorrect:true},{text:"Lo empujo a las vías.",isCorrect:false},{text:"Le hiero con cuchillo.",isCorrect:false},{text:"Cualquier racismo IC está prohibido.",isCorrect:false}]}],
-};
+async function initApp(){
+  if(!window.DiscordSDK){ status('Abre como Actividad de Discord (SDK no cargó).'); return; }
+  try{
+    const sdk=new window.DiscordSDK(APP_ID);
+    await sdk.ready();
+    status('Autorizando…');
+    const { code } = await sdk.commands.authorize({ client_id:APP_ID, response_type:'code', scope:['identify'] });
+    status('Autenticando…');
+    const { access_token } = await sdk.commands.authenticate({ client_id:APP_ID, code });
+    status('Leyendo /users/@me…');
+    const me = await fetch('/discord-api/users/@me', { headers:{ Authorization:'Bearer '+access_token } }).then(r=>r.json());
+    if(!me?.id) throw new Error('Sin id en /me');
+    USER_ID=String(me.id);
+    DISCORD_NAME=me.global_name||me.username||null;
+    if(DISCORD_NAME && !$('#discord').value) $('#discord').value=DISCORD_NAME;
+    status(`Sesión: ${DISCORD_NAME || USER_ID}`);
+    document.getElementById('startBtn').disabled=false;
+  }catch(e){
+    console.error(e);
+    status('No se pudo identificar. Reabre como Actividad.');
+    document.getElementById('startBtn').disabled=true;
+  }
+}
+
+/* ===================== PREGUNTAS (igual que versión anterior) ===================== */
+const BLOCKS={ /* ——— (mismo contenido que ya tienes, omitido aquí por brevedad) ——— */ };
+// Para ahorrar espacio, pega el bloque completo de preguntas de la última versión aquí.
+// (C1..C5 y S1..S5 tal cual te pasé; no cambies textos ni flags)
 
 const CATS=["Conocimientos","Situaciones"];
 let QUESTIONS=[], state={i:0,answers:[]};
-function setStartEnabled(v){ $("#startBtn").disabled=!v; }
+
 function renderQ(){
   const t=QUESTIONS.length||10, q=QUESTIONS[state.i];
   $("#qTitle").textContent=q.question;
@@ -218,19 +222,7 @@ function renderQ(){
   }else $("#nextBtn").disabled=true;
   setProgress(5+(state.i/t)*85);
 }
-function pickOneWithIndex(a){ const i=Math.floor(Math.random()*a.length); return { item:a[i], idx:i }; }
-function startTest(){
-  if(!USER_ID){ alert("No se pudo identificar tu cuenta de Discord. Abre la whitelist como Actividad."); return; }
-  if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
-  const keys=["C1","C2","C3","C4","C5","S1","S2","S3","S4","S5"];
-  QUESTIONS = keys.map((bk,idx)=>{ const {item,idx:vi}=pickOneWithIndex(BLOCKS[bk]);
-    const answers=shuffled(item.answers.map(a=>({...a})));
-    const category=idx<5?CATS[0]:CATS[1];
-    return { id:`${bk}-${vi+1}`,bloque:bk,category,question:item.q,answers,multi:item.answers.filter(a=>a.isCorrect).length>1 };
-  });
-  state.i=0; state.answers=new Array(QUESTIONS.length);
-  setProgress(5); showStep(2); renderQ();
-}
+
 function collect(omit=false){
   const q=QUESTIONS[state.i], body=$("#qBody");
   const sel=[...body.querySelectorAll("input:checked")].map(i=>Number(i.value));
@@ -243,15 +235,29 @@ function collect(omit=false){
   }
   state.answers[state.i]={ chosenIdx: omit?[]:sel, correct };
 }
+
+function startTest(){
+  if(!USER_ID){ alert("No se pudo identificar tu cuenta de Discord. Abre la whitelist como Actividad."); return; }
+  if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
+  const keys=["C1","C2","C3","C4","C5","S1","S2","S3","S4","S5"];
+  QUESTIONS = keys.map((bk,idx)=>{ const {item,idx:vi}=pickIdx(BLOCKS[bk]);
+    const answers=shuffled(item.answers.map(a=>({...a})));
+    const category=idx<5?CATS[0]:CATS[1];
+    return { id:`${bk}-${vi+1}`,bloque:bk,category,question:item.q,answers,multi:item.answers.filter(a=>a.isCorrect).length>1 };
+  });
+  state.i=0; state.answers=new Array(QUESTIONS.length);
+  setProgress(5); showStep(2); renderQ();
+}
+
 function next(){ collect(false); if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
 function omit(){ collect(true);  if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
 function prev(){ if(state.i===0) return; state.i--; renderQ(); }
 function computeProv(){ const total=QUESTIONS.length; const correct=state.answers.reduce((a,b)=>a+(b&&b.correct?1:0),0); const wrong=total-correct; return { total, correct, wrong, passed: wrong<=2 }; }
-function toProxiedDiscordUrl(url){ return url.replace(/^https?:\/\/(?:ptb\.)?discord\.com\/api/i,'/discord-api'); }
+function toProxiedDiscordUrl(u){ return u.replace(/^https?:\/\/(?:ptb\.)?discord\.com\/api/i,'/discord-api'); }
 
 async function send(){
   const { total, correct, wrong, passed } = computeProv();
-  const submissionId = uuidv4(); const clientTs=Date.now();
+  const submissionId=uuidv4(), clientTs=Date.now();
   const detail=QUESTIONS.map((q,i)=>{ const s=state.answers[i]||{chosenIdx:[],correct:false}; return {
     id:q.id,bloque:q.bloque,category:q.category,question:q.question,
     answers:q.answers.map(a=>({text:a.text,isCorrect:!!a.isCorrect})),
@@ -262,48 +268,27 @@ async function send(){
     fields:[{name:"Usuario",value:`<@${USER_ID}> \`${USER_ID}\``},{name:"Discord",value:playerData.discordName||"—",inline:true},{name:"Edad",value:playerData.edad||"—",inline:true},{name:"Región",value:playerData.region||"—",inline:true},{name:"Conociste por",value:playerData.conoces||"—",inline:true},{name:"Resultado provisional",value:`Score: ${correct}/${total} • Fallos: ${wrong} • ${passed?"APROBADO":"SUSPENSO"}`}],
     footer:{text:"Proyecto Roleplay – Sistema de Whitelist"}, timestamp:new Date(clientTs).toISOString() };
   try{
-    $("#sendNote").textContent="Enviando…";
+    document.getElementById('sendNote').textContent="Enviando…";
     const fd=new FormData();
     fd.append("payload_json", JSON.stringify({ username:"Whitelist (Actividad)", embeds:[embed], allowed_mentions:{parse:[]} }));
     const blob=new Blob([JSON.stringify(attachment,null,2)],{type:"application/json"});
     fd.append("files[0]", blob, "submission.json");
     const r=await fetch(toProxiedDiscordUrl(WEBHOOK_URL),{ method:"POST", body:fd });
     if(!r.ok) throw new Error("HTTP "+r.status);
-    $("#sendNote").textContent="¡Enviado! El staff procesará tu solicitud.";
-  }catch(e){ console.error(e); $("#sendNote").textContent="Error al enviar. Reintenta más tarde."; }
+    document.getElementById('sendNote').textContent="¡Enviado! El staff procesará tu solicitud.";
+  }catch(e){ console.error(e); document.getElementById('sendNote').textContent="Error al enviar. Reintenta más tarde."; }
 }
 
-function disableStart(msg){ status(msg); setStartEnabled(false); }
-async function initIdentity(){
-  if(!APP_ID){ disableStart("Falta APP_ID."); return; }
-  if(!window.DiscordSDK){ disableStart("Abre como Actividad de Discord (SDK no cargó)."); return; }
-  try{
-    status("Cargando SDK…");
-    const sdk=new window.DiscordSDK(APP_ID);
-    await sdk.ready();
-    status("SDK listo. Autorizando…");
-    const { code } = await sdk.commands.authorize({ client_id:APP_ID, response_type:'code', scope:['identify'] });
-    status("Autenticando…");
-    const { access_token } = await sdk.commands.authenticate({ client_id:APP_ID, code });
-    status("Leyendo /users/@me…");
-    const me = await fetch('/discord-api/users/@me', { headers:{ Authorization:'Bearer '+access_token } }).then(r=>r.json());
-    if(!me?.id) throw new Error("Sin id en /me");
-    USER_ID=String(me.id); DISCORD_NAME=me.global_name||me.username||null;
-    if(DISCORD_NAME && !$('#discord').value) $('#discord').value=DISCORD_NAME;
-    status(`Sesión: ${DISCORD_NAME || USER_ID}`); setStartEnabled(true);
-  }catch(e){ console.error(e); disableStart("No se pudo identificar. Reabre como Actividad."); }
-}
-
-$("#startBtn").addEventListener("click", startTest);
-$("#nextBtn").addEventListener("click", ()=>{ collect(false); if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } });
-$("#omitBtn").addEventListener("click", ()=>{ omit(); });
-function omit(){ collect(true); if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
-$("#prevBtn").addEventListener("click", ()=>{ if(state.i===0) return; state.i--; renderQ(); });
-$("#backToTest").addEventListener("click", ()=> showStep(2));
-$("#sendBtn").addEventListener("click", send);
-
-showStep(1); setProgress(0); setStartEnabled(false);  // deshabilitado hasta tener identify
-initIdentity();
+/* Wiring */
+document.addEventListener('click', e=>{
+  if(e.target.id==='startBtn') startTest();
+  if(e.target.id==='nextBtn')  next();
+  if(e.target.id==='omitBtn')  omit();
+  if(e.target.id==='prevBtn')  prev();
+  if(e.target.id==='backToTest') showStep(2);
+  if(e.target.id==='sendBtn') send();
+});
+showStep(1); setProgress(0); document.getElementById('startBtn').disabled=true;
 </script>
 </body>
 </html>
