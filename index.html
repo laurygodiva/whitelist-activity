@@ -96,7 +96,7 @@
         <div class="section">
           <h3>Progreso</h3>
           <div class="progress"><div class="bar"><span id="bar"></span></div><span class="pill" id="pill">0%</span></div>
-          <p class="note">Al pulsar “Empezar test” inicia el bloque 3. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
+          <p class="note">Al pulsar "Empezar test" inicia el bloque 3. Se mostrará 1 pregunta por bloque (variantes aleatorias).</p>
           <div class="controls"><button class="btn btn-primary" id="startBtn" disabled>Empezar test</button></div>
         </div>
       </div>
@@ -164,32 +164,90 @@ function pickOneWithIndex(a){ const i=Math.floor(Math.random()*a.length); return
 function uuidv4(){ return (crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);})); }
 function toProxiedDiscordUrl(url){ return url.replace(/^https?:\/\/(?:ptb\.)?discord\.com\/api/i, '/discord-api'); }
 
-async function initIdentity(){
-  if(!window.DiscordSDK){ status('Abre como Actividad de Discord (SDK no cargó).'); return; }
-  try{
-    status('Cargando SDK…');
-    const sdk=new window.DiscordSDK(APP_ID);
+async function setupDiscordSDK() {
+  try {
+    const sdk = new DiscordSDK(APP_ID);
+    
     await sdk.ready();
+    console.log('Discord SDK está listo');
+    
+    // Autenticación
+    const { code } = await sdk.commands.authorize({
+      client_id: APP_ID,
+      response_type: 'code',
+      scope: ['identify']
+    });
+    
+    // Obtener token de acceso
+    const response = await fetch(toProxiedDiscordUrl('https://discord.com/api/oauth2/token'), {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        client_id: APP_ID,
+        client_secret: '', // Necesitarás un client_secret si es una aplicación verificada
+        grant_type: 'authorization_code',
+        code: code,
+        redirect_uri: window.location.origin
+      })
+    });
+    
+    const { access_token } = await response.json();
+    
+    // Obtener información del usuario
+    const userResponse = await fetch(toProxiedDiscordUrl('https://discord.com/api/users/@me'), {
+      headers: {
+        Authorization: `Bearer ${access_token}`
+      }
+    });
+    
+    const user = await userResponse.json();
+    
+    if (user && user.id) {
+      USER_ID = user.id;
+      DISCORD_NAME = user.global_name || user.username;
+      if (DISCORD_NAME && !$('#discord').value) {
+        $('#discord').value = DISCORD_NAME;
+      }
+      status(`Conectado como: ${DISCORD_NAME}`);
+      $('#startBtn').disabled = false;
+    } else {
+      throw new Error('No se pudo obtener información del usuario');
+    }
+  } catch (e) {
+    console.error('Error en setupDiscordSDK:', e);
+    status('Error de autenticación. Abre como Actividad.');
+    $('#startBtn').disabled = true;
+  }
+}
 
-    status('Autorizando…');
-    const { code } = await sdk.commands.authorize({ client_id:APP_ID, response_type:'code', scope:['identify'] });
-
-    status('Autenticando…');
-    const { access_token } = await sdk.commands.authenticate({ client_id:APP_ID, code });
-
-    status('Leyendo /users/@me…');
-    const me = await fetch('/discord-api/users/@me', { headers:{ Authorization:'Bearer '+access_token } }).then(r=>r.json());
-
-    if(!me?.id) throw new Error('Sin id en /me');
-    USER_ID = String(me.id);
-    DISCORD_NAME = me.global_name || me.username || null;
-    if(DISCORD_NAME && !$('#discord').value) $('#discord').value = DISCORD_NAME;
-
-    status(`Sesión: ${DISCORD_NAME || USER_ID}`);
-    $('#startBtn').disabled = false;
-  }catch(e){
-    console.error(e);
-    status('No se pudo identificar. Reabre como Actividad.');
+async function initIdentity() {
+  try {
+    status('Inicializando SDK...');
+    
+    // Verifica si el SDK está disponible
+    if (!window.DiscordSDK) {
+      // Intenta cargar el SDK manualmente si no está disponible
+      const script = document.createElement('script');
+      script.src = '/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js';
+      script.onload = async () => {
+        if (!window.DiscordSDK) {
+          throw new Error('SDK no se cargó correctamente');
+        }
+        await setupDiscordSDK();
+      };
+      script.onerror = () => {
+        status('Error al cargar el SDK. Abre como Actividad de Discord.');
+        $('#startBtn').disabled = true;
+      };
+      document.head.appendChild(script);
+    } else {
+      await setupDiscordSDK();
+    }
+  } catch (e) {
+    console.error('Error en initIdentity:', e);
+    status('Error de autenticación. Abre como Actividad.');
     $('#startBtn').disabled = true;
   }
 }
@@ -340,15 +398,34 @@ async function send(){
 }
 
 /* Wiring */
-document.getElementById('startBtn').addEventListener('click', startTest);
-document.getElementById('nextBtn').addEventListener('click', next);
-document.getElementById('omitBtn').addEventListener('click', omit);
-document.getElementById('prevBtn').addEventListener('click', prev);
-document.getElementById('backToTest').addEventListener('click', ()=>showStep(2));
-document.getElementById('sendBtn').addEventListener('click', send);
-
-showStep(1); setProgress(0);  // botón habilita tras obtener identify
-initIdentity();
+document.addEventListener('DOMContentLoaded', () => {
+  // Verificar campos requeridos para habilitar el botón de inicio
+  const requiredFields = ['#discord', '#edad', '#region'];
+  requiredFields.forEach(selector => {
+    $(selector)?.addEventListener('input', checkStartButton);
+  });
+  
+  function checkStartButton() {
+    const allFilled = requiredFields.every(selector => {
+      const el = $(selector);
+      return el && el.value.trim() !== '';
+    });
+    $('#startBtn').disabled = !allFilled;
+  }
+  
+  // Asignar event listeners
+  $('#startBtn').addEventListener('click', startTest);
+  $('#nextBtn').addEventListener('click', next);
+  $('#omitBtn').addEventListener('click', omit);
+  $('#prevBtn').addEventListener('click', prev);
+  $('#backToTest').addEventListener('click', () => showStep(2));
+  $('#sendBtn').addEventListener('click', send);
+  
+  // Inicialización
+  showStep(1);
+  setProgress(0);
+  initIdentity();
+});
 </script>
 </body>
 </html>
