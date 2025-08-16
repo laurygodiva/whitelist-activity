@@ -3,134 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prueba de Actividad Discord</title>
+    <title>Whitelist Activity</title>
     <style>
         body {
             font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background-color: #36393f;
             color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            padding: 20px;
             text-align: center;
+            padding: 20px;
         }
         .container {
+            max-width: 800px;
+            margin: 0 auto;
             background-color: #2f3136;
             border-radius: 8px;
-            padding: 30px;
+            padding: 20px;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 100%;
-        }
-        .avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 20px auto;
-            display: block;
-            object-fit: cover;
-            border: 4px solid #5865f2;
         }
         .status {
-            padding: 12px;
-            border-radius: 4px;
+            padding: 15px;
+            border-radius: 5px;
             margin: 20px 0;
             font-weight: bold;
         }
-        .loading {
-            background-color: #faa61a;
+        .loading { background-color: #faa61a; }
+        .error { background-color: #ed4245; }
+        .success { background-color: #3ba55c; }
+        .user-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #40444b;
+            border-radius: 5px;
         }
-        .error {
-            background-color: #ed4245;
-        }
-        .success {
-            background-color: #3ba55c;
+        .avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            margin: 10px auto;
+            display: block;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Prueba de Actividad Discord</h1>
+        <h1>Sistema de Whitelist</h1>
         <div id="status" class="status loading">Inicializando actividad...</div>
         
-        <div id="userDisplay" style="display: none;">
+        <div id="userDisplay" class="user-info" style="display: none;">
             <img id="userAvatar" class="avatar" src="" alt="Avatar">
             <h2 id="userName"></h2>
-            <p><strong>ID:</strong> <span id="userId"></span></p>
+            <p>ID: <span id="userId"></span></p>
         </div>
     </div>
 
-    <!-- SDK de Discord -->
-    <script src="https://cdn.jsdelivr.net/npm/@discord/embedded-app-sdk@1.4.0/dist/embedded.js"></script>
-    
     <script>
-        // Configuración según documentación oficial
-        const APP_ID = '1383517896747126987'; // Tu Application ID
-        
-        // Elementos del DOM
+        // 1. Configuración básica
+        const APP_ID = '1383517896747126987';
         const statusElement = document.getElementById('status');
-        const userDisplay = document.getElementById('userDisplay');
         
-        // Función para actualizar estado
+        // 2. Función para actualizar estado
         function updateStatus(message, type = 'loading') {
             statusElement.textContent = message;
             statusElement.className = `status ${type}`;
         }
         
-        // Función principal según documentación de Discord
-        async function setupDiscordActivity() {
+        // 3. Cargar el SDK de Discord
+        function loadDiscordSdk() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = '/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js';
+                script.onload = () => window.DiscordSDK ? resolve() : reject('SDK no cargado');
+                script.onerror = () => reject('Error al cargar SDK');
+                document.head.appendChild(script);
+            });
+        }
+        
+        // 4. Inicializar la actividad
+        async function initActivity() {
             try {
-                // 1. Verificar si estamos en el cliente de Discord
+                // Verificar si estamos en Discord
                 if (window.location === window.parent.location) {
-                    updateStatus('Esta aplicación debe ejecutarse dentro de Discord como actividad', 'error');
+                    updateStatus('Por favor abre esta aplicación como Actividad en Discord', 'error');
                     return;
                 }
                 
-                updateStatus('Inicializando SDK...');
+                // Cargar SDK
+                updateStatus('Cargando SDK de Discord...');
+                await loadDiscordSdk();
                 
-                // 2. Crear instancia del SDK
+                // Inicializar SDK
+                updateStatus('Conectando con Discord...');
                 const discordSdk = new DiscordSDK(APP_ID);
-                
-                // 3. Esperar a que el SDK esté listo
                 await discordSdk.ready();
-                console.log('Discord SDK está listo');
                 
-                // 4. Obtener el objeto de comandos
-                const commands = discordSdk.commands;
+                // Obtener usuario
+                updateStatus('Autenticando...');
+                const { user } = await discordSdk.commands.getCurrentUser();
                 
-                updateStatus('Obteniendo información del usuario...');
+                if (!user?.id) throw new Error('Usuario no disponible');
                 
-                // 5. Obtener el usuario actual (método específico para actividades)
-                const { user } = await commands.getCurrentUser();
-                
-                if (!user?.id) {
-                    throw new Error('No se pudo obtener información del usuario');
-                }
-                
-                // 6. Mostrar información del usuario
+                // Mostrar información del usuario
                 document.getElementById('userAvatar').src = user.avatar 
                     ? `https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png?size=256`
                     : 'https://cdn.discordapp.com/embed/avatars/0.png';
                 
-                document.getElementById('userName').textContent = user.username || 'Usuario desconocido';
+                document.getElementById('userName').textContent = user.global_name || user.username;
                 document.getElementById('userId').textContent = user.id;
+                document.getElementById('userDisplay').style.display = 'block';
                 
-                userDisplay.style.display = 'block';
-                updateStatus('Actividad inicializada correctamente', 'success');
-                
-                console.log('Usuario:', user);
+                updateStatus('¡Conectado correctamente!', 'success');
                 
             } catch (error) {
-                console.error('Error en la actividad:', error);
-                updateStatus(`Error: ${error.message}`, 'error');
+                console.error('Error:', error);
+                updateStatus(`Error: ${error.message || error}`, 'error');
             }
         }
         
-        // Iniciar la actividad cuando se cargue la página
-        document.addEventListener('DOMContentLoaded', setupDiscordActivity);
+        // Iniciar todo cuando se cargue la página
+        window.addEventListener('load', initActivity);
     </script>
 </body>
 </html>
