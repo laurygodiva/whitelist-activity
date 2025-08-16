@@ -27,14 +27,13 @@
   </div>
 
   <script type="module">
-    const CLIENT_ID = "1383517896747126987";
-
+    const CLIENT_ID = "1383517896747126987"; // tu App ID
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
     const spinnerEl = document.getElementById("spinner");
+    const cdn = (p) => `/cdn${p}`;
 
-    const cdn = (path) => `/cdn${path}`;
     const ok = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
       let avatar = cdn(`/embed/avatars/0.png`);
@@ -44,86 +43,55 @@
       hintEl.innerHTML = `<span class="ok">OK</span> ID: ${u?.id ?? "desconocido"}`;
       spinnerEl.style.display = "none";
     };
-    const err = (title, details) => {
-      nameEl.textContent = title;
-      hintEl.innerHTML = details;
-      hintEl.classList.add("err");
-      spinnerEl.style.display = "none";
-    };
-
-    // Intenta varios CDNs mapeados: jsDelivr, unpkg y Skypack
-    const CDN_PREFIXES = ["/npm", "/unpkg", "/skypack"];
-    const PATHS = [
-      "/@discord/embedded-app-sdk@2.2.0/dist/index.mjs",   // jsDelivr/unpkg
-      "/@discord/embedded-app-sdk@2.2.0/+esm",              // jsDelivr
-      "/@discord/embedded-app-sdk@2/dist/index.mjs",        // fallback
-      "/@discord/embedded-app-sdk@2/+esm",                  // fallback
-      "/@discord/embedded-app-sdk@2.2.0"                    // Skypack (ESM)
-    ];
+    const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
 
     async function importSDK() {
-      // Ping rápido para ver cuál responde
-      let lastStatus = "";
-      for (const prefix of CDN_PREFIXES) {
-        try {
-          const ping = await fetch(`${prefix}/@discord/embedded-app-sdk@2.2.0/package.json?ts=${Date.now()}`, { cache: "no-store" });
-          lastStatus = `${prefix}:${ping.status}`;
-          if (!ping.ok) throw 0;
-        } catch {
-          continue; // prueba el siguiente CDN
-        }
-        // Intento de import en este CDN
-        for (const path of PATHS) {
-          try {
-            const mod = await import(`${prefix}${path}`);
-            if (mod?.DiscordSDK) return mod.DiscordSDK;
-          } catch {}
-        }
-      }
-      throw new Error(`no_sdk (${lastStatus})`);
+      // El SDK lo servimos desde el Worker vía /api/sdk (sin depender de CDNs en el cliente)
+      const mod = await import("/api/sdk");
+      return mod.DiscordSDK ?? mod.default?.DiscordSDK ?? mod;
     }
 
     (async () => {
       let DiscordSDK;
-      try {
-        DiscordSDK = await importSDK();
-      } catch (e) {
-        return err("No carga el SDK", [
-          "Revisa URL Mappings (añade los tres CDNs):",
-          "• <code>/ → laurygodiva.github.io/whitelist-activity/</code>",
-          "• <code>/npm → cdn.jsdelivr.net</code>",
-          "• <code>/unpkg → unpkg.com</code>",
-          "• <code>/skypack → cdn.skypack.dev</code>",
-          `<br>Detalle: <code>${e?.message || e}</code>`
-        ].join("<br>"));
-      }
+      try { DiscordSDK = await importSDK(); }
+      catch { return err("No carga el SDK", "Revisa el mapping <code>/api → TU_WORKER</code> y que el Worker expone <code>/sdk</code>."); }
 
-      // Handshake con Discord (timeout 8s)
       hintEl.textContent = "Esperando handshake de Discord…";
       const sdk = new DiscordSDK(CLIENT_ID);
       try {
-        await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("sdk_ready_timeout")),8000)) ]);
+        await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),8000)) ]);
       } catch {
-        return err("Sin handshake con Discord", [
-          "Abre esto como <b>Embedded Activity</b> de <b>esta misma app</b>.",
-          "Verifica que Embedded App está activado y el Root Mapping apunta a GitHub Pages."
-        ].join("<br>"));
+        return err("Sin handshake con Discord", "Ábrelo como <b>Embedded Activity</b> de esta app.");
       }
 
-      // Obtener usuario sin OAuth (getUser)
-      hintEl.textContent = "Obteniendo usuario…";
-      let me = null;
-      try { const r1 = await sdk.commands.getUser?.(); me = r1?.user ?? r1 ?? null; } catch {}
-      if (!me) { try { const r2 = await sdk.commands.getUser?.({ id: "me" }); me = r2?.user ?? r2 ?? null; } catch {} }
-      if (me) return ok(me);
+      hintEl.textContent = "Autorizando…";
+      try {
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          state: "",
+          prompt: "none",
+          scope: ["identify"]
+        });
 
-      // Cliente sin getUser
-      return err("El cliente no soporta getUser", [
-        "Tu build de Discord aún no expone <code>sdk.commands.getUser</code>.",
-        "Opciones:",
-        "• Prueba en el cliente Desktop actualizado.",
-        "• O pasamos a la Opción B (OAuth con Worker) añadiendo <code>/api</code>."
-      ].join("<br>"));
+        const tres = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ code })
+        });
+        const t = await tres.json();
+        if (!tres.ok || !t?.access_token) throw new Error("token_exchange_failed");
+
+        await sdk.commands.authenticate({ access_token: t.access_token });
+
+        const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${t.access_token}` } });
+        const me = await meRes.json();
+        if (!meRes.ok) throw new Error("me_failed");
+        ok(me);
+      } catch (e) {
+        console.error(e);
+        err("Fallo de autorización", "Revisa el Worker y las variables <code>DISCORD_CLIENT_ID</code> y <code>DISCORD_CLIENT_SECRET</code>.");
+      }
     })();
   </script>
 </body>
