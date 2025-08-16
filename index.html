@@ -26,11 +26,13 @@
     <div class="spinner" id="spinner"></div>
   </div>
 
-  <!-- Import ESM ESTÁTICO desde el Worker (misma origin del proxy) -->
-  <script type="module">
-    import { DiscordSDK } from "/api/sdk";   // <- estático
+  <!-- 1) Cargamos el SDK; el Worker lo deja en window.DiscordSDK -->
+  <script src="/api/sdk?v=1"></script>
 
+  <!-- 2) Lógica de la Activity -->
+  <script>
     const CLIENT_ID = "1383517896747126987";
+
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
@@ -50,6 +52,11 @@
 
     (async () => {
       try {
+        if (!window.DiscordSDK) {
+          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> en /api/sdk.");
+        }
+        const { DiscordSDK } = window;
+
         hintEl.textContent = "Esperando handshake de Discord…";
         const sdk = new DiscordSDK(CLIENT_ID);
         await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout")),8000)) ]);
@@ -82,7 +89,7 @@
         if (String(e?.message).includes("timeout")) {
           err("Sin handshake con Discord", "Ábrelo como <b>Embedded Activity</b> de esta app.");
         } else {
-          err("Fallo de autorización o carga de SDK", "Revisa mapping <code>/api</code> y las variables del Worker.");
+          err("Fallo de autorización", "Revisa mapping <code>/api</code> y las variables del Worker.");
         }
       }
     })();
