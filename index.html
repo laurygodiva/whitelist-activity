@@ -26,12 +26,13 @@
     <div class="spinner" id="spinner"></div>
   </div>
 
-  <!-- 1) Carga del SDK como MÓDULO (ESM). Importantísimo el type="module". -->
-  <script type="module" src="/api/sdk?v=3" id="sdk"></script>
+  <!-- Carga del SDK como módulo desde el Worker -->
+  <script type="module" src="/api/sdk" id="sdk"></script>
 
-  <!-- 2) Lógica: esperamos a que el módulo termine (evento load del <script>) -->
+  <!-- Lógica de la Activity -->
   <script>
     const CLIENT_ID = "1383517896747126987";
+
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
@@ -49,14 +50,15 @@
     };
     const err = (t, d) => { nameEl.textContent = t; hintEl.innerHTML = d; hintEl.classList.add("err"); spinnerEl.style.display = "none"; };
 
+    // Espera a que cargue el módulo del SDK
     const sdkScript = document.getElementById("sdk");
     sdkScript.addEventListener("error", () => {
-      err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk</code> responde 200.");
+      err("No carga el SDK", "Revisa el mapping <code>/api</code> y que <code>/api/sdk</code> responda 200.");
     });
     sdkScript.addEventListener("load", async () => {
       try {
         if (!window.DiscordSDK) {
-          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> (línea añadida en /api/sdk).");
+          return err("No carga el SDK", "El Worker debe exponer <code>globalThis.DiscordSDK</code> en <code>/api/sdk</code>.");
         }
         const { DiscordSDK } = window;
 
