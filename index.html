@@ -65,6 +65,11 @@
   .btn-primary{background:linear-gradient(180deg,var(--grad3),var(--grad4));color:#0b0f14;border-color:transparent}
   .btn-success{background:linear-gradient(180deg,var(--grad2),var(--grad3));color:#0b0f14;border-color:transparent}
   .note{font-size:13px;color:var(--muted)}
+  .error-message {
+    color: #ff6b6b;
+    font-weight: bold;
+    margin-top: 10px;
+  }
 </style>
 </head>
 <body>
@@ -147,63 +152,89 @@
   window.WEBHOOK_URL = 'https://discord.com/api/webhooks/1385716193066745997/ZoQ-DRAkE9ilPSQZQ23gU1b6uT3U_tMQ8Qcpmgx_2AvyrG8c1Ey75iAVeWKJ4wcKky-e';
 </script>
 
-<!-- SDK: se carga por el mapping /discord-sdk -> cdn.jsdelivr.net -->
-<script src="/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js"></script>
-
 <script>
 /* ==================== App base ==================== */
-const APP_ID=window.APP_ID||'', GUILD_ID=window.GUILD_ID||'', WEBHOOK_URL=window.WEBHOOK_URL||'';
-const $=s=>document.querySelector(s); const bar=$("#bar"), pill=$("#pill");
-let USER_ID=null, DISCORD_NAME=null;
+const APP_ID = window.APP_ID || '';
+const GUILD_ID = window.GUILD_ID || '';
+const WEBHOOK_URL = window.WEBHOOK_URL || '';
+const $ = s => document.querySelector(s);
+let USER_ID = null, DISCORD_NAME = null, SDK_LOADED = false;
 
-function status(msg){ const t=$("#statusTag"); t.style.display='block'; t.textContent=msg; }
-function setProgress(p){ if(bar&&pill){ bar.style.width=p+"%"; pill.textContent=Math.round(p)+"%"; } }
-function showStep(n){ $("#step1").style.display=n===1?"block":"none"; $("#step2").style.display=n===2?"block":"none"; $("#step3").style.display=n===3?"block":"none"; }
-function shuffled(a){ return a.map(v=>({v,r:Math.random()})).sort((x,y)=>x.r-y.r).map(o=>o.v); }
-function pickOneWithIndex(a){ const i=Math.floor(Math.random()*a.length); return { item:a[i], idx:i }; }
-function uuidv4(){ return (crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0,v=c==='x'?r:(r&0x3|0x8);return v.toString(16);})); }
-function toProxiedDiscordUrl(url){ return url.replace(/^https?:\/\/(?:ptb\.)?discord\.com\/api/i, '/discord-api'); }
+// Función para mostrar estado/errores
+function status(msg, isError = false) {
+  const t = $("#statusTag");
+  t.style.display = 'block';
+  t.textContent = msg;
+  if (isError) {
+    t.classList.add('error-message');
+    t.classList.remove('muted');
+  } else {
+    t.classList.add('muted');
+    t.classList.remove('error-message');
+  }
+}
 
-async function setupDiscordSDK() {
+// Función para verificar campos requeridos
+function checkRequiredFields() {
+  const required = ['#discord', '#edad', '#region'];
+  const allFilled = required.every(selector => {
+    const el = $(selector);
+    return el && el.value.trim() !== '';
+  });
+  
+  $('#startBtn').disabled = !allFilled || !SDK_LOADED;
+}
+
+// Función para cargar el SDK manualmente
+function loadDiscordSDK() {
+  return new Promise((resolve, reject) => {
+    if (window.DiscordSDK) {
+      SDK_LOADED = true;
+      return resolve();
+    }
+
+    const script = document.createElement('script');
+    script.src = '/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js';
+    script.onload = () => {
+      if (window.DiscordSDK) {
+        SDK_LOADED = true;
+        resolve();
+      } else {
+        reject(new Error('SDK no se cargó correctamente'));
+      }
+    };
+    script.onerror = () => reject(new Error('Error al cargar el SDK'));
+    document.head.appendChild(script);
+  });
+}
+
+// Función de autenticación mejorada
+async function authenticateWithDiscord() {
   try {
+    status('Conectando con Discord...');
+    
+    await loadDiscordSDK();
     const sdk = new DiscordSDK(APP_ID);
     
     await sdk.ready();
-    console.log('Discord SDK está listo');
+    console.log('Discord SDK listo');
     
-    // Autenticación
     const { code } = await sdk.commands.authorize({
       client_id: APP_ID,
       response_type: 'code',
       scope: ['identify']
     });
     
-    // Obtener token de acceso
-    const response = await fetch(toProxiedDiscordUrl('https://discord.com/api/oauth2/token'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams({
-        client_id: APP_ID,
-        client_secret: '', // Necesitarás un client_secret si es una aplicación verificada
-        grant_type: 'authorization_code',
-        code: code,
-        redirect_uri: window.location.origin
-      })
-    });
-    
-    const { access_token } = await response.json();
-    
     // Obtener información del usuario
-    const userResponse = await fetch(toProxiedDiscordUrl('https://discord.com/api/users/@me'), {
+    const response = await fetch(`/discord-api/users/@me`, {
       headers: {
-        Authorization: `Bearer ${access_token}`
+        Authorization: `Bearer ${code}`
       }
     });
     
-    const user = await userResponse.json();
+    if (!response.ok) throw new Error('Error al obtener datos del usuario');
     
+    const user = await response.json();
     if (user && user.id) {
       USER_ID = user.id;
       DISCORD_NAME = user.global_name || user.username;
@@ -211,48 +242,18 @@ async function setupDiscordSDK() {
         $('#discord').value = DISCORD_NAME;
       }
       status(`Conectado como: ${DISCORD_NAME}`);
-      $('#startBtn').disabled = false;
+      return true;
     } else {
-      throw new Error('No se pudo obtener información del usuario');
+      throw new Error('Datos de usuario incompletos');
     }
-  } catch (e) {
-    console.error('Error en setupDiscordSDK:', e);
-    status('Error de autenticación. Abre como Actividad.');
-    $('#startBtn').disabled = true;
+  } catch (error) {
+    console.error('Error en autenticación:', error);
+    status('Error de conexión con Discord. Abre como Actividad.', true);
+    return false;
   }
 }
 
-async function initIdentity() {
-  try {
-    status('Inicializando SDK...');
-    
-    // Verifica si el SDK está disponible
-    if (!window.DiscordSDK) {
-      // Intenta cargar el SDK manualmente si no está disponible
-      const script = document.createElement('script');
-      script.src = '/discord-sdk/npm/@discord/embedded-app-sdk@latest/dist/embedded.js';
-      script.onload = async () => {
-        if (!window.DiscordSDK) {
-          throw new Error('SDK no se cargó correctamente');
-        }
-        await setupDiscordSDK();
-      };
-      script.onerror = () => {
-        status('Error al cargar el SDK. Abre como Actividad de Discord.');
-        $('#startBtn').disabled = true;
-      };
-      document.head.appendChild(script);
-    } else {
-      await setupDiscordSDK();
-    }
-  } catch (e) {
-    console.error('Error en initIdentity:', e);
-    status('Error de autenticación. Abre como Actividad.');
-    $('#startBtn').disabled = true;
-  }
-}
-
-/* ==================== Banco de preguntas (mismo contenido) ==================== */
+/* ==================== Banco de preguntas ==================== */
 const BLOCKS = {
   C1:[{q:"Cuál de los siguientes conceptos no es sancionable?",answers:[{text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},{text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}]},
       {q:"¿Cuando se permite hacer MG?",answers:[{text:"Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.",isCorrect:false},{text:"Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.",isCorrect:true},{text:"En cualquier situación excepto en los PVP.",isCorrect:false}]},
@@ -287,132 +288,239 @@ const BLOCKS = {
 };
 
 /* ==================== Lógica de test ==================== */
-const CATS=["Conocimientos","Situaciones"];
-let QUESTIONS=[]; const state={i:0,answers:[]};
+const CATS = ["Conocimientos", "Situaciones"];
+let QUESTIONS = [];
+const state = { i: 0, answers: [] };
 
-function renderQ(){
-  const t=QUESTIONS.length||10, q=QUESTIONS[state.i];
-  $("#qTitle").textContent=q.question;
-  $("#catPill").textContent=q.category+(state.i<5?` (Bloque ${state.i+3})`:` (Bloque ${state.i-5+8})`);
-  $("#qIndex").textContent=`Pregunta ${state.i+1} de ${t}`;
-  const body=$("#qBody"); body.innerHTML="";
-  q.answers.forEach((a,idx)=>{
-    const lab=document.createElement("label"); lab.className="option";
-    const input=document.createElement("input"); input.type=q.multi?"checkbox":"radio"; input.name="q"; input.value=idx;
-    input.addEventListener("change",()=>{ $("#nextBtn").disabled = body.querySelectorAll("input:checked").length===0; });
-    const span=document.createElement("span"); span.textContent=a.text;
-    lab.appendChild(input); lab.appendChild(span); body.appendChild(lab);
+function renderQ() {
+  const t = QUESTIONS.length || 10;
+  const q = QUESTIONS[state.i];
+  $("#qTitle").textContent = q.question;
+  $("#catPill").textContent = q.category + (state.i < 5 ? ` (Bloque ${state.i + 3})` : ` (Bloque ${state.i - 5 + 8})`);
+  $("#qIndex").textContent = `Pregunta ${state.i + 1} de ${t}`;
+  
+  const body = $("#qBody");
+  body.innerHTML = "";
+  
+  q.answers.forEach((a, idx) => {
+    const lab = document.createElement("label");
+    lab.className = "option";
+    
+    const input = document.createElement("input");
+    input.type = q.multi ? "checkbox" : "radio";
+    input.name = "q";
+    input.value = idx;
+    input.addEventListener("change", () => {
+      $("#nextBtn").disabled = body.querySelectorAll("input:checked").length === 0;
+    });
+    
+    const span = document.createElement("span");
+    span.textContent = a.text;
+    
+    lab.appendChild(input);
+    lab.appendChild(span);
+    body.appendChild(lab);
   });
-  const saved=state.answers[state.i];
-  if(saved&&saved.chosenIdx){
-    saved.chosenIdx.forEach(v=>{ const el=body.querySelector(`input[value="${v}"]`); if(el) el.checked=true; });
-    $("#nextBtn").disabled=saved.chosenIdx.length===0;
-  }else $("#nextBtn").disabled=true;
-  setProgress(5+(state.i/t)*85);
-}
-
-function collect(omit=false){
-  const q=QUESTIONS[state.i], body=$("#qBody");
-  const sel=[...body.querySelectorAll("input:checked")].map(i=>Number(i.value));
-  const correctSet=new Set(q.answers.map((a,i)=>a.isCorrect?i:null).filter(i=>i!==null));
-  const chosen=new Set(sel);
-  let correct=true;
-  if(omit||sel.length===0) correct=false;
-  else{
-    for(const i of chosen) if(!correctSet.has(i)){ correct=false; break; }
-    if(correct){ for(const i of correctSet) if(!chosen.has(i)){ correct=false; break; } }
+  
+  const saved = state.answers[state.i];
+  if (saved && saved.chosenIdx) {
+    saved.chosenIdx.forEach(v => {
+      const el = body.querySelector(`input[value="${v}"]`);
+      if (el) el.checked = true;
+    });
+    $("#nextBtn").disabled = saved.chosenIdx.length === 0;
+  } else {
+    $("#nextBtn").disabled = true;
   }
-  state.answers[state.i]={ chosenIdx: omit?[]:sel, correct };
+  
+  setProgress(5 + (state.i / t) * 85);
 }
 
-function startTest(){
-  if(!USER_ID){ alert("No se pudo identificar tu cuenta de Discord. Abre la whitelist como Actividad."); return; }
-  if(!$("#discord").value.trim()){ alert("Pon tu nombre de Discord."); return; }
-  const keys=["C1","C2","C3","C4","C5","S1","S2","S3","S4","S5"];
-  QUESTIONS = keys.map((bk,idx)=>{
-    const {item,idx:vi}=pickOneWithIndex(BLOCKS[bk]);
-    const answers=shuffled(item.answers.map(a=>({...a})));
-    const category=idx<5?CATS[0]:CATS[1];
-    return { id:`${bk}-${vi+1}`,bloque:bk,category,question:item.q,answers,
-             multi:item.answers.filter(a=>a.isCorrect).length>1 };
+function collect(omit = false) {
+  const q = QUESTIONS[state.i];
+  const body = $("#qBody");
+  const sel = [...body.querySelectorAll("input:checked")].map(i => Number(i.value));
+  const correctSet = new Set(q.answers.map((a, i) => a.isCorrect ? i : null).filter(i => i !== null));
+  const chosen = new Set(sel);
+  
+  let correct = true;
+  if (omit || sel.length === 0) {
+    correct = false;
+  } else {
+    for (const i of chosen) {
+      if (!correctSet.has(i)) {
+        correct = false;
+        break;
+      }
+    }
+    if (correct) {
+      for (const i of correctSet) {
+        if (!chosen.has(i)) {
+          correct = false;
+          break;
+        }
+      }
+    }
+  }
+  
+  state.answers[state.i] = { chosenIdx: omit ? [] : sel, correct };
+}
+
+function startTest() {
+  if (!USER_ID) {
+    alert("Debes abrir esta aplicación como Actividad de Discord para continuar");
+    return;
+  }
+  
+  if (!$("#discord").value.trim()) {
+    alert("Por favor ingresa tu nombre de Discord");
+    return;
+  }
+  
+  const keys = ["C1", "C2", "C3", "C4", "C5", "S1", "S2", "S3", "S4", "S5"];
+  QUESTIONS = keys.map((bk, idx) => {
+    const { item, idx: vi } = pickOneWithIndex(BLOCKS[bk]);
+    const answers = shuffled(item.answers.map(a => ({ ...a })));
+    const category = idx < 5 ? CATS[0] : CATS[1];
+    return {
+      id: `${bk}-${vi + 1}`,
+      bloque: bk,
+      category,
+      question: item.q,
+      answers,
+      multi: item.answers.filter(a => a.isCorrect).length > 1
+    };
   });
-  state.i=0; state.answers=new Array(QUESTIONS.length);
-  setProgress(5); showStep(2); renderQ();
+  
+  state.i = 0;
+  state.answers = new Array(QUESTIONS.length);
+  setProgress(5);
+  showStep(2);
+  renderQ();
 }
-function next(){ collect(false); if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
-function omit(){ collect(true);  if(state.i<QUESTIONS.length-1){ state.i++; renderQ(); } else { setProgress(100); showStep(3); } }
-function prev(){ if(state.i===0) return; state.i--; renderQ(); }
 
-function computeProv(){
-  const total=QUESTIONS.length;
-  const correct=state.answers.reduce((a,b)=>a+(b&&b.correct?1:0),0);
-  const wrong=total-correct;
-  const passed = wrong<=2; // 3 fallos => suspenso
+function next() {
+  collect(false);
+  if (state.i < QUESTIONS.length - 1) {
+    state.i++;
+    renderQ();
+  } else {
+    setProgress(100);
+    showStep(3);
+  }
+}
+
+function omit() {
+  collect(true);
+  if (state.i < QUESTIONS.length - 1) {
+    state.i++;
+    renderQ();
+  } else {
+    setProgress(100);
+    showStep(3);
+  }
+}
+
+function prev() {
+  if (state.i === 0) return;
+  state.i--;
+  renderQ();
+}
+
+function computeProv() {
+  const total = QUESTIONS.length;
+  const correct = state.answers.reduce((a, b) => a + (b && b.correct ? 1 : 0), 0);
+  const wrong = total - correct;
+  const passed = wrong <= 2; // 3 fallos => suspenso
   return { total, correct, wrong, passed };
 }
 
-async function send(){
+async function send() {
   const { total, correct, wrong, passed } = computeProv();
-  const submissionId=uuidv4(), clientTs=Date.now();
-  const detail=QUESTIONS.map((q,i)=>{
-    const s=state.answers[i]||{chosenIdx:[],correct:false};
-    return { id:q.id,bloque:q.bloque,category:q.category,question:q.question,
-      answers:q.answers.map(a=>({text:a.text,isCorrect:!!a.isCorrect})),
-      chosenIdx:s.chosenIdx, chosenText:s.chosenIdx.map(ix=>q.answers[ix]?.text||""), multi:q.multi };
+  const submissionId = uuidv4();
+  const clientTs = Date.now();
+  
+  const detail = QUESTIONS.map((q, i) => {
+    const s = state.answers[i] || { chosenIdx: [], correct: false };
+    return {
+      id: q.id,
+      bloque: q.bloque,
+      category: q.category,
+      question: q.question,
+      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })),
+      chosenIdx: s.chosenIdx,
+      chosenText: s.chosenIdx.map(ix => q.answers[ix]?.text || ""),
+      multi: q.multi
+    };
   });
-  const playerData={
+  
+  const playerData = {
     discordName: $("#discord").value || DISCORD_NAME || "",
     edad: $("#edad").value || "",
     region: $("#region").value || "",
     conoces: $("#conoces").value || "",
-    exp: ($("#exp").value || "").slice(0,1000)
+    exp: ($("#exp").value || "").slice(0, 1000)
   };
-  const attachment={ submissionId,userId:USER_ID,guildId:GUILD_ID,clientTs,
-    provisional:{score:correct,total,wrong,passed}, detail, playerData };
+  
+  const attachment = {
+    submissionId,
+    userId: USER_ID,
+    guildId: GUILD_ID,
+    clientTs,
+    provisional: { score: correct, total, wrong, passed },
+    detail,
+    playerData
+  };
 
-  const embed={ title:"Nueva solicitud de Whitelist", description:"Solicitud enviada desde la Activity.",
-    color: passed?0x46b34b:0xff6b6b,
-    fields:[
-      {name:"Usuario",value:`<@${USER_ID}> \`${USER_ID}\``},
-      {name:"Discord",value:playerData.discordName||"—",inline:true},
-      {name:"Edad",value:playerData.edad||"—",inline:true},
-      {name:"Región",value:playerData.region||"—",inline:true},
-      {name:"Conociste por",value:playerData.conoces||"—",inline:true},
-      {name:"Resultado provisional",value:`Score: ${correct}/${total} • Fallos: ${wrong} • ${passed?"APROBADO":"SUSPENSO"}`}
+  const embed = {
+    title: "Nueva solicitud de Whitelist",
+    description: "Solicitud enviada desde la Activity.",
+    color: passed ? 0x46b34b : 0xff6b6b,
+    fields: [
+      { name: "Usuario", value: `<@${USER_ID}> \`${USER_ID}\`` },
+      { name: "Discord", value: playerData.discordName || "—", inline: true },
+      { name: "Edad", value: playerData.edad || "—", inline: true },
+      { name: "Región", value: playerData.region || "—", inline: true },
+      { name: "Conociste por", value: playerData.conoces || "—", inline: true },
+      { name: "Resultado provisional", value: `Score: ${correct}/${total} • Fallos: ${wrong} • ${passed ? "APROBADO" : "SUSPENSO"}` }
     ],
-    footer:{text:"Proyecto Roleplay – Sistema de Whitelist"},
-    timestamp:new Date(clientTs).toISOString()
+    footer: { text: "Proyecto Roleplay – Sistema de Whitelist" },
+    timestamp: new Date(clientTs).toISOString()
   };
 
-  try{
-    $("#sendNote").textContent="Enviando…";
-    const fd=new FormData();
-    fd.append("payload_json", JSON.stringify({ username:"Whitelist (Actividad)", embeds:[embed], allowed_mentions:{parse:[]} }));
-    const blob=new Blob([JSON.stringify(attachment,null,2)],{type:"application/json"});
+  try {
+    $("#sendNote").textContent = "Enviando…";
+    const fd = new FormData();
+    fd.append("payload_json", JSON.stringify({
+      username: "Whitelist (Actividad)",
+      embeds: [embed],
+      allowed_mentions: { parse: [] }
+    }));
+    
+    const blob = new Blob([JSON.stringify(attachment, null, 2)], { type: "application/json" });
     fd.append("files[0]", blob, "submission.json");
 
-    const r=await fetch(toProxiedDiscordUrl(WEBHOOK_URL),{ method:"POST", body:fd });
-    if(!r.ok) throw new Error("HTTP "+r.status);
-    $("#sendNote").textContent="¡Enviado! El staff procesará tu solicitud.";
-  }catch(e){ console.error(e); $("#sendNote").textContent="Error al enviar. Reintenta más tarde."; }
+    const r = await fetch(`/discord-api/webhooks/${WEBHOOK_URL.split('/').slice(-2).join('/')}`, {
+      method: "POST",
+      body: fd
+    });
+    
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    $("#sendNote").textContent = "¡Enviado! El staff procesará tu solicitud.";
+  } catch (e) {
+    console.error(e);
+    $("#sendNote").textContent = "Error al enviar. Reintenta más tarde.";
+  }
 }
 
-/* Wiring */
+/* ==================== Inicialización ==================== */
 document.addEventListener('DOMContentLoaded', () => {
-  // Verificar campos requeridos para habilitar el botón de inicio
-  const requiredFields = ['#discord', '#edad', '#region'];
-  requiredFields.forEach(selector => {
-    $(selector)?.addEventListener('input', checkStartButton);
+  // Configurar listeners para campos de formulario
+  const fields = ['#discord', '#edad', '#region', '#conoces', '#exp'];
+  fields.forEach(field => {
+    $(field)?.addEventListener('input', checkRequiredFields);
   });
-  
-  function checkStartButton() {
-    const allFilled = requiredFields.every(selector => {
-      const el = $(selector);
-      return el && el.value.trim() !== '';
-    });
-    $('#startBtn').disabled = !allFilled;
-  }
-  
+
   // Asignar event listeners
   $('#startBtn').addEventListener('click', startTest);
   $('#nextBtn').addEventListener('click', next);
@@ -420,12 +528,69 @@ document.addEventListener('DOMContentLoaded', () => {
   $('#prevBtn').addEventListener('click', prev);
   $('#backToTest').addEventListener('click', () => showStep(2));
   $('#sendBtn').addEventListener('click', send);
-  
-  // Inicialización
+
+  // Mostrar primer paso
   showStep(1);
   setProgress(0);
-  initIdentity();
+
+  // Iniciar autenticación con Discord
+  (async () => {
+    try {
+      // Verificar si estamos en un iframe de Discord
+      if (window.location !== window.parent.location) {
+        const authSuccess = await authenticateWithDiscord();
+        if (!authSuccess) {
+          $('#startBtn').disabled = true;
+          return;
+        }
+      } else {
+        status('Abre esta aplicación como Actividad de Discord para continuar', true);
+        $('#startBtn').disabled = true;
+        return;
+      }
+      
+      // Verificar campos requeridos
+      checkRequiredFields();
+    } catch (error) {
+      console.error('Error en inicialización:', error);
+      status('Error al iniciar la aplicación. Recarga la página.', true);
+      $('#startBtn').disabled = true;
+    }
+  })();
 });
+
+// Funciones auxiliares
+function showStep(n) {
+  $("#step1").style.display = n === 1 ? "block" : "none";
+  $("#step2").style.display = n === 2 ? "block" : "none";
+  $("#step3").style.display = n === 3 ? "block" : "none";
+}
+
+function setProgress(p) {
+  const bar = $("#bar"), pill = $("#pill");
+  if (bar && pill) {
+    bar.style.width = p + "%";
+    pill.textContent = Math.round(p) + "%";
+  }
+}
+
+function shuffled(a) {
+  return a.map(v => ({ v, r: Math.random() }))
+          .sort((x, y) => x.r - y.r)
+          .map(o => o.v);
+}
+
+function pickOneWithIndex(a) {
+  const i = Math.floor(Math.random() * a.length);
+  return { item: a[i], idx: i };
+}
+
+function uuidv4() {
+  return crypto?.randomUUID?.() || 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
 </script>
 </body>
 </html>
