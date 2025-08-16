@@ -7,7 +7,7 @@
 <style>
   :root { color-scheme: dark; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
-  .card { width:320px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
+  .card { width:340px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
   img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 12px; }
   h1 { font-size:18px; margin:8px 0 0; color:#e2e8f0; }
   p  { font-size:13px; margin:6px 0 0; color:#94a3b8; }
@@ -51,79 +51,78 @@
       spinnerEl.style.display = "none";
     };
 
+    // Intenta varios CDNs mapeados: jsDelivr, unpkg y Skypack
+    const CDN_PREFIXES = ["/npm", "/unpkg", "/skypack"];
+    const PATHS = [
+      "/@discord/embedded-app-sdk@2.2.0/dist/index.mjs",   // jsDelivr/unpkg
+      "/@discord/embedded-app-sdk@2.2.0/+esm",              // jsDelivr
+      "/@discord/embedded-app-sdk@2/dist/index.mjs",        // fallback
+      "/@discord/embedded-app-sdk@2/+esm",                  // fallback
+      "/@discord/embedded-app-sdk@2.2.0"                    // Skypack (ESM)
+    ];
+
     async function importSDK() {
-      // Probamos diferentes rutas ESM en jsDelivr (sin redirecciones a otros hosts)
-      const candidates = [
-        "/npm/@discord/embedded-app-sdk@2.2.0/dist/index.mjs",
-        "/npm/@discord/embedded-app-sdk@2.2.0/+esm",
-        "/npm/@discord/embedded-app-sdk@2/dist/index.mjs",
-        "/npm/@discord/embedded-app-sdk@2/+esm"
-      ];
-      for (const p of candidates) {
+      // Ping rápido para ver cuál responde
+      let lastStatus = "";
+      for (const prefix of CDN_PREFIXES) {
         try {
-          const mod = await import(p);
-          if (mod?.DiscordSDK) return mod.DiscordSDK;
-        } catch {}
+          const ping = await fetch(`${prefix}/@discord/embedded-app-sdk@2.2.0/package.json?ts=${Date.now()}`, { cache: "no-store" });
+          lastStatus = `${prefix}:${ping.status}`;
+          if (!ping.ok) throw 0;
+        } catch {
+          continue; // prueba el siguiente CDN
+        }
+        // Intento de import en este CDN
+        for (const path of PATHS) {
+          try {
+            const mod = await import(`${prefix}${path}`);
+            if (mod?.DiscordSDK) return mod.DiscordSDK;
+          } catch {}
+        }
       }
-      throw new Error("no_sdk");
+      throw new Error(`no_sdk (${lastStatus})`);
     }
 
     (async () => {
-      // Comprobar que /npm responde (mapping correcto)
-      try {
-        const ping = await fetch("/npm/@discord/embedded-app-sdk@2.2.0/package.json?ping=" + Date.now(), { cache:"no-store" });
-        if (!ping.ok) throw 0;
-      } catch {
-        return err("No carga el SDK", [
-          "Revisa URL Mappings con <b>https://</b>:",
-          "• <code>/ → https://laurygodiva.github.io/whitelist-activity/</code>",
-          "• <code>/npm → https://cdn.jsdelivr.net</code>",
-          "• <code>/cdn → https://cdn.discordapp.com</code>"
-        ].join("<br>"));
-      }
-
-      // Importar el SDK desde jsDelivr
       let DiscordSDK;
       try {
         DiscordSDK = await importSDK();
-      } catch {
-        return err("Error importando el SDK", "No se pudo cargar desde <code>jsDelivr</code>. Comprueba el mapping <code>/npm</code>.");
+      } catch (e) {
+        return err("No carga el SDK", [
+          "Revisa URL Mappings (añade los tres CDNs):",
+          "• <code>/ → laurygodiva.github.io/whitelist-activity/</code>",
+          "• <code>/npm → cdn.jsdelivr.net</code>",
+          "• <code>/unpkg → unpkg.com</code>",
+          "• <code>/skypack → cdn.skypack.dev</code>",
+          `<br>Detalle: <code>${e?.message || e}</code>`
+        ].join("<br>"));
       }
 
       // Handshake con Discord (timeout 8s)
       hintEl.textContent = "Esperando handshake de Discord…";
       const sdk = new DiscordSDK(CLIENT_ID);
-      const ready = sdk.ready();
-      const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error("sdk_ready_timeout")), 8000));
-      try { await Promise.race([ready, timeout]); }
-      catch {
+      try {
+        await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("sdk_ready_timeout")),8000)) ]);
+      } catch {
         return err("Sin handshake con Discord", [
           "Abre esto como <b>Embedded Activity</b> de <b>esta misma app</b>.",
-          "Verifica que <b>Embedded App</b> está activado y el Root Mapping apunta a GitHub Pages."
+          "Verifica que Embedded App está activado y el Root Mapping apunta a GitHub Pages."
         ].join("<br>"));
       }
 
-      // Obtener usuario vía getUser (modo estático)
+      // Obtener usuario sin OAuth (getUser)
       hintEl.textContent = "Obteniendo usuario…";
       let me = null;
-      try {
-        const r1 = await sdk.commands.getUser?.();
-        me = r1?.user ?? r1 ?? null;
-      } catch {}
-      if (!me) {
-        try {
-          const r2 = await sdk.commands.getUser?.({ id: "me" });
-          me = r2?.user ?? r2 ?? null;
-        } catch {}
-      }
+      try { const r1 = await sdk.commands.getUser?.(); me = r1?.user ?? r1 ?? null; } catch {}
+      if (!me) { try { const r2 = await sdk.commands.getUser?.({ id: "me" }); me = r2?.user ?? r2 ?? null; } catch {} }
       if (me) return ok(me);
 
-      // Fallback: cliente sin getUser
+      // Cliente sin getUser
       return err("El cliente no soporta getUser", [
         "Tu build de Discord aún no expone <code>sdk.commands.getUser</code>.",
         "Opciones:",
         "• Prueba en el cliente Desktop actualizado.",
-        "• O pasamos a la Opción B (OAuth con Worker) añadiendo el mapping <code>/api</code>."
+        "• O pasamos a la Opción B (OAuth con Worker) añadiendo <code>/api</code>."
       ].join("<br>"));
     })();
   </script>
