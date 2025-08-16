@@ -1,62 +1,59 @@
-import { DiscordSDK } from "@discord/embedded-app-sdk";
+// Import del SDK sin npm, vía el proxy /npm (lo declaras en URL Mappings).
+import { DiscordSDK } from "/npm/@discord/embedded-app-sdk@2.2.0";
 
-/**
- * Flujo:
- * 1) Espera READY
- * 2) authorize({ scope: ['identify'] })
- * 3) POST /api/token -> access_token
- * 4) authenticate({ access_token })
- * 5) GET /api/@me y pintar nombre + avatar
- */
+const CLIENT_ID = "1383517896747126987"; // tu client_id
+
+const avatarEl  = document.getElementById("avatar");
+const nameEl    = document.getElementById("name");
+const hintEl    = document.getElementById("hint");
+const spinnerEl = document.getElementById("spinner");
+
+// Utilidad para construir URLs de avatar desde el CDN proxyeado
+const cdn = (path) => `/cdn${path}`;
+
+function paintUser(u) {
+  const display = u?.global_name || u?.username || "Usuario";
+  let avatar = cdn(`/embed/avatars/0.png`);
+  if (u?.avatar) avatar = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
+  avatarEl.src = avatar;
+  nameEl.textContent = display;
+  hintEl.textContent = `ID: ${u?.id ?? "desconocido"}`;
+  spinnerEl.style.display = "none";
+}
+
 (async () => {
-  const clientId = import.meta.env.VITE_DISCORD_CLIENT_ID;
-  const cdnPrefix = import.meta.env.VITE_CDN_PREFIX ?? "/cdn";
-
-  const avatarEl = document.getElementById("avatar");
-  const nameEl = document.getElementById("name");
-  const hintEl = document.getElementById("hint");
-  const spinnerEl = document.getElementById("spinner");
-
   try {
-    const sdk = new DiscordSDK(clientId);
-    await sdk.ready();
+    const sdk = new DiscordSDK(CLIENT_ID);
+    await sdk.ready(); // Espera a Discord
 
-    const { code } = await sdk.commands.authorize({
-      client_id: clientId,
-      response_type: "code",
-      state: "",
-      prompt: "none",
-      scope: ["identify"]
-    });
-
-    const tokenRes = await fetch("/api/token", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code })
-    });
-    const { access_token } = await tokenRes.json();
-
-    await sdk.commands.authenticate({ access_token });
-
-    const meRes = await fetch("/api/@me", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-    const me = await meRes.json();
-
-    const displayName = me.global_name || me.username || "Usuario";
-    let avatarUrl = `${cdnPrefix}/embed/avatars/0.png`;
-    if (me.avatar) {
-      avatarUrl = `${cdnPrefix}/avatars/${me.id}/${me.avatar}.png?size=256`;
+    // Ruta 100% estática: getUser (sin OAuth)
+    // Algunos clientes aceptan sin args; otros requieren { id: 'me' }.
+    let me = null;
+    if (sdk?.commands?.getUser) {
+      try {
+        const r1 = await sdk.commands.getUser();
+        me = r1?.user ?? r1 ?? null;
+      } catch {
+        const r2 = await sdk.commands.getUser({ id: "me" });
+        me = r2?.user ?? r2 ?? null;
+      }
     }
 
-    avatarEl.src = avatarUrl;
-    nameEl.textContent = displayName;
-    hintEl.textContent = `ID: ${me.id}`;
-    spinnerEl.style.display = "none";
+    if (!me) {
+      // Si tu cliente aún no soporta getUser, mostramos ayuda.
+      throw new Error("getUser_unavailable");
+    }
+
+    paintUser(me);
   } catch (err) {
     console.error(err);
-    nameEl.textContent = "Error al autenticar";
-    hintEl.textContent = "Revisa permisos de la Activity y URL mappings";
+    nameEl.textContent = "No se pudo obtener tu perfil";
+    hintEl.innerHTML = [
+      "Asegúrate de abrir esto dentro de una Activity en Discord.",
+      "Si el error persiste, tu cliente podría no soportar <code>getUser</code> aún.",
+      "En ese caso, usa la Opción B (OAuth con Worker) o pídeme que la añada."
+    ].join("<br>");
+    hintEl.classList.add("err");
     spinnerEl.style.display = "none";
   }
 })();
