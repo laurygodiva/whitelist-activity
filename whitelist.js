@@ -22,12 +22,8 @@ const BLOCKS = {
   C1: [
     { q:"Cuál de los siguientes conceptos no es sancionable?",
       answers:[
-        { text: "CK", isCorrect: true },
-        { text: "MG", isCorrect: false },
-        { text: "RK", isCorrect: false },
-        { text: "PK", isCorrect: true },
-        { text: "IDP", isCorrect: true },
-        { text: "DM", isCorrect: false }
+        { text: "CK", isCorrect: true }, { text: "MG", isCorrect: false }, { text: "RK", isCorrect: false },
+        { text: "PK", isCorrect: true }, { text: "IDP", isCorrect: true }, { text: "DM", isCorrect: false }
       ]},
     { q:"¿Cuando se permite hacer MG?",
       answers:[
@@ -126,8 +122,6 @@ const BLOCKS = {
         { text: "/do se escucharía el rugir de sus tripas.", isCorrect: false }
       ]}
   ],
-
-  // Situaciones
   S1: [
     { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",
       answers:[
@@ -158,92 +152,91 @@ const BLOCKS = {
         { text: "Los demás jugadores deben seguir el rol excusando tu ausencia de forma ingeniosa hasta que puedas reconectar y seguir con el rol.", isCorrect: true },
         { text: "Los demás jugadores se tienen que quedar afk para esperarte y de mientras salen de su idp y se ponen a hablar de cosas OOC .", isCorrect: false }
       ]},
-    { q:"Acabas de ser secuestrado por unos enmascarados que te han maniatado y obligado a subir a un coche, sin darte tiempo de reacción te han metido a la fuerza dentro de un flecca y te han obligado a arrodillarte delante de la puerta con intención de que te vea la policía. ¿Qué haces en ese momento?",
+    { q:"Acabas de ser secuestrado por unos enmascarados... ¿Qué haces en ese momento?",
       answers:[
-        { text: "Tratas de hacerte valiente e intentar noquear a alguno de los enmascarados para apoderarte de su arma y tratar de huir.", isCorrect: false },
-        { text: "Haces caso a las indicaciones de los enmascarados y esperas paciente y con cautela a que la policía venga en tu ayuda.", isCorrect: true },
-        { text: "Te haces amigo de los atracadores y te unes a ellos haciendo de rehén y quedándote una parte del botín.", isCorrect: false }
+        { text: "Tratas de hacerte valiente e intentar noquear...", isCorrect: false },
+        { text: "Haces caso a las indicaciones y esperas a la policía.", isCorrect: true },
+        { text: "Te haces amigo de los atracadores...", isCorrect: false }
       ]},
-    { q:"9 amigos excursionistas y tú habéis decidido subir al monte andando para realizar una excursión y tirarnos en paracaídas desde la cima. Estando a mitad del camino un puma los ataca dejando a más de la mitad del grupo herido.¿Como procedes a este rol?",
+    { q:"9 amigos excursionistas... puma los ataca... ¿Como procedes?",
       answers:[
-        { text: "Llamas al equipo de emergencia para que os intenten evacuar mediante helicóptero o camioneta para llevaros a un centro sanitario cercano a curar las heridas.", isCorrect: true },
-        { text: "Tus compañeros no heridos y tú tratas de arrastrar a los demás heridos exponiendolos a un nuevo ataque o problemas por el camino en la bajada.", isCorrect: false },
-        { text: "Tratáis de arrastrar a los heridos hasta la cima y os tirais todos juntos en paracaídas tratando de llegar a una zona donde haya un centro sanitario.", isCorrect: false }
+        { text: "Llamas al equipo de emergencia...", isCorrect: true },
+        { text: "Arrastráis a los heridos exponiéndolos...", isCorrect: false },
+        { text: "Arrastráis hasta la cima y os tiráis...", isCorrect: false }
       ]}
   ],
   S3: [
-    { q:"Esta última semana finalmente le has realizado un ck a tu pj. Hoy por fin te has decidido y te has creado un personaje nuevo que llega a la ciudad. Elige la respuesta correcta.",
+    { q:"CK hecho, pj nuevo llega. Elige la correcta.",
       answers:[
-        { text: "Camino por la ciudad con el nuevo personaje reconociendo los lugares y las personas con las que interactúe con el personaje anterior.", isCorrect: false },
-        { text: "Como el personaje es completamente nuevo no puedo acordarme de las personas o lugares que haya conocido con el anterior personaje.", isCorrect: true },
-        { text: "Voy por la ciudad conociendo todo de nuevo y me acuerdo de algunos personajes de otros jugadores porque son mis amigos.", isCorrect: false }
+        { text: "Reconozco lugares/personas del pj anterior.", isCorrect: false },
+        { text: "No recuerdo nada del anterior pj.", isCorrect: true },
+        { text: "Recuerdo amigos de antes.", isCorrect: false }
       ]},
-    { q:"Estás tranquilamente caminando cuando de repente recibes una llamada anónima, amenazándote y pidiéndote dinero. En medio de la llamada, reconoces que esa voz es la del dueño del casino. ¿Cómo continuarías el rol?",
+    { q:"Llamada anónima; reconoces voz del dueño del casino...",
       answers:[
-        { text: "Me hago el loco y acato sus instrucciones.", isCorrect: true },
-        { text: "Le insultaría, le mencionaría su nombre y le diría que le voy a mandar cuatro sicarios al casino a partirle las piernas.", isCorrect: false },
-        { text: "Me hago el loco, espero un rato y voy al casino a preguntar a los trabajadores si han escuchado al jefe amenazar a alguien por teléfono.", isCorrect: false }
+        { text: "Me hago el loco y acato instrucciones.", isCorrect: true },
+        { text: "Le insulto y amenazo.", isCorrect: false },
+        { text: "Voy al casino a preguntar si escucharon la voz.", isCorrect: false }
       ]},
-    { q:"Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.",
+    { q:"Rol sexual con consentimiento.",
       answers:[
-        { text: "No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.", isCorrect: false },
-        { text: "Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.", isCorrect: true },
-        { text: "Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.", isCorrect: false }
+        { text: "Está prohibido siempre.", isCorrect: false },
+        { text: "Se puede si ambos aceptan.", isCorrect: true },
+        { text: "Lo fuerzo indirectamente.", isCorrect: false }
       ]}
   ],
   S4: [
-    { q:"Tu y tu amigo estás roleando con otros jugadores en GC, sin querer, en medio de un rol, tu amigo se deja el micrófono encendido y se escuchan conversaciones OC.¿Qué haces en esta situación?",
+    { q:"Amigo con micro abierto OC en GC, ¿qué haces?",
       answers:[
-        { text: "Paramos el rol de inmediato y avisamos por voz saliendo del pj que se ha dejado el micrófono encendido.", isCorrect: false },
-        { text: "Tratáis de continuar con el rol haciendo caso omiso a lo que ha dicho tu amigo y mediante mensaje privado le avisas de que se ha dejado el micrófono abierto.posteriormente seguís el rol como si no hubiera pasado nada.", isCorrect: true },
-        { text: "Parais el rol momentáneamente y escribís por el chat oc para avisar a tu amigo. Os quedáis Afk hasta que solucione el problema hablando de vuestras cosas por discord. Posteriormente haceis regresión de rol y seguis.", isCorrect: false }
+        { text: "Paro el rol y lo digo por voz OOC.", isCorrect: false },
+        { text: "Sigo el rol y le aviso por privado.", isCorrect: true },
+        { text: "Paro y escribo en chat OOC y me quedo AFK.", isCorrect: false }
       ]},
-    { q:"Te encuentras en un garaje sacando un vehículo, de repente aparece un enmascarado con una pistola, el cual te dice que estás secuestrado y que a la mínima tontería te pegará un tiro. ¿Cómo actuarías?",
+    { q:"Garaje, enmascarado te apunta: ¿qué haces?",
       answers:[
-        { text: "Sacaría una pistola y le dispararía hasta dejarlo en el suelo en coma y luego me reiria de el.", isCorrect: false },
-        { text: "Le diría IC que en el garaje no me puede robar, que se vaya o, si no, rezaría para que lo deportaran de la ciudad por intentar robarme en una zona segura.", isCorrect: false },
-        { text: "Seguiría sus indicaciones.", isCorrect: true }
+        { text: "Saco arma y le tumbo.", isCorrect: false },
+        { text: "Le digo que es zona segura.", isCorrect: false },
+        { text: "Sigo sus indicaciones.", isCorrect: true }
       ]},
-    { q:"Estas en el hospital y te percatas de que un jugador nada mas entrar en el hospital empieza a dar puñetazos a todo el mundo sin mediar palabra. ¿Cómo no deberías actuar?",
+    { q:"Hospital: uno pega puñetazos a todos. ¿Cómo NO?",
       answers:[
-        { text: "Me uno a dar puñetazos, la culpa es del que empieza.", isCorrect: true },
-        { text: "Me escondo en algún lugar donde no pueda pegarme y aviso al staff con el comando /reporte", isCorrect: false },
-        { text: "Saco una SMG y le abro la cabeza para que deje de hacer antirol.", isCorrect: true }
+        { text: "Me uno a pegar.", isCorrect: true },
+        { text: "Me escondo y reporto.", isCorrect: false },
+        { text: "Saco SMG y lo abro.", isCorrect: true }
       ]}
   ],
   S5: [
-    { q:"Durante un rol de secuestro siendo tu el rehen empiezas a valorar que los secuestradores empiezan a ser excesivamente maleducados contigo ¿Cómo deberías actuar frente ese rol?",
+    { q:"Secuestro; son maleducados. ¿Cómo actúas?",
       answers:[
-        { text: "Tomo mala actitud por el desagrado llegando a insultar pero manteniendo la cooperación.", isCorrect: true },
-        { text: "Insisto por el chat OOC que se están pasando y si no paran me desconecto.", isCorrect: false },
-        { text: "Continuo el rol pero reporto.", isCorrect: false }
+        { text: "Mala actitud pero coopero.", isCorrect: true },
+        { text: "Insisto por chat OOC y amenazo con irme.", isCorrect: false },
+        { text: "Sigo el rol pero reporto.", isCorrect: false }
       ]},
-    { q:"Tu personaje es un médico y acudes a un aviso de un jugador inconsciente, y resulta que este te cae mal en el rol. ¿Qué no puedes hacer?",
+    { q:"Eres médico; te cae mal el paciente. ¿Qué NO puedes?",
       answers:[
-        { text: "Le atiendo pero no sin antes escupirle en la boca por payaso.", isCorrect: false },
-        { text: "Aprovecho la situación para dejar que se muera definitivamente y si puedo hago que sufra en el proceso.", isCorrect: true },
-        { text: "Le atiendo pero pongo una excusa para cobrarle 1.000$", isCorrect: false }
+        { text: "Le atiendo pero le escupo.", isCorrect: false },
+        { text: "Dejo que muera y hago que sufra.", isCorrect: true },
+        { text: "Le atiendo y le cobro 1.000$.", isCorrect: false }
       ]},
-    { q:"Estás en el metro esperando el tren, a los minutos otro jugador comienza a cantar rancheras mexicanas pidiendo limosna, pero los ideales racistas de tu personaje hacen que te sientas completamente incómodo. ¿Cuál de estas acciones no tendría consecuencias OOC? ",
+    { q:"Metro y racismo. ¿Qué no tendría consecuencias OOC?",
       answers:[
-        { text: "Comienzas una batalla de miradas tensas y cuando llega el tren, mientras subes le gritas: cierra el pico chimpancé.", isCorrect: true },
-        { text: "Dejas caer un billete de 500$ junto a las vías y cuando este lo recoge del suelo aprovechas para darle una patada en el culo para que sea atropellado por el tren.", isCorrect: false },
-        { text: "Le acercas un cuchillo al cuello, comienzas a dar tu discurso xenófobo y sin intenciones de matarlo pero sí de herirlo lo apuñalas.", isCorrect: false },
-        { text: "Cualquier acción, comentario o comportamiento racista, xenófoba o discriminatoria IC está prohibida. Las ideologías de los personajes deben ser respetuosas.", isCorrect: false }
+        { text: "Grito 'cierra el pico chimpancé'.", isCorrect: true },
+        { text: "Lo empujo a las vías.", isCorrect: false },
+        { text: "Le acerco cuchillo y lo hiero.", isCorrect: false },
+        { text: "Cualquier racismo IC está prohibido.", isCorrect: false }
       ]}
   ],
 };
 
 // ====== Estado y flujo ======
 const CATS = ["Conocimientos","Situaciones"];
-let QUESTIONS = []; // [{id,bloque,category,question,answers:[{text,isCorrect}], multi}]
-const state = { i: 0, answers: [] }; // answers[i] = { chosenIdx:[...], correct:boolean }
+let QUESTIONS = [];
+const state = { i: 0, answers: [] };
 
 function startTest(){
   if (!USER_ID) { alert("No se pudo identificar tu cuenta de Discord. Abre la whitelist como Actividad."); return; }
   if (!$("#discord").value.trim()) { alert("Pon tu nombre de Discord."); return; }
 
-  // Elegimos 1 variante por bloque (C1..C5 + S1..S5), y barajamos respuestas de cada pregunta
   const blockKeys = ["C1","C2","C3","C4","C5","S1","S2","S3","S4","S5"];
   QUESTIONS = blockKeys.map((bk, idx) => {
     const { item, idx: varIdx } = pickOneWithIndex(BLOCKS[bk]);
@@ -298,11 +291,9 @@ function collectCurrentAnswer(omit=false){
   let correct = true;
   if (omit || sel.length === 0) correct = false;
   else {
-    // Multi ⇒ debe seleccionar TODAS las correctas y NINGUNA incorrecta
     for (const i of chosenSet) if (!correctSet.has(i)) { correct=false; break; }
     if (correct) for (const i of correctSet) if (!chosenSet.has(i)) { correct=false; break; }
   }
-
   state.answers[state.i] = { chosenIdx: omit? [] : sel, correct };
 }
 
@@ -314,28 +305,27 @@ function computeProvisional(){
   const total = QUESTIONS.length;
   const correct = state.answers.reduce((acc,a)=> acc + (a && a.correct ? 1 : 0), 0);
   const wrong = total - correct;
-  // Regla de Laury: con 3 fallos ⇒ SUSPENSO
-  const passed = wrong <= 2;
+  const passed = wrong <= 2; // 3 fallos ⇒ suspenso
   return { total, correct, wrong, passed };
 }
 
 // ====== Envío al webhook (embed + adjunto JSON) ======
+function toProxiedDiscordUrl(url){
+  // Convierte https://discord.com/api/... a /discord-api/...
+  return url.replace(/^https?:\/\/(?:ptb\.)?discord\.com\/api/i, '/discord-api');
+}
+
 async function send(){
   const { total, correct, wrong, passed } = computeProvisional();
-
   const submissionId = uuidv4();
   const clientTs = Date.now();
 
   const detail = QUESTIONS.map((q, i)=>{
     const saved = state.answers[i] || { chosenIdx: [] , correct: false};
     return {
-      id: q.id,
-      bloque: q.bloque,
-      category: q.category,
-      question: q.question,
-      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })), // para que el bot pueda recalcular
-      chosenIdx: saved.chosenIdx,
-      chosenText: saved.chosenIdx.map(idx => q.answers[idx]?.text || ""),
+      id: q.id, bloque: q.bloque, category: q.category, question: q.question,
+      answers: q.answers.map(a => ({ text: a.text, isCorrect: !!a.isCorrect })),
+      chosenIdx: saved.chosenIdx, chosenText: saved.chosenIdx.map(idx => q.answers[idx]?.text || ""),
       multi: q.multi
     };
   });
@@ -348,18 +338,12 @@ async function send(){
     exp: ($("#exp").value || "").slice(0, 1000)
   };
 
-  // Archivo JSON adjunto (para que el bot lo lea fácil)
   const attachment = {
-    submissionId,
-    userId: USER_ID,
-    guildId: GUILD_ID,
-    clientTs,
+    submissionId, userId: USER_ID, guildId: GUILD_ID, clientTs,
     provisional: { score: correct, total, wrong, passed },
-    detail,
-    playerData
+    detail, playerData
   };
 
-  // Embed resumen para lectura rápida del staff
   const embed = {
     title: "Nueva solicitud de Whitelist",
     description: "Solicitud enviada desde la Activity.",
@@ -387,7 +371,8 @@ async function send(){
     const blob = new Blob([JSON.stringify(attachment, null, 2)], { type: "application/json" });
     fd.append("files[0]", blob, "submission.json");
 
-    const r = await fetch(WEBHOOK_URL, { method: "POST", body: fd });
+    const webhook = toProxiedDiscordUrl(WEBHOOK_URL);
+    const r = await fetch(webhook, { method: "POST", body: fd });
     if (!r.ok) throw new Error("HTTP " + r.status);
 
     $("#sendNote").textContent = "¡Enviado! El staff procesará tu solicitud.";
@@ -404,6 +389,7 @@ function showFatal(msg){
   tag.innerHTML = msg;
   $("#startBtn").disabled = true;
 }
+
 async function initIdentity(){
   if (!APP_ID) { showFatal("Falta configurar APP_ID en el HTML."); return; }
   if (!window.DiscordSDK) { showFatal("Abre la whitelist como <b>Actividad de Discord</b>."); return; }
@@ -417,7 +403,7 @@ async function initIdentity(){
     });
     const { access_token } = await sdk.commands.authenticate({ client_id: APP_ID, code });
 
-    // IMPORTANTE: usar el proxy /discord-api en la Activity (URL Mapping)
+    // IMPORTANTE: usar el proxy /discord-api
     const me = await fetch('/discord-api/users/@me', {
       headers: { Authorization: 'Bearer ' + access_token }
     }).then(r => r.json());
