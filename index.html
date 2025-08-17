@@ -64,7 +64,7 @@
 
   /* Modo cuestionario: más ancho y altura fija para que no cambie entre páginas */
   .card.quiz{ width: var(--card-w-quiz); }
-  .card.quiz .inner{ min-height: 500px; } /* ajusta si necesitas más/menos alto */
+  .card.quiz .inner{ min-height: 520px; } /* ajuste fino de altura del test */
 
   /* Avatar */
   img.avatar{
@@ -102,6 +102,9 @@
 
   /* Formularios */
   .form{ text-align:left; max-width:520px; margin:0 auto; }
+  /* En modo quiz ampliamos el ancho útil del formulario para que haya menos saltos de línea */
+  .card.quiz .form{ max-width:660px; }
+
   .field{ margin:10px 0 14px; }
   .label{ display:block; font-size:13px; margin-bottom:6px; color:#eef2ff; }
   .req{ color:#ffd3d3; margin-left:6px; font-size:12px; }
@@ -116,12 +119,16 @@
   /* Contenedores de opciones */
   .radios, .checks{ display:grid; grid-template-columns:1fr; gap:10px; }
   .radio, .check{
-    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    display:flex; align-items:center; gap:12px; padding:10px 14px;
     border:1px solid rgba(255,255,255,.28); border-radius:14px;
     background: rgba(0,0,0,.18); transition:border-color .2s ease, background .2s ease;
   }
+  .card.quiz .checks{ gap:8px; } /* algo más compacto en quiz */
   .radio:has(input:focus-visible), .check:has(input:focus-visible){ border-color:#fff; }
   .radio:has(input:checked), .check:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
+
+  /* Texto de las respuestas un poco más pequeño para que no crezca la altura */
+  .check span, .radio span{ font-size:14px; line-height:1.25; }
 
   /* Marcadores redondos: contorno blanco y relleno #0c121e al seleccionar */
   .radio input, .check input{
@@ -386,7 +393,7 @@
       show(viewStep1); document.getElementById("edad").focus();
     });
 
-    /* Validación Paso 1 */
+    /* Estado y validación Paso 1 */
     const state = {
       step1:{},
       quizChoice:{},   // pageIdx -> questionIdx elegido aleatoriamente
@@ -478,9 +485,9 @@
       } else {
         hide(viewQuiz);
         setProgress(TOTAL_STEPS);
+        setWelcomeMode();             // ← tarjeta final como la de inicio
         show(viewResult);
-        /* Sin puntuación pública */
-        scoreText.textContent = "Has completado el cuestionario.";
+        scoreText.textContent = "Has completado el cuestionario."; // sin puntuación pública
       }
     });
 
