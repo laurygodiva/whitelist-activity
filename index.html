@@ -30,8 +30,6 @@
 
   <script>
     const CLIENT_ID = "1383517896747126987";
-    // Redirect URI fijo (debe coincidir con el que añadas en el Developer Portal)
-    const REDIRECT_URI = `https://1383517896747126987.discordsays.com/oauth-complete`;
 
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
@@ -95,15 +93,15 @@
             e?.message || e);
         }
 
-        hintEl.textContent = "Solicitando código OAuth…";
+        hintEl.textContent = "Solicitando código OAuth (RPC)…";
         let auth;
         try {
           auth = await sdk.commands.authorize({
             client_id: CLIENT_ID,
             response_type: "code",
             scope: ["identify"],
-            prompt: "none",
-            redirect_uri: REDIRECT_URI
+            prompt: "none"
+            // IMPORTANTE: en RPC OAuth2 NO se usa redirect_uri
           });
         } catch (e) {
           return err("Fallo en authorize()", "El cliente devolvió un error.", e?.message || e);
@@ -119,14 +117,14 @@
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: auth.code, redirect_uri: REDIRECT_URI })
+          body: JSON.stringify({ code: auth.code }) // sin redirect_uri en RPC
         });
         const tokText = await tres.text();
         let tok; try { tok = JSON.parse(tokText); } catch { tok = { raw: tokText }; }
         showLog("POST /api/token", { status: tres.status, body: tok });
         if (!tres.ok || !tok?.access_token) {
           return err("token_exchange_failed",
-            "Verifica el <b>DISCORD_CLIENT_SECRET</b> del Worker y que el <b>redirect_uri</b> coincide con el del authorize y el Portal.",
+            "Verifica el <b>DISCORD_CLIENT_SECRET</b> del Worker (rota y actualiza si hace falta).",
             { status: tres.status, tok });
         }
 
