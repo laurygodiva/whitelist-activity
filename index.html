@@ -8,37 +8,28 @@
   :root { color-scheme: dark; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
 
-  /* Logo esquina (opcional: logo.png en la raíz) */
-  .brand{
-    position:fixed; top:16px; left:16px; z-index:10;
-    width:64px; height:auto; user-select:none; -webkit-user-drag:none;
-    filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
-    opacity:.95; transition:opacity .15s ease, transform .15s ease;
-  }
+  .brand{ position:fixed; top:16px; left:16px; z-index:10; width:64px; height:auto; user-select:none; -webkit-user-drag:none; filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); opacity:.95; transition:opacity .15s, transform .15s; }
   .brand:hover{ opacity:1; transform:scale(1.03); }
 
-  .card {
-    width:380px; padding:24px; border-radius:20px;
-    background: linear-gradient(135deg, #5edae7, #885dfd);
-    box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none;
-  }
-  .inner { background: rgba(0,0,0,0.25); border-radius:16px; padding:16px; }
+  .card{ width:380px; padding:24px; border-radius:20px; background: linear-gradient(135deg,#5edae7,#885dfd); box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
+  .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:16px; }
 
-  /* Avatar: completamente oculto hasta que CARGA (no hay círculo de fondo) */
-  img.avatar {
-    width:120px; height:120px; border-radius:50%;
-    display:block; margin:0 auto 14px; object-fit:cover;
-    box-shadow:0 6px 18px rgba(0,0,0,.25);
-    opacity:0; transition:opacity .25s ease;
-  }
-  img.avatar.hidden { display:none; }         /* no ocupa sitio ni muestra contorno */
-  img.avatar.revealed { display:block; opacity:1; }
+  /* Avatar oculto hasta que cargue (sin círculo) */
+  img.avatar{ width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transition:opacity .25s ease; }
+  img.avatar.hidden{ display:none; }
+  img.avatar.revealed{ display:block; opacity:1; }
 
-  h1 { font-size:18px; margin:8px 0 0; color:#ffffff; font-weight:700; min-height:1.2em; }
-  p  { font-size:13px; margin:6px 0 0; color:#eef2ff; min-height:1.2em; opacity:.9; }
-  .spinner { width:24px; height:24px; border:3px solid rgba(255,255,255,.35); border-top-color:#ffffff; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
-  @keyframes spin { to { transform:rotate(360deg) } }
-  .err { color:#ffe1e1 }
+  /* Título principal */
+  h1{ font-size:20px; margin:8px 0 0; color:#ffffff; font-weight:700; min-height:1.2em; }
+
+  /* Estado de carga -> mismo look que el título */
+  #hint{ font-size:20px; font-weight:700; margin:6px 0 0; color:#ffffff; min-height:1.2em; opacity:.95; }
+
+  .username{ color:#0c121e; } /* color solicitado para el nombre ya verificado */
+
+  .spinner{ width:24px; height:24px; border:3px solid rgba(255,255,255,.35); border-top-color:#ffffff; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+  .err{ color:#ffe1e1 }
 </style>
 </head>
 <body>
@@ -61,29 +52,18 @@
     const spinnerEl = document.getElementById("spinner");
     const cdn = (p) => `/cdn${p}`;
 
-    // Revela el avatar SOLO cuando la imagen está cargada
-    function revealAvatar(url) {
+    function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+    function revealAvatar(url){
       const done = () => {
         avatarEl.classList.remove("hidden");
-        // pequeña espera para permitir el reflow antes del fade-in
         requestAnimationFrame(() => avatarEl.classList.add("revealed"));
       };
-
-      // Prepara handlers (se eliminan tras disparar)
-      const onLoad = () => { avatarEl.removeEventListener("load", onLoad); done(); };
-      avatarEl.addEventListener("load", onLoad, { once: true });
-
-      // Fallback si la URL falla: avatar por defecto y también esperamos a su load
-      const onError = () => {
-        avatarEl.removeEventListener("error", onError);
-        const fallback = cdn(`/embed/avatars/0.png?size=256`);
-        const onFallbackLoad = () => { avatarEl.removeEventListener("load", onFallbackLoad); done(); };
-        avatarEl.addEventListener("load", onFallbackLoad, { once: true });
-        avatarEl.src = fallback;
-      };
-      avatarEl.addEventListener("error", onError, { once: true });
-
-      // Dispara la carga
+      avatarEl.addEventListener("load", () => done(), { once:true });
+      avatarEl.addEventListener("error", () => {
+        avatarEl.addEventListener("load", () => done(), { once:true });
+        avatarEl.src = cdn(`/embed/avatars/0.png?size=256`);
+      }, { once:true });
       avatarEl.src = url;
     }
 
@@ -92,8 +72,8 @@
       let url = cdn(`/embed/avatars/0.png?size=256`);
       if (u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
 
-      revealAvatar(url); // ← aquí ya no se muestra nada hasta que carga
-      nameEl.textContent = `Bienvenido al sistema de whitelist de Proyecto Roleplay ${display}`;
+      revealAvatar(url);
+      nameEl.innerHTML = `Bienvenido al sistema de whitelist de Proyecto Roleplay <span class="username">${escapeHtml(display)}</span>`;
       hintEl.textContent = "";
       spinnerEl.style.display = "none";
     };
@@ -106,16 +86,16 @@
       avatarEl.classList.add("hidden");
     };
 
-    async function loadSDKViaBlob() {
-      const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache: "no-store" });
+    async function loadSDKViaBlob(){
+      const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
       const txt = await r.text();
-      if (!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,120)}`);
-      const url = URL.createObjectURL(new Blob([txt], { type: "text/javascript" }));
-      try {
+      if(!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,120)}`);
+      const url = URL.createObjectURL(new Blob([txt], { type:"text/javascript" }));
+      try{
         const mod = await import(/* webpackIgnore: true */ url);
         URL.revokeObjectURL(url);
         return mod.DiscordSDK || (mod.default?.DiscordSDK || mod.default) || mod;
-      } catch (e) {
+      }catch(e){
         URL.revokeObjectURL(url);
         throw new Error(`sdk_import_failed: ${e?.message || e}`);
       }
@@ -125,10 +105,7 @@
       try {
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
-        await Promise.race([
-          sdk.ready(),
-          new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000))
-        ]);
+        await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000)) ]);
 
         const { code } = await sdk.commands.authorize({
           client_id: CLIENT_ID,
@@ -154,15 +131,10 @@
         showUser(me);
       } catch (e) {
         const msg = String(e?.message || e);
-        if (msg.includes("timeout_ready")) {
-          fail("Sin handshake con Discord", "Ábrelo como Embedded Activity de esta app.");
-        } else if (msg.startsWith("sdk_")) {
-          fail("No carga el SDK", "Revisa el mapping /api y que /api/sdk-src responda 200.");
-        } else if (msg === "token_exchange_failed") {
-          fail("Fallo de autorización", "Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
-        } else {
-          fail("Error", msg);
-        }
+        if (msg.includes("timeout_ready")) fail("Sin handshake con Discord","Ábrelo como Embedded Activity de esta app.");
+        else if (msg.startsWith("sdk_"))  fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
+        else if (msg === "token_exchange_failed") fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+        else fail("Error", msg);
       }
     })();
   </script>
