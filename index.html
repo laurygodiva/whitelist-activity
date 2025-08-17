@@ -4,38 +4,89 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Discord Activity — Whitelist</title>
-<style>
-  :root { color-scheme: dark; --card-w: 640px; } /* ← más ancho y fijo */
-  body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
 
+<style>
+  :root{
+    color-scheme: dark;
+    /* tamaños separados */
+    --card-w-welcome: 560px;  /* bienvenida + paso 1 */
+    --card-w-quiz:    720px;  /* páginas 2–11 */
+  }
+
+  /* Lienzo */
+  body{
+    margin:0; min-height:100dvh;
+    display:grid; place-items:center;
+    background:#0b0f14;
+    font-family: system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif;
+  }
   .stack{ display:grid; gap:16px; place-items:center; }
 
-  /* Logo centrado */
-  .brand-center{ width:72px; height:auto; user-select:none; -webkit-user-drag:none; filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); }
+  /* Logo centrado arriba */
+  .brand-center{
+    width:72px; height:auto;
+    user-select:none; -webkit-user-drag:none;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
+  }
 
   /* Progreso */
-  .progress{ width:var(--card-w); text-align:center; }
-  .progress-track{ height:10px; border-radius:9999px; overflow:hidden; background: rgba(255,255,255,.15); box-shadow: inset 0 1px 2px rgba(0,0,0,.25); }
-  .progress-fill{ height:100%; width:0%; background: linear-gradient(135deg,#5edae7,#885dfd); border-radius:9999px; transition:width .35s ease; }
+  .progress{ width:var(--card-w-welcome); text-align:center; transition:width .25s ease; }
+  .progress.quiz{ width:var(--card-w-quiz); }
+  .progress-track{
+    height:10px; border-radius:9999px; overflow:hidden;
+    background: rgba(255,255,255,.15);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.25);
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    background: linear-gradient(135deg,#5edae7,#885dfd);
+    border-radius:9999px; transition:width .35s ease;
+  }
   .progress-label{ font-size:12px; color:#e5e7eb; margin-top:6px; opacity:.9; }
   .hidden{ display:none !important; }
 
   /* Tarjeta */
-  .card{ width:var(--card-w); padding:24px; border-radius:20px; background: linear-gradient(135deg,#5edae7,#885dfd); box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
-  .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:18px; min-height:400px; display:flex; flex-direction:column; justify-content:center; } /* altura mínima para que no cambie */
+  .card{
+    width: var(--card-w-welcome);  /* por defecto: modo bienvenida */
+    padding:24px; border-radius:20px; border:none;
+    background: linear-gradient(135deg,#5edae7,#885dfd);
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
+    text-align:center; color:#fff;
+    transition: width .25s ease;
+  }
+  .inner{
+    background: rgba(0,0,0,0.25);
+    border-radius:16px; padding:18px;
+    /* sin altura fija en bienvenida/paso 1 */
+    min-height: auto;
+    display:flex; flex-direction:column; justify-content:center;
+  }
+
+  /* Modo cuestionario: más ancho y altura fija para que no cambie entre páginas */
+  .card.quiz{ width: var(--card-w-quiz); }
+  .card.quiz .inner{ min-height: 500px; } /* ajusta si necesitas más/menos alto */
 
   /* Avatar */
-  img.avatar{ width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transition:opacity .25s ease; }
+  img.avatar{
+    width:120px; height:120px; border-radius:50%;
+    display:block; margin:0 auto 14px; object-fit:cover;
+    box-shadow:0 6px 18px rgba(0,0,0,.25);
+    opacity:0; transition:opacity .25s ease;
+  }
   img.avatar.hidden{ display:none; }
   img.avatar.revealed{ display:block; opacity:1; }
 
-  /* Títulos / estado */
+  /* Encabezados / textos */
   h1{ font-size:20px; margin:8px 0 0; color:#ffffff; font-weight:700; min-height:1.2em; }
   #hint{ font-size:20px; font-weight:700; margin:6px 0 0; color:#ffffff; min-height:1.2em; opacity:.95; }
-  .username{ color:#0c121e; }
+  .username{ color:#0c121e; } /* nombre del usuario en #0c121e */
 
   /* Spinner */
-  .spinner{ width:24px; height:24px; border:3px solid rgba(255,255,255,.35); border-top-color:#ffffff; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
+  .spinner{
+    width:24px; height:24px; border:3px solid rgba(255,255,255,.35);
+    border-top-color:#ffffff; border-radius:50%;
+    margin:18px auto 0; animation:spin 1s linear infinite;
+  }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .err{ color:#ffe1e1 }
 
@@ -46,9 +97,10 @@
   .btn-primary:active{ transform:translateY(0); }
   .gtext{ background-image:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
 
-  /* Encabezados de página en #0c121e */
+  /* Títulos de página en #0c121e para distinguir de enunciados */
   .step-title, #quiz-title{ font-size:18px; font-weight:800; margin:0 0 12px; color:#0c121e; }
 
+  /* Formularios */
   .form{ text-align:left; max-width:520px; margin:0 auto; }
   .field{ margin:10px 0 14px; }
   .label{ display:block; font-size:13px; margin-bottom:6px; color:#eef2ff; }
@@ -71,7 +123,7 @@
   .radio:has(input:focus-visible), .check:has(input:focus-visible){ border-color:#fff; }
   .radio:has(input:checked), .check:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
 
-  /* Marcadores redondos con contorno blanco y relleno #0c121e al seleccionar */
+  /* Marcadores redondos: contorno blanco y relleno #0c121e al seleccionar */
   .radio input, .check input{
     appearance:none; width:20px; height:20px; border-radius:50%;
     border:2px solid #ffffff; background:transparent; display:inline-block; flex-shrink:0;
@@ -82,6 +134,7 @@
   .actions{ display:flex; gap:10px; justify-content:center; margin-top:12px; }
 </style>
 </head>
+
 <body>
   <div class="stack">
     <!-- Logo centrado -->
@@ -103,6 +156,7 @@
           <h1 id="name"></h1>
           <p id="hint">Identificando usuario…</p>
           <div class="spinner" id="spinner"></div>
+
           <div id="startWrap" class="hidden" style="margin-top:14px;">
             <button id="startBtn" type="button" class="btn btn-primary">
               <span class="gtext">Comenzar whitelist</span>
@@ -110,20 +164,23 @@
           </div>
         </section>
 
-        <!-- Paso 1 -->
+        <!-- Paso 1: Datos -->
         <section id="step1" class="hidden" aria-labelledby="step1-title">
           <p id="step1-title" class="step-title">Datos del jugador</p>
+
           <form id="formStep1" class="form" novalidate>
             <div class="field">
               <label class="label" for="edad">Edad <span class="req">*</span></label>
               <input id="edad" name="edad" class="input" type="text" inputmode="numeric" autocomplete="off" required />
               <div class="error" id="err-edad"></div>
             </div>
+
             <div class="field">
               <label class="label" for="pais">País <span class="req">*</span></label>
               <input id="pais" name="pais" class="input" type="text" autocomplete="country-name" required />
               <div class="error" id="err-pais"></div>
             </div>
+
             <div class="field">
               <span class="label">Experiencia en rol <span class="req">*</span></span>
               <div class="radios" role="radiogroup">
@@ -133,10 +190,12 @@
               </div>
               <div class="error" id="err-exp"></div>
             </div>
+
             <div class="field">
               <label class="label" for="conocido">¿Cómo nos has conocido? <span style="opacity:.7">(opcional)</span></label>
               <textarea id="conocido" name="conocido" class="textarea"></textarea>
             </div>
+
             <div class="actions">
               <button type="submit" class="btn btn-primary"><span class="gtext">Siguiente</span></button>
             </div>
@@ -147,6 +206,7 @@
         <section id="quiz" class="hidden" aria-live="polite">
           <p id="quiz-title" class="step-title"></p>
           <div id="quiz-q" style="font-weight:700; margin:8px 0 10px;"></div>
+
           <form id="quiz-form" class="form">
             <div id="quiz-options" class="checks"></div>
             <div id="quiz-error" class="error"></div>
@@ -156,10 +216,10 @@
           </form>
         </section>
 
-        <!-- Resultado final (temporal) -->
+        <!-- Resultado final (sin puntuación pública) -->
         <section id="result" class="hidden">
-          <p class="step-title">Resultado</p>
-          <p id="scoreText" style="opacity:.95"></p>
+          <p class="step-title">¡Gracias!</p>
+          <p id="scoreText" style="opacity:.95">Has completado el cuestionario.</p>
         </section>
 
       </div>
@@ -167,9 +227,10 @@
   </div>
 
   <script>
+    /* Config */
     const CLIENT_ID = "1383517896747126987";
 
-    /* ---------- PREGUNTAS (tal cual) ---------- */
+    /* ---------------- PREGUNTAS (tal cual nos pasaste) ---------------- */
     const QUIZ_PAGES = [
       { title: "Conocimientos Generales 1/5", questions: [
         {q:"Cuál de los siguientes conceptos no es sancionable?",answers:[{text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},{text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}]},
@@ -222,14 +283,15 @@
         {q:"Estás en el metro esperando el tren, a los minutos otro jugador comienza a cantar rancheras mexicanas pidiendo limosna, pero los ideales racistas de tu personaje hacen que te sientas completamente incómodo. ¿Cuál de estas acciones no tendría consecuencias OOC? ",answers:[{text:"Comienzas una batalla de miradas tensas y cuando llega el tren, mientras subes le gritas: cierra el pico chimpancé.",isCorrect:true},{text:"Dejas caer un billete de 500$ junto a las vías y cuando este lo recoge del suelo aprovechas para darle una patada en el culo para que sea atropellado por el tren.",isCorrect:false},{text:"Le acercas un cuchillo al cuello, comienzas a dar tu discurso xenófobo y sin intenciones de matarlo pero sí de herirlo lo apuñalas.",isCorrect:false},{text:"Cualquier acción, comentario o comportamiento racista, xenófoba o discriminatoria IC está prohibida. Las ideologías de los personajes deben ser respetuosas.",isCorrect:false}]}
       ]}
     ];
-    /* ---------------------------------------- */
+    /* ------------------------------------------------------------------ */
 
-    const TOTAL_STEPS = 11; // 1 de datos + 10 de test
+    const TOTAL_STEPS = 11; // 1 datos + 10 test
 
-    // Refs UI
-    const progress = document.getElementById("progress");
-    const progressFill = document.getElementById("progressFill");
-    const progressLabel = document.getElementById("progressLabel");
+    /* Refs UI */
+    const card = document.querySelector('.card');
+    const progressEl = document.getElementById('progress');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
 
     const avatarEl = document.getElementById("avatar");
     const nameEl = document.getElementById("name");
@@ -256,25 +318,29 @@
 
     const scoreText = document.getElementById("scoreText");
 
+    /* Helpers */
     const cdn = (p) => `/cdn${p}`;
-    const state = {
-      step1:{},
-      quizChoice:{},        // pageIdx -> questionIdx chosen
-      quizAnswers:{},       // pageIdx -> selected indices
-      score: 0,
-      currentQuizIndex: 0   // 0..9
-    };
-
-    // Utils
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function show(el){ el.classList.remove("hidden"); }
     function hide(el){ el.classList.add("hidden"); }
-    function setProgress(step){ const pct = Math.round(step / TOTAL_STEPS * 100); progressFill.style.width = pct + "%"; progressLabel.textContent = `Paso ${step} de ${TOTAL_STEPS}`; }
+    function setProgress(step){
+      const pct = Math.round(step / TOTAL_STEPS * 100);
+      progressFill.style.width = pct + "%";
+      progressLabel.textContent = `Paso ${step} de ${TOTAL_STEPS}`;
+    }
+    function setWelcomeMode(){ card.classList.remove('quiz'); progressEl.classList.remove('quiz'); }
+    function setQuizMode(){ card.classList.add('quiz'); progressEl.classList.add('quiz'); }
 
     function revealAvatar(url){
-      const done = () => { avatarEl.classList.remove("hidden"); requestAnimationFrame(()=>avatarEl.classList.add("revealed")); };
+      const done = () => {
+        avatarEl.classList.remove("hidden");
+        requestAnimationFrame(()=>avatarEl.classList.add("revealed"));
+      };
       avatarEl.addEventListener("load", done, { once:true });
-      avatarEl.addEventListener("error", () => { avatarEl.addEventListener("load", done, { once:true }); avatarEl.src = cdn(`/embed/avatars/0.png?size=256`); }, { once:true });
+      avatarEl.addEventListener("error", () => {
+        avatarEl.addEventListener("load", done, { once:true });
+        avatarEl.src = cdn(`/embed/avatars/0.png?size=256`);
+      }, { once:true });
       avatarEl.src = url;
     }
 
@@ -284,12 +350,17 @@
       if (u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       revealAvatar(url);
       nameEl.innerHTML = `Bienvenido al sistema de whitelist de Proyecto Roleplay <span class="username">${escapeHtml(display)}</span>`;
-      hintEl.textContent = ""; spinnerEl.style.display = "none"; show(startWrap);
+      hintEl.textContent = "";
+      spinnerEl.style.display = "none";
+      show(startWrap);
     };
 
     const fail = (title, detail) => {
-      nameEl.textContent = title; hintEl.textContent = detail || ""; hintEl.classList.add("err");
-      spinnerEl.style.display = "none"; avatarEl.classList.add("hidden");
+      nameEl.textContent = title;
+      hintEl.textContent = detail || "";
+      hintEl.classList.add("err");
+      spinnerEl.style.display = "none";
+      avatarEl.classList.add("hidden");
     };
 
     async function loadSDKViaBlob(){
@@ -297,22 +368,37 @@
       const txt = await r.text();
       if(!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,120)}`);
       const url = URL.createObjectURL(new Blob([txt], { type:"text/javascript" }));
-      try{ const mod = await import(/* webpackIgnore: true */ url); URL.revokeObjectURL(url);
+      try{
+        const mod = await import(/* webpackIgnore: true */ url);
+        URL.revokeObjectURL(url);
         return mod.DiscordSDK || (mod.default?.DiscordSDK || mod.default) || mod;
-      }catch(e){ URL.revokeObjectURL(url); throw new Error(`sdk_import_failed: ${e?.message || e}`); }
+      }catch(e){
+        URL.revokeObjectURL(url);
+        throw new Error(`sdk_import_failed: ${e?.message || e}`);
+      }
     }
 
-    // Bienvenida -> Paso 1
+    /* Bienvenida -> Paso 1 */
     startBtn?.addEventListener("click", () => {
       hide(viewWelcome);
-      show(progress); setProgress(1);
+      show(progressEl); setProgress(1);
+      setWelcomeMode();                 // tamaño compacto
       show(viewStep1); document.getElementById("edad").focus();
     });
 
-    // Validación Paso 1
+    /* Validación Paso 1 */
+    const state = {
+      step1:{},
+      quizChoice:{},   // pageIdx -> questionIdx elegido aleatoriamente
+      quizAnswers:{},  // pageIdx -> índices seleccionados
+      score: 0,
+      currentQuizIndex: 0  // 0..9 (para páginas 2..11)
+    };
+
     form1.addEventListener("submit", (e) => {
       e.preventDefault();
       errEdad.textContent = ""; errPais.textContent = ""; errExp.textContent = "";
+
       const edad = (document.getElementById("edad").value || "").trim();
       const pais = (document.getElementById("pais").value || "").trim();
       const exp  = (form1.querySelector('input[name="exp"]:checked')?.value || "").trim();
@@ -328,41 +414,58 @@
       startQuizPage(0);
     });
 
-    // Mostrar página de quiz idx (0..9)
+    /* Arranque de una página de test (idx 0..9) */
     function startQuizPage(idx){
+      setQuizMode();                    // ancho 720 + altura fija
       state.currentQuizIndex = idx;
       setProgress(2 + idx);
       hide(viewStep1); hide(viewResult); show(viewQuiz);
 
       const page = QUIZ_PAGES[idx];
-      document.getElementById("quiz-title").textContent = page.title;
+      quizTitle.textContent = page.title;
 
-      if (state.quizChoice[idx] === undefined) state.quizChoice[idx] = Math.floor(Math.random() * page.questions.length);
+      // Elegir 1 pregunta al azar (persistente)
+      if (state.quizChoice[idx] === undefined) {
+        state.quizChoice[idx] = Math.floor(Math.random() * page.questions.length);
+      }
       const q = page.questions[state.quizChoice[idx]];
-      document.getElementById("quiz-q").textContent = q.q;
+      quizQ.textContent = q.q;
 
-      const box = document.getElementById("quiz-options");
-      box.innerHTML = "";
+      // Render opciones (checkbox múltiple)
+      quizOptions.innerHTML = "";
       q.answers.forEach((ans, i) => {
+        const id = `q${idx}-a${i}`;
         const lbl = document.createElement("label");
         lbl.className = "check";
+
         const input = document.createElement("input");
-        input.type = "checkbox"; input.value = String(i); input.name = "opt";
-        const span = document.createElement("span"); span.textContent = ans.text;
-        lbl.appendChild(input); lbl.appendChild(span); box.appendChild(lbl);
+        input.type = "checkbox"; input.value = String(i); input.id = id; input.name = "opt";
+
+        const span = document.createElement("span");
+        span.textContent = ans.text;
+
+        lbl.appendChild(input); lbl.appendChild(span);
+        quizOptions.appendChild(lbl);
       });
-      document.getElementById("quiz-error").textContent = "";
+
+      quizError.textContent = "";
     }
 
-    // Validar y avanzar
-    document.getElementById("quiz-form").addEventListener("submit", (e) => {
+    /* Validar test y avanzar */
+    quizForm.addEventListener("submit", (e) => {
       e.preventDefault();
+
       const idx = state.currentQuizIndex;
       const page = QUIZ_PAGES[idx];
       const q = page.questions[state.quizChoice[idx]];
 
-      const selected = [...document.querySelectorAll('#quiz-options input[type="checkbox"]:checked')].map(i => Number(i.value));
-      if (selected.length === 0) { document.getElementById("quiz-error").textContent = "Selecciona al menos una opción."; return; }
+      const selected = [...quizOptions.querySelectorAll('input[type="checkbox"]:checked')]
+                        .map(i => Number(i.value));
+
+      if (selected.length === 0) {
+        quizError.textContent = "Selecciona al menos una opción.";
+        return;
+      }
 
       const correctIdx = q.answers.map((a, i) => a.isCorrect ? i : -1).filter(i => i !== -1);
       const isExactly = selected.length === correctIdx.length && selected.every(i => correctIdx.includes(i));
@@ -370,34 +473,53 @@
       state.quizAnswers[idx] = selected;
       if (isExactly) state.score++;
 
-      if (idx + 1 < QUIZ_PAGES.length) startQuizPage(idx + 1);
-      else { hide(viewQuiz); setProgress(TOTAL_STEPS); show(viewResult); document.getElementById("scoreText").textContent = `Has acertado ${state.score} de ${QUIZ_PAGES.length} preguntas.`; }
+      if (idx + 1 < QUIZ_PAGES.length) {
+        startQuizPage(idx + 1);
+      } else {
+        hide(viewQuiz);
+        setProgress(TOTAL_STEPS);
+        show(viewResult);
+        /* Sin puntuación pública */
+        scoreText.textContent = "Has completado el cuestionario.";
+      }
     });
 
-    // Boot Discord
+    /* Boot Discord + user */
     (async () => {
       try {
-        document.getElementById("hint").textContent = "Identificando usuario…";
+        hintEl.textContent = "Identificando usuario…";
+
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
         await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000)) ]);
 
-        const { code } = await sdk.commands.authorize({ client_id: CLIENT_ID, response_type: "code", scope: ["identify"], prompt: "none" });
-        const tres = await fetch("/api/token", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ code }) });
-        const tok  = await tres.json();
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          scope: ["identify"],
+          prompt: "none"
+        });
+
+        const tres = await fetch("/api/token", {
+          method:"POST", headers:{ "Content-Type":"application/json" },
+          body: JSON.stringify({ code })
+        });
+        const tok = await tres.json();
         if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
         await sdk.commands.authenticate({ access_token: tok.access_token });
+
         const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${tok.access_token}` } });
         const me = await meRes.json();
         if (!meRes.ok) throw new Error("me_failed");
+
         showUser(me);
       } catch (e) {
         const msg = String(e?.message || e);
-        if (msg.includes("timeout_ready")) fail("Sin handshake con Discord","Ábrelo como Embedded Activity de esta app.");
-        else if (msg.startsWith("sdk_"))  fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
+        if (msg.includes("timeout_ready"))        fail("Sin handshake con Discord","Ábrelo como Embedded Activity de esta app.");
+        else if (msg.startsWith("sdk_"))          fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         else if (msg === "token_exchange_failed") fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
-        else fail("Error", msg);
+        else                                       fail("Error", msg);
       }
     })();
   </script>
