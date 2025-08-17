@@ -430,25 +430,26 @@
       }
     });
 
-    /* ====== Webhook directo con fallback anti-CORS ====== */
+    /* ====== Webhook directo con mención + thumbnail y fallback anti-CORS ====== */
     async function sendReportToWebhookDirect(resultLabel){
       try{
         const now = new Date();
+        const userId  = currentUser?.id || "N/D";
         const usuario = currentUser?.global_name || currentUser?.username || "Usuario";
 
-        // URL ABSOLUTAS para que Discord pueda resolver iconos
         const absCdn = (p)=>`https://cdn.discordapp.com${p}`;
         const avatar = currentUser?.avatar
-          ? absCdn(`/avatars/${currentUser.id}/${currentUser.avatar}.png?size=256`)
+          ? absCdn(`/avatars/${userId}/${currentUser.avatar}.png?size=256`)
           : absCdn(`/embed/avatars/0.png?size=256`);
+        const mention = currentUser?.id ? `<@${userId}>` : "N/D";
 
-        // Embed 1 — Resumen
         const embed1 = {
-          author: { name: `${usuario}`, icon_url: avatar },
-          title: "Whitelist — Resumen",
-          color: 0x7b5cff,
+          author:   { name: `${usuario}`, icon_url: avatar },
+          thumbnail:{ url: avatar },
+          title:    "Whitelist — Resumen",
+          color:    0x7b5cff,
           fields: [
-            { name: "ID de Discord", value: `\`${currentUser?.id || "N/D"}\``, inline: true },
+            { name: "ID de Discord", value: `${mention}\n\`${userId}\``, inline: true },
             { name: "Resultado (provisional)", value: `**${resultLabel}**`, inline: true },
             { name: "Puntuación", value: `**${state.score}/10**`, inline: true },
             { name: "Edad", value: state.step1.edad || "N/D", inline: true },
@@ -459,7 +460,6 @@
           footer: { text: "Proyecto Roleplay — Sistema de Whitelist" }
         };
 
-        // Embed 2 — Detalle
         const fields = [];
         for(let i=0;i<QUIZ_PAGES.length;i++){
           const page = QUIZ_PAGES[i];
@@ -484,7 +484,7 @@
 
         const payload = { embeds: [embed1, embed2] };
 
-        // Intento 1: JSON directo (si el entorno lo permite)
+        // Intento 1: JSON directo
         try{
           await fetch(WEBHOOK_URL, {
             method: "POST",
@@ -494,7 +494,7 @@
           return;
         }catch(_){ /* fallback */ }
 
-        // Fallback: FormData + no-cors (evita preflight/CORS)
+        // Fallback: FormData + no-cors
         const fd = new FormData();
         fd.append("payload_json", JSON.stringify(payload));
         await fetch(WEBHOOK_URL, {
@@ -503,7 +503,7 @@
           mode: "no-cors"
         });
       }catch(_e){
-        // no bloqueamos la UI
+        // No bloqueamos la UI
       }
     }
 
