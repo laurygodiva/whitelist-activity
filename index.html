@@ -153,7 +153,10 @@
 
         <section id="result" class="hidden">
           <p class="step-title">¡Gracias!</p>
-          <p id="scoreText" style="opacity:.95">Has completado el cuestionario.</p>
+          <p id="scoreText" style="opacity:.95">
+            Tu Whitelist se ha enviado exitosamente<br>
+            Podrás encontrar tu resultado en unos segundos en el canal ┃🔔┃resultados
+          </p>
         </section>
 
       </div>
@@ -163,7 +166,7 @@
   <script>
     const CLIENT_ID = "1383517896747126987";
 
-    /* Páginas 2–11 (sin cambios de contenido) */
+    /* Páginas 2–11 (contenido íntegro) */
     const QUIZ_PAGES = [
       { title:"Conocimientos Generales 1/5", questions:[
         {q:"Cuál de los siguientes conceptos no es sancionable?",answers:[{text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},{text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}]},
@@ -334,7 +337,7 @@
       const q = page.questions[state.quizChoice[idx]];
       quizQ.textContent = q.q;
 
-      // --- Barajar respuestas y recordar el orden en esta sesión ---
+      // Barajar respuestas y recordar el orden
       if(!state.answerOrder[idx]){
         state.answerOrder[idx] = shuffleInPlace([...q.answers.keys()].map((_,i)=>i));
       }
@@ -348,7 +351,6 @@
         lbl.className="check";
         const input=document.createElement("input");
         input.type="checkbox"; input.id=id; input.name="opt";
-        // guardamos si esta opción es correcta, independientemente del orden
         input.dataset.correct = ans.isCorrect ? "1":"0";
         const span=document.createElement("span"); span.textContent=ans.text;
         lbl.appendChild(input); lbl.appendChild(span);
@@ -382,7 +384,8 @@
         setProgress(TOTAL_STEPS);
         setWelcomeMode();
         show(viewResult);
-        scoreText.textContent="Has completado el cuestionario.";
+        // Mensaje final solicitado
+        scoreText.innerHTML = "Tu Whitelist se ha enviado exitosamente<br>Podrás encontrar tu resultado en unos segundos en el canal ┃🔔┃resultados";
       }
     });
 
