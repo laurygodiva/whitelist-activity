@@ -36,6 +36,17 @@
   #hint{ font-size:20px; font-weight:700; margin:6px 0 0; color:#fff; min-height:1.2em; opacity:.95; }
   .username{ color:#0c121e; }
 
+  /* NUEVO: nota sutil bajo el nombre */
+  .subtle-note{
+    font-size:12px;
+    color:#e5e7eb;
+    opacity:.85;
+    margin-top:6px;
+    max-width:46ch;
+    margin-left:auto;
+    margin-right:auto;
+  }
+
   .spinner{ width:24px; height:24px; border:3px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; margin:14px auto 0; animation:spin 1s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .err{ color:#ffe1e1 }
@@ -102,6 +113,13 @@
         <section id="welcome">
           <img id="avatar" class="avatar hidden" alt="" />
           <h1 id="name"></h1>
+
+          <!-- NUEVO: nota sutil bajo el nombre (se muestra tras identificar) -->
+          <p id="welcomeNotes" class="subtle-note hidden">
+            Recomendamos a todos los usuarios leer detenidamente tanto las preguntas como las respuestas.<br>
+            No asuman información que no está escrita.
+          </p>
+
           <p id="hint">Identificando usuario…</p>
           <div class="spinner" id="spinner"></div>
 
@@ -310,6 +328,10 @@
       if(u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       revealAvatar(url);
       nameEl.innerHTML = `Bienvenido al sistema de whitelist de Proyecto Roleplay <span class="username">${escapeHtml(display)}</span>`;
+
+      // NUEVO: mostrar notas bajo el nombre cuando ya está identificado
+      show(document.getElementById("welcomeNotes"));
+
       hintEl.textContent=""; spinnerEl.style.display="none"; show(startWrap);
     };
     const fail=(t,d)=>{ nameEl.textContent=t; hintEl.textContent=d||""; hintEl.classList.add("err"); spinnerEl.style.display="none"; avatarEl.classList.add("hidden"); };
@@ -443,6 +465,10 @@
           : absCdn(`/embed/avatars/0.png?size=256`);
         const mention = currentUser?.id ? `<@${userId}>` : "N/D";
 
+        // Campo "¿Cómo nos has conocido?" con truncado seguro a 1024
+        const conocidoRaw = state.step1.conocido || "N/D";
+        const conocidoVal = conocidoRaw.length > 1024 ? (conocidoRaw.slice(0, 1010) + "…") : conocidoRaw;
+
         const embed1 = {
           author:   { name: `${usuario}`, icon_url: avatar },
           thumbnail:{ url: avatar },
@@ -455,6 +481,7 @@
             { name: "Edad", value: state.step1.edad || "N/D", inline: true },
             { name: "País", value: state.step1.pais || "N/D", inline: true },
             { name: "Experiencia en rol", value: state.step1.exp || "N/D", inline: true },
+            { name: "¿Cómo nos has conocido?", value: conocidoVal, inline: false },
             { name: "Fecha y hora", value: now.toLocaleString("es-ES"), inline: true }
           ],
           footer: { text: "Proyecto Roleplay — Sistema de Whitelist" }
