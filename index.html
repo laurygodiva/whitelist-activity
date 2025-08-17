@@ -3,20 +3,17 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Discord Activity — Perfil (debug)</title>
+<title>Discord Activity — Perfil</title>
 <style>
   :root { color-scheme: dark; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
-  .card { width:380px; padding:20px; border:1px solid #1e293b; border-radius:16px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
-  img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 12px; }
-  h1 { font-size:18px; margin:8px 0 0; color:#e2e8f0; }
-  p  { font-size:13px; margin:6px 0 0; color:#94a3b8; }
-  pre { text-align:left; white-space:pre-wrap; word-break:break-word; background:#0b1220; border:1px solid #1e293b; padding:10px; border-radius:10px; color:#cbd5e1; font-size:12px; max-height:180px; overflow:auto; }
+  .card { width:380px; padding:24px; border:1px solid #1e293b; border-radius:20px; background:#0f172a; box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; }
+  img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; }
+  h1 { font-size:20px; margin:8px 0 0; color:#e2e8f0; }
+  p  { font-size:13px; margin:6px 0 0; color:#94a3b8; min-height:1.2em; }
   .spinner { width:24px; height:24px; border:3px solid #334155; border-top-color:#60a5fa; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
   @keyframes spin { to { transform:rotate(360deg) } }
   .err { color:#fca5a5 }
-  .ok  { color:#86efac }
-  code { background:#111827; padding:0 6px; border-radius:6px; }
 </style>
 </head>
 <body>
@@ -25,46 +22,36 @@
     <h1 id="name">Cargando…</h1>
     <p id="hint">Iniciando SDK</p>
     <div class="spinner" id="spinner"></div>
-    <pre id="log" style="display:none"></pre>
   </div>
 
   <script>
     const CLIENT_ID = "1383517896747126987";
-
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
     const spinnerEl = document.getElementById("spinner");
-    const logEl     = document.getElementById("log");
     const cdn = (p) => `/cdn${p}`;
 
-    const showLog = (title, obj) => {
-      logEl.style.display = "block";
-      logEl.textContent = `[${new Date().toISOString()}] ${title}\n` +
-        (typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
-    };
-    const ok = (u) => {
+    const showUser = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
       let avatar = cdn(`/embed/avatars/0.png`);
       if (u?.avatar) avatar = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       avatarEl.src = avatar;
       nameEl.textContent = display;
-      hintEl.innerHTML = `<span class="ok">OK</span> ID: ${u?.id ?? "desconocido"}`;
+      hintEl.textContent = "";            // ← sin “OK” ni ID
       spinnerEl.style.display = "none";
     };
-    const err = (t, d, dbg=null) => {
-      nameEl.textContent = t;
-      hintEl.innerHTML = d;
+    const fail = (title, detail) => {
+      nameEl.textContent = title;
+      hintEl.textContent = detail || "";
       hintEl.classList.add("err");
       spinnerEl.style.display = "none";
-      if (dbg) showLog(t, dbg);
     };
 
     async function loadSDKViaBlob() {
-      hintEl.textContent = "Descargando SDK…";
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache: "no-store" });
       const txt = await r.text();
-      if (!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,200)}`);
+      if (!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,120)}`);
       const url = URL.createObjectURL(new Blob([txt], { type: "text/javascript" }));
       try {
         const mod = await import(/* webpackIgnore: true */ url);
@@ -78,71 +65,51 @@
 
     (async () => {
       try {
+        hintEl.textContent = "Cargando SDK…";
         const DiscordSDK = await loadSDKViaBlob();
 
-        hintEl.textContent = "Handshake con Discord…";
+        hintEl.textContent = "Conectando con Discord…";
         const sdk = new DiscordSDK(CLIENT_ID);
-        try {
-          await Promise.race([
-            sdk.ready(),
-            new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000))
-          ]);
-        } catch (e) {
-          return err("Sin handshake con Discord",
-            "Abre esto como <b>Embedded Activity</b> de <b>esta app</b>.",
-            e?.message || e);
-        }
+        await Promise.race([
+          sdk.ready(),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000))
+        ]);
 
-        hintEl.textContent = "Solicitando código OAuth (RPC)…";
-        let auth;
-        try {
-          auth = await sdk.commands.authorize({
-            client_id: CLIENT_ID,
-            response_type: "code",
-            scope: ["identify"],
-            prompt: "none"
-            // IMPORTANTE: en RPC OAuth2 NO se usa redirect_uri
-          });
-        } catch (e) {
-          return err("Fallo en authorize()", "El cliente devolvió un error.", e?.message || e);
-        }
-        if (!auth?.code) {
-          return err("Authorize sin código",
-            "No se recibió <code>code</code>. Si es la primera vez, acepta el diálogo y reintenta.",
-            auth);
-        }
-        showLog("authorize()", auth);
+        hintEl.textContent = "Autorizando…";
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          scope: ["identify"],
+          prompt: "none"              // RPC OAuth2 (sin redirect_uri)
+        });
 
-        hintEl.textContent = "Intercambiando token…";
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: auth.code }) // sin redirect_uri en RPC
+          body: JSON.stringify({ code })
         });
-        const tokText = await tres.text();
-        let tok; try { tok = JSON.parse(tokText); } catch { tok = { raw: tokText }; }
-        showLog("POST /api/token", { status: tres.status, body: tok });
-        if (!tres.ok || !tok?.access_token) {
-          return err("token_exchange_failed",
-            "Verifica el <b>DISCORD_CLIENT_SECRET</b> del Worker (rota y actualiza si hace falta).",
-            { status: tres.status, tok });
-        }
+        const tok = await tres.json();
+        if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
-        hintEl.textContent = "Autenticando SDK…";
-        try { await sdk.commands.authenticate({ access_token: tok.access_token }); }
-        catch (e) { return err("authenticate() falló", "El cliente no aceptó el token.", e?.message || e); }
+        await sdk.commands.authenticate({ access_token: tok.access_token });
 
-        hintEl.textContent = "Cargando tu perfil…";
+        hintEl.textContent = "Cargando perfil…";
         const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${tok.access_token}` } });
-        const meText = await meRes.text();
-        let me; try { me = JSON.parse(meText); } catch { me = { raw: meText }; }
-        showLog("GET /api/@me", { status: meRes.status, body: me });
-        if (!meRes.ok) return err("Error en /@me", "Token no válido para <code>users/@me</code>.", { status: meRes.status, me });
+        const me = await meRes.json();
+        if (!meRes.ok) throw new Error("me_failed");
 
-        ok(me);
+        showUser(me);
       } catch (e) {
-        console.error(e);
-        err("Error inesperado", "Revisa la consola de la Activity (Ctrl/Cmd+Shift+I).", e?.message || e);
+        const msg = String(e?.message || e);
+        if (msg.includes("timeout_ready")) {
+          fail("Sin handshake con Discord", "Ábrelo como Embedded Activity de esta app.");
+        } else if (msg.startsWith("sdk_")) {
+          fail("No carga el SDK", "Revisa el mapping /api y que /api/sdk-src responda 200.");
+        } else if (msg === "token_exchange_failed") {
+          fail("Fallo de autorización", "Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+        } else {
+          fail("Error", msg);
+        }
       }
     })();
   </script>
