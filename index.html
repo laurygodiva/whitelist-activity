@@ -41,7 +41,7 @@
   .err{ color:#ffe1e1 }
 
   .btn{ appearance:none; border:0; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700; font-size:14px; transition:transform .05s ease, box-shadow .2s ease, opacity .2s ease; }
-  .btn-primary{ background:#fff; color:#0b0f14; box-shadow:0 8px 18px rgba(0,0,0,.25); }
+  .btn-primary{ background:#fff; color:#0b0f14; box-shadow:0 8px 18px rgba(0,0,0,.25); text-decoration:none; display:inline-block; }
   .btn-primary:hover{ transform:translateY(-1px); }
   .btn-primary:active{ transform:translateY(0); }
   .gtext{ background-image:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
@@ -87,6 +87,7 @@
 
     <div class="card">
       <div class="inner">
+        <!-- Bienvenida / identificación -->
         <section id="welcome">
           <img id="avatar" class="avatar hidden" alt="" />
           <h1 id="name"></h1>
@@ -100,6 +101,7 @@
           </div>
         </section>
 
+        <!-- Paso 1 -->
         <section id="step1" class="hidden" aria-labelledby="step1-title">
           <p id="step1-title" class="step-title">Datos del jugador</p>
 
@@ -138,6 +140,7 @@
           </form>
         </section>
 
+        <!-- Cuestionario (pasos 2–11) -->
         <section id="quiz" class="hidden" aria-live="polite">
           <p id="quiz-title" class="step-title"></p>
           <div id="quiz-q"></div>
@@ -151,12 +154,22 @@
           </form>
         </section>
 
+        <!-- Final -->
         <section id="result" class="hidden">
           <p class="step-title">¡Gracias!</p>
           <p id="scoreText" style="opacity:.95">
             Tu Whitelist se ha enviado exitosamente<br>
-            Podrás encontrar tu resultado en unos segundos en el canal ┃🔔┃resultados
+            Podrás encontrar tu resultado en unos segundos en el canal
           </p>
+          <a
+            id="resultLink"
+            class="btn btn-primary"
+            href="https://discord.com/channels/1383503690136162337/1383523661977223248"
+            target="_blank" rel="noopener noreferrer"
+            style="margin-top:12px;"
+          >
+            <span class="gtext">┃🔔┃resultados</span>
+          </a>
         </section>
 
       </div>
@@ -339,7 +352,7 @@
 
       // Barajar respuestas y recordar el orden
       if(!state.answerOrder[idx]){
-        state.answerOrder[idx] = shuffleInPlace([...q.answers.keys()].map((_,i)=>i));
+        state.answerOrder[idx] = shuffleInPlace(q.answers.map((_, i)=>i));
       }
       const order = state.answerOrder[idx];
       const shuffled = order.map(i=>q.answers[i]);
@@ -384,8 +397,9 @@
         setProgress(TOTAL_STEPS);
         setWelcomeMode();
         show(viewResult);
-        // Mensaje final solicitado
-        scoreText.innerHTML = "Tu Whitelist se ha enviado exitosamente<br>Podrás encontrar tu resultado en unos segundos en el canal ┃🔔┃resultados";
+        scoreText.innerHTML =
+          "Tu Whitelist se ha enviado exitosamente<br>" +
+          "Podrás encontrar tu resultado en unos segundos en el canal";
       }
     });
 
