@@ -46,6 +46,17 @@
   .btn-primary:active{ transform:translateY(0); }
   .gtext{ background-image:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
 
+  /* Píldora informativa (no botón) del nombre del canal */
+  .pill-outline{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 14px; border-radius:12px; user-select:none;
+    border:2px solid transparent;
+    background:
+      linear-gradient(#0b0f14,#0b0f14) padding-box,
+      linear-gradient(135deg,#5edae7,#885dfd) border-box;
+    color:#eaf2ff; font-weight:700;
+  }
+
   .step-title, #quiz-title{ font-size:18px; font-weight:800; margin:0 0 8px; color:#0c121e; }
   #quiz-q{ font-weight:700; font-size:16px; line-height:1.25; margin:6px 0 8px; }
 
@@ -161,15 +172,10 @@
             Tu Whitelist se ha enviado exitosamente<br>
             Podrás encontrar tu resultado en unos segundos en el canal
           </p>
-          <a
-            id="resultLink"
-            class="btn btn-primary"
-            href="https://discord.com/channels/1383503690136162337/1383523661977223248"
-            target="_blank" rel="noopener noreferrer"
-            style="margin-top:12px;"
-          >
-            <span class="gtext">┃🔔┃resultados</span>
-          </a>
+          <!-- Píldora informativa sin enlace -->
+          <div class="pill-outline" style="margin-top:12px;" aria-hidden="true">
+            🔔 ┃resultados
+          </div>
         </section>
 
       </div>
