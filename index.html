@@ -5,14 +5,13 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Discord Activity — Whitelist</title>
 <style>
-  :root { color-scheme: dark; --card-w: 420px; }
+  :root { color-scheme: dark; --card-w: 640px; } /* ← más ancho y fijo */
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
 
   .stack{ display:grid; gap:16px; place-items:center; }
 
   /* Logo centrado */
-  .brand-center{ width:72px; height:auto; user-select:none; -webkit-user-drag:none;
-    filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); }
+  .brand-center{ width:72px; height:auto; user-select:none; -webkit-user-drag:none; filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); }
 
   /* Progreso */
   .progress{ width:var(--card-w); text-align:center; }
@@ -23,7 +22,7 @@
 
   /* Tarjeta */
   .card{ width:var(--card-w); padding:24px; border-radius:20px; background: linear-gradient(135deg,#5edae7,#885dfd); box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
-  .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:18px; }
+  .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:18px; min-height:400px; display:flex; flex-direction:column; justify-content:center; } /* altura mínima para que no cambie */
 
   /* Avatar */
   img.avatar{ width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transition:opacity .25s ease; }
@@ -47,9 +46,10 @@
   .btn-primary:active{ transform:translateY(0); }
   .gtext{ background-image:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
 
-  /* Formulario */
-  .step-title{ font-size:16px; font-weight:700; margin:0 0 12px; opacity:.95; }
-  .form{ text-align:left; }
+  /* Encabezados de página en #0c121e */
+  .step-title, #quiz-title{ font-size:18px; font-weight:800; margin:0 0 12px; color:#0c121e; }
+
+  .form{ text-align:left; max-width:520px; margin:0 auto; }
   .field{ margin:10px 0 14px; }
   .label{ display:block; font-size:13px; margin-bottom:6px; color:#eef2ff; }
   .req{ color:#ffd3d3; margin-left:6px; font-size:12px; }
@@ -61,24 +61,25 @@
   }
   .input:focus, .textarea:focus{ border-color:#fff; background: rgba(255,255,255,.08); }
 
-  /* Radios (página 1) */
-  .radios{ display:grid; grid-template-columns:1fr; gap:8px; }
-  .radio{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid transparent; border-radius:12px; background: rgba(0,0,0,.18); transition:border-color .2s ease, background .2s ease; }
-  .radio input{ appearance:none; width:18px; height:18px; border-radius:50%; border:2px solid transparent; background:transparent; box-shadow: inset 0 0 0 9px transparent; }
-  .radio:has(input:focus-visible){ border-color:#fff; }
-  .radio:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
-  .radio input:checked{ box-shadow: inset 0 0 0 9px #fff; }
+  /* Contenedores de opciones */
+  .radios, .checks{ display:grid; grid-template-columns:1fr; gap:10px; }
+  .radio, .check{
+    display:flex; align-items:center; gap:12px; padding:12px 14px;
+    border:1px solid rgba(255,255,255,.28); border-radius:14px;
+    background: rgba(0,0,0,.18); transition:border-color .2s ease, background .2s ease;
+  }
+  .radio:has(input:focus-visible), .check:has(input:focus-visible){ border-color:#fff; }
+  .radio:has(input:checked), .check:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
 
-  /* Checks (quiz) */
-  .checks{ display:grid; grid-template-columns:1fr; gap:8px; text-align:left; }
-  .check{ display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid transparent; border-radius:12px; background: rgba(0,0,0,.18); transition:border-color .2s ease, background .2s ease; }
-  .check input{ appearance:none; width:18px; height:18px; border-radius:6px; border:2px solid transparent; background:transparent; box-shadow: inset 0 0 0 9px transparent; }
-  .check:has(input:focus-visible){ border-color:#fff; }
-  .check:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
-  .check input:checked{ box-shadow: inset 0 0 0 9px #fff; border-radius:3px; }
+  /* Marcadores redondos con contorno blanco y relleno #0c121e al seleccionar */
+  .radio input, .check input{
+    appearance:none; width:20px; height:20px; border-radius:50%;
+    border:2px solid #ffffff; background:transparent; display:inline-block; flex-shrink:0;
+  }
+  .radio input:checked, .check input:checked{ background:#0c121e; }
 
   .error{ color:#ffd3d3; font-size:12px; margin-top:6px; }
-  .actions{ display:flex; gap:10px; justify-content:center; margin-top:8px; }
+  .actions{ display:flex; gap:10px; justify-content:center; margin-top:12px; }
 </style>
 </head>
 <body>
@@ -168,185 +169,60 @@
   <script>
     const CLIENT_ID = "1383517896747126987";
 
-    /* ---------- Datos de preguntas: NO ALTERADOS ---------- */
+    /* ---------- PREGUNTAS (tal cual) ---------- */
     const QUIZ_PAGES = [
       { title: "Conocimientos Generales 1/5", questions: [
-        { q:"Cuál de los siguientes conceptos no es sancionable?", answers:[
-          {text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},
-          {text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}
-        ]},
-        { q:"¿Cuando se permite hacer MG?", answers:[
-          {text:"Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.",isCorrect:false},
-          {text:"Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.",isCorrect:true},
-          {text:"En cualquier situación excepto en los PVP.",isCorrect:false}
-        ]},
-        { q:"¿Qué significa IC?", answers:[
-          {text:"In Conversation.",isCorrect:false},{text:"In Character.",isCorrect:true},
-          {text:"In Combat.",isCorrect:false},{text:"In Community.",isCorrect:false}
-        ]}
+        {q:"Cuál de los siguientes conceptos no es sancionable?",answers:[{text:"CK",isCorrect:true},{text:"MG",isCorrect:false},{text:"RK",isCorrect:false},{text:"PK",isCorrect:true},{text:"IDP",isCorrect:true},{text:"DM",isCorrect:false}]},
+        {q:"¿Cuando se permite hacer MG?",answers:[{text:"Siempre que no entorpezca roles ajenos o administrativos y no te de ninguna ventaja IC.",isCorrect:false},{text:"Nunca, todo aquello que conoce tu pj debe haberlo presenciado, escuchado o visto IC.",isCorrect:true},{text:"En cualquier situación excepto en los PVP.",isCorrect:false}]},
+        {q:"¿Qué significa IC?",answers:[{text:"In Conversation.",isCorrect:false},{text:"In Character.",isCorrect:true},{text:"In Combat.",isCorrect:false},{text:"In Community.",isCorrect:false}]}
       ]},
       { title: "Conocimientos Generales 2/5", questions: [
-        { q:"¿A qué se refieren las siglas OOC?", answers:[
-          {text:"Se refiere a las conversaciones por voz dentro del juego.",isCorrect:false},
-          {text:"Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.",isCorrect:true},
-          {text:"Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.",isCorrect:false}
-        ]},
-        { q:"¿Qué es el RDE y qué significa?", answers:[
-          {text:"Significa Rol de Entorno, son ciudadanos, cámaras y vida en la ciudad que debemos tener en cuenta en todo momento para tener una interpretación correcta en la ciudad.",isCorrect:true},
-          {text:"Significa Roll Death Eyes, son los NPC que estan cerca de tu personaje y avisan a la policía o EMS cuando estas muerto.",isCorrect:false},
-          {text:"Significa Rol de Espera, es el tiempo que debes esperar tras la muerte de tu personaje para poder recordar como has muerto y quien fue el culpable.",isCorrect:false}
-        ]},
-        { q:"¿Para qué se utiliza el comando /me?", answers:[
-          {text:"Se utilizará para acciones que realiza nuestro personaje y no exista animación para ello.",isCorrect:true},
-          {text:"Se utilizará para especificar las acciones que tengan que ver con el entorno que nos rodea.",isCorrect:false},
-          {text:"Se utiliza para expresar las acciones y pensamientos de tu personaje.",isCorrect:false}
-        ]}
+        {q:"¿A qué se refieren las siglas OOC?",answers:[{text:"Se refiere a las conversaciones por voz dentro del juego.",isCorrect:false},{text:"Se refiere a las conversaciones y acciones que están fuera del contexto del rol y no afectan la narrativa del personaje.",isCorrect:true},{text:"Se refiere a las conversaciones que ocurren exclusivamente en el chat del juego.",isCorrect:false}]},
+        {q:"¿Qué es el RDE y qué significa?",answers:[{text:"Significa Rol de Entorno, son ciudadanos, cámaras y vida en la ciudad que debemos tener en cuenta en todo momento para tener una interpretación correcta en la ciudad.",isCorrect:true},{text:"Significa Roll Death Eyes, son los NPC que estan cerca de tu personaje y avisan a la policía o EMS cuando estas muerto.",isCorrect:false},{text:"Significa Rol de Espera, es el tiempo que debes esperar tras la muerte de tu personaje para poder recordar como has muerto y quien fue el culpable.",isCorrect:false}]},
+        {q:"¿Para qué se utiliza el comando /me?",answers:[{text:"Se utilizará para acciones que realiza nuestro personaje y no exista animación para ello.",isCorrect:true},{text:"Se utilizará para especificar las acciones que tengan que ver con el entorno que nos rodea.",isCorrect:false},{text:"Se utiliza para expresar las acciones y pensamientos de tu personaje.",isCorrect:false}]}
       ]},
       { title: "Conocimientos Generales 3/5", questions: [
-        { q:"¿Por qué no se permite el RK?", answers:[
-          {text:"Porque después de acabar inconsciente, no recuerdas el rol que te llevó a dicho estado.",isCorrect:true},
-          {text:"Porque tengo que esperar 30 minutos para poder volver a un PVP.",isCorrect:false},
-          {text:"Si está permitido.",isCorrect:false}
-        ]},
-        { q:"Cuál de los siguientes comentarios no se considera una falta de interpretación?", answers:[
-          {text:"Voy a descansar un rato, luego nos vemos.",isCorrect:true},
-          {text:"¿Con qué músculo me pongo el cinturón?",isCorrect:false},
-          {text:"Voy a parpadear que no te veo los brazos.",isCorrect:false},
-          {text:"Mira qué dice la nube.",isCorrect:false}
-        ]},
-        { q:"¿Se permiten los roles sexuales?", answers:[
-          {text:"Si, siempre que exista consentimiento de los participantes.",isCorrect:true},
-          {text:"No.",isCorrect:false}
-        ]}
+        {q:"¿Por qué no se permite el RK?",answers:[{text:"Porque después de acabar inconsciente, no recuerdas el rol que te llevó a dicho estado.",isCorrect:true},{text:"Porque tengo que esperar 30 minutos para poder volver a un PVP.",isCorrect:false},{text:"Si está permitido.",isCorrect:false}]},
+        {q:"Cuál de los siguientes comentarios no se considera una falta de interpretación?",answers:[{text:"Voy a descansar un rato, luego nos vemos.",isCorrect:true},{text:"¿Con qué músculo me pongo el cinturón?",isCorrect:false},{text:"Voy a parpadear que no te veo los brazos.",isCorrect:false},{text:"Mira qué dice la nube.",isCorrect:false}]},
+        {q:"¿Se permiten los roles sexuales?",answers:[{text:"Si, siempre que exista consentimiento de los participantes.",isCorrect:true},{text:"No.",isCorrect:false}]}
       ]},
       { title: "Conocimientos Generales 4/5", questions: [
-        { q:"¿Cuál de los siguientes ejemplos no son aptos para la elección de nombre de personaje?", answers:[
-          {text:"Nombres de Familiares cercanos.",isCorrect:false},
-          {text:"Nombres Reales.",isCorrect:false},
-          {text:"Nombres ofensivos o con doble sentido.",isCorrect:true},
-          {text:"Nombres de Famosos.",isCorrect:true},
-          {text:"Nombres de Personajes Ficticios.",isCorrect:true},
-          {text:"Nombres extranjeros.",isCorrect:false}
-        ]},
-        { q:"¿Qué se necesita para publicar contenido sobre PROYECTO ROLEPLAY", answers:[
-          {text:"Mencionar el nombre del servidor en el título del video o streaming.",isCorrect:false},
-          {text:"El permiso de Creador de Contenido.",isCorrect:true},
-          {text:"Nada.",isCorrect:false}
-        ]},
-        { q:"¿Se permite el uso de mods en el servidor?", answers:[
-          {text:"Si, unicamente los que mejoran los gráficos visuales.",isCorrect:true},
-          {text:"No, ningún tipo de mod está permitido.",isCorrect:false}
-        ]}
+        {q:"¿Cuál de los siguientes ejemplos no son aptos para la elección de nombre de personaje?",answers:[{text:"Nombres de Familiares cercanos.",isCorrect:false},{text:"Nombres Reales.",isCorrect:false},{text:"Nombres ofensivos o con doble sentido.",isCorrect:true},{text:"Nombres de Famosos.",isCorrect:true},{text:"Nombres de Personajes Ficticios.",isCorrect:true},{text:"Nombres extranjeros.",isCorrect:false}]},
+        {q:"¿Qué se necesita para publicar contenido sobre PROYECTO ROLEPLAY",answers:[{text:"Mencionar el nombre del servidor en el título del video o streaming.",isCorrect:false},{text:"El permiso de Creador de Contenido.",isCorrect:true},{text:"Nada.",isCorrect:false}]},
+        {q:"¿Se permite el uso de mods en el servidor?",answers:[{text:"Si, unicamente los que mejoran los gráficos visuales.",isCorrect:true},{text:"No, ningún tipo de mod está permitido.",isCorrect:false}]}
       ]},
       { title: "Conocimientos Generales 5/5", questions: [
-        { q:"¿Cómo debes comunicarte con otros jugadores fuera de rol pero dentro del juego?", answers:[
-          {text:"No puedes comunicarte fuera de rol.",isCorrect:false},
-          {text:"Mediante la voz IC pero sin otros jugadores cerca.",isCorrect:false},
-          {text:"Con el comando /msg o /ooc",isCorrect:true}
-        ]},
-        { q:"¿Se permiten los roles de tortura?", answers:[
-          {text:"Si, siempre que exista la aprobación administrativa y rol previo",isCorrect:false},
-          {text:"No, no se permiten ese tipo de roles tan increpantes",isCorrect:false},
-          {text:"Si, pero en casos de desmembramientos debes tener la aprobación OOC de la víctima",isCorrect:true}
-        ]},
-        { q:"¿Cuál de estas descripciones del comando /do no es correcta?", answers:[
-          {text:"/do se podría leer en la nota la palabra S.O.S",isCorrect:false},
-          {text:"/do ¿habría algún arma dentro del bolso?",isCorrect:false},
-          {text:"/do pensaría en el hambre que tiene.",isCorrect:true},
-          {text:"/do se escucharía el rugir de sus tripas.",isCorrect:false}
-        ]}
+        {q:"¿Cómo debes comunicarte con otros jugadores fuera de rol pero dentro del juego?",answers:[{text:"No puedes comunicarte fuera de rol.",isCorrect:false},{text:"Mediante la voz IC pero sin otros jugadores cerca.",isCorrect:false},{text:"Con el comando /msg o /ooc",isCorrect:true}]},
+        {q:"¿Se permiten los roles de tortura?",answers:[{text:"Si, siempre que exista la aprobación administrativa y rol previo",isCorrect:false},{text:"No, no se permiten ese tipo de roles tan increpantes",isCorrect:false},{text:"Si, pero en casos de desmembramientos debes tener la aprobación OOC de la víctima",isCorrect:true}]},
+        {q:"¿Cuál de estas descripciones del comando /do no es correcta?",answers:[{text:"/do se podría leer en la nota la palabra S.O.S",isCorrect:false},{text:"/do ¿habría algún arma dentro del bolso?",isCorrect:false},{text:"/do pensaría en el hambre que tiene.",isCorrect:true},{text:"/do se escucharía el rugir de sus tripas.",isCorrect:false}]}
       ]},
       { title: "Situaciones de rol 1/5", questions: [
-        { q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?", answers:[
-          {text:"Tratar de terminar el rol actual si existiese e ir a sala de espera.",isCorrect:true},
-          {text:"Ignorarlo y seguir roleando.",isCorrect:false},
-          {text:"Desconectarme e ignorar el mensaje.",isCorrect:false},
-          {text:"Quedarme AFK e ir a sala de espera.",isCorrect:false}
-        ]},
-        { q:"Después de un día duro de trabajo y de problemas en tu vida, decides irte a tu bar de confianza a llorar tus penas y a beberte una botella de Absenta. ¿Qué no debes hacer en este rol?", answers:[
-          {text:"Roleas que bebes el licor, pero no consumes el ítem y te lo guardas para después.",isCorrect:true},
-          {text:"Consumo el ítem y rolear que bebes el licor.",isCorrect:false},
-          {text:"Roleo el beber el licor y consumo el ítem pero no roleo que voy embriagad@.",isCorrect:true},
-          {text:"Roleo el beber el licor pero tiro el ítem. ",isCorrect:true}
-        ]},
-        { q:"¿Cuál de los siguientes roles sería el adecuado para justificar que llevas más de 15 items de un mismo objeto encima?", answers:[
-          {text:"Roleas que te entregan los ítems mediante una caja y la transportan manualmente dando uso a la animación o transporte correspondiente.",isCorrect:true},
-          {text:"Roleas que lo guardas en el bolsillo sin tener ningún objeto que justifique donde pueden estar  guardados.",isCorrect:false},
-          {text:"Roleo que tengo una mochila enorme.",isCorrect:false},
-          {text:"Si llevo el accesorio visual de la mochila guardo una cantidad considerable.",isCorrect:true}
-        ]}
+        {q:"Un staff te comunica por /msg que acudas a sala de reporte ¿Cómo debes actuar?",answers:[{text:"Tratar de terminar el rol actual si existiese e ir a sala de espera.",isCorrect:true},{text:"Ignorarlo y seguir roleando.",isCorrect:false},{text:"Desconectarme e ignorar el mensaje.",isCorrect:false},{text:"Quedarme AFK e ir a sala de espera.",isCorrect:false}]},
+        {q:"Después de un día duro de trabajo y de problemas en tu vida, decides irte a tu bar de confianza a llorar tus penas y a beberte una botella de Absenta. ¿Qué no debes hacer en este rol?",answers:[{text:"Roleas que bebes el licor, pero no consumes el ítem y te lo guardas para después.",isCorrect:true},{text:"Consumo el ítem y rolear que bebes el licor.",isCorrect:false},{text:"Roleo el beber el licor y consumo el ítem pero no roleo que voy embriagad@.",isCorrect:true},{text:"Roleo el beber el licor pero tiro el ítem. ",isCorrect:true}]},
+        {q:"¿Cuál de los siguientes roles sería el adecuado para justificar que llevas más de 15 items de un mismo objeto encima?",answers:[{text:"Roleas que te entregan los ítems mediante una caja y la transportan manualmente dando uso a la animación o transporte correspondiente.",isCorrect:true},{text:"Roleas que lo guardas en el bolsillo sin tener ningún objeto que justifique donde pueden estar  guardados.",isCorrect:false},{text:"Roleo que tengo una mochila enorme.",isCorrect:false},{text:"Si llevo el accesorio visual de la mochila guardo una cantidad considerable.",isCorrect:true}]}
       ]},
       { title: "Situaciones de rol 2/5", questions: [
-        { q:"Estás en medio de un rol que no ha sido pactado con otro jugador y de la nada se te cae la conexión y te saca del servidor obligándote a reiniciar. ¿Cómo se ha de proceder?", answers:[
-          {text:"Los demás jugadores deben frenar el rol momentáneamente quedandote afk hasta que vuelvas a entrar al servidor.",isCorrect:false},
-          {text:"Los demás jugadores deben seguir el rol excusando tu ausencia de forma ingeniosa hasta que puedas reconectar y seguir con el rol.",isCorrect:true},
-          {text:"Los demás jugadores se tienen que quedar afk para esperarte y de mientras salen de su idp y se ponen a hablar de cosas OOC .",isCorrect:false}
-        ]},
-        { q:"Acabas de ser secuestrado por unos enmascarados que te han maniatado y obligado a subir a un coche, sin darte tiempo de reacción te han metido a la fuerza dentro de un flecca y te han obligado a arrodillarte delante de la puerta con intención de que te vea la policía. ¿Qué haces en ese momento?", answers:[
-          {text:"Tratas de hacerte valiente e intentar noquear a alguno de los enmascarados para apoderarte de su arma y tratar de huir.",isCorrect:false},
-          {text:"Haces caso a las indicaciones de los enmascarados y esperas paciente y con cautela a que la policía venga en tu ayuda.",isCorrect:true},
-          {text:"Te haces amigo de los atracadores y te unes a ellos haciendo de rehén y quedándote una parte del botín.",isCorrect:false}
-        ]},
-        { q:"9 amigos excursionistas y tú habéis decidido subir al monte andando para realizar una excursión y tirarnos en paracaídas desde la cima. Estando a mitad del camino un puma los ataca dejando a más de la mitad del grupo herido.¿Como procedes a este rol?", answers:[
-          {text:"Llamas al equipo de emergencia para que os intenten evacuar mediante helicóptero o camioneta para llevaros a un centro sanitario cercano a curar las heridas.",isCorrect:true},
-          {text:"Tus compañeros no heridos y tú tratas de arrastrar a los demás heridos exponiendolos a un nuevo ataque o problemas por el camino en la bajada.",isCorrect:false},
-          {text:"Tratáis de arrastrar a los heridos hasta la cima y os tirais todos juntos en paracaídas tratando de llegar a una zona donde haya un centro sanitario.",isCorrect:false}
-        ]}
-      ]},
+        {q:"Estás en medio de un rol que no ha sido pactado con otro jugador y de la nada se te cae la conexión y te saca del servidor obligándote a reiniciar. ¿Cómo se ha de proceder?",answers:[{text:"Los demás jugadores deben frenar el rol momentáneamente quedandote afk hasta que vuelvas a entrar al servidor.",isCorrect:false},{text:"Los demás jugadores deben seguir el rol excusando tu ausencia de forma ingeniosa hasta que puedas reconectar y seguir con el rol.",isCorrect:true},{text:"Los demás jugadores se tienen que quedar afk para esperarte y de mientras salen de su idp y se ponen a hablar de cosas OOC .",isCorrect:false}]},
+        {q:"Acabas de ser secuestrado por unos enmascarados que te han maniatado y obligado a subir a un coche, sin darte tiempo de reacción te han metido a la fuerza dentro de un flecca y te han obligado a arrodillarte delante de la puerta con intención de que te vea la policía. ¿Qué haces en ese momento?",answers:[{text:"Tratas de hacerte valiente e intentar noquear a alguno de los enmascarados para apoderarte de su arma y tratar de huir.",isCorrect:false},{text:"Haces caso a las indicaciones de los enmascarados y esperas paciente y con cautela a que la policía venga en tu ayuda.",isCorrect:true},{text:"Te haces amigo de los atracadores y te unes a ellos haciendo de rehén y quedándote una parte del botín.",isCorrect:false}]},
+        {q:"9 amigos excursionistas y tú habéis decidido subir al monte andando para realizar una excursión y tirarnos en paracaídas desde la cima. Estando a mitad del camino un puma los ataca dejando a más de la mitad del grupo herido.¿Como procedes a este rol?",answers:[{text:"Llamas al equipo de emergencia para que os intenten evacuar mediante helicóptero o camioneta para llevaros a un centro sanitario cercano a curar las heridas.",isCorrect:true},{text:"Tus compañeros no heridos y tú tratas de arrastrar a los demás heridos exponiendolos a un nuevo ataque o problemas por el camino en la bajada.",isCorrect:false},{text:"Tratáis de arrastrar a los heridos hasta la cima y os tirais todos juntos en paracaídas tratando de llegar a una zona donde haya un centro sanitario.",isCorrect:false}]}]
+      },
       { title: "Situaciones de rol 3/5", questions: [
-        { q:"Esta última semana finalmente le has realizado un ck a tu pj. Hoy por fin te has decidido y te has creado un personaje nuevo que llega a la ciudad. Elige la respuesta correcta.", answers:[
-          {text:"Camino por la ciudad con el nuevo personaje reconociendo los lugares y las personas con las que interactúe con el personaje anterior.",isCorrect:false},
-          {text:"Como el personaje es completamente nuevo no puedo acordarme de las personas o lugares que haya conocido con el anterior personaje.",isCorrect:true},
-          {text:"Voy por la ciudad conociendo todo de nuevo y me acuerdo de algunos personajes de otros jugadores porque son mis amigos.",isCorrect:false}
-        ]},
-        { q:"Estás tranquilamente caminando cuando de repente recibes una llamada anónima, amenazándote y pidiéndote dinero. En medio de la llamada, reconoces que esa voz es la del dueño del casino. ¿Cómo continuarías el rol?", answers:[
-          {text:"Me hago el loco y acato sus instrucciones.",isCorrect:true},
-          {text:"Le insultaría, le mencionaría su nombre y le diría que le voy a mandar cuatro sicarios al casino a partirle las piernas.",isCorrect:false},
-          {text:"Me hago el loco, espero un rato y voy al casino a preguntar a los trabajadores si han escuchado al jefe amenazar a alguien por teléfono.",isCorrect:false}
-        ]},
-        { q:"Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.", answers:[
-          {text:"No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.",isCorrect:false},
-          {text:"Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.",isCorrect:true},
-          {text:"Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.",isCorrect:false}
-        ]}
-      ]},
+        {q:"Esta última semana finalmente le has realizado un ck a tu pj. Hoy por fin te has decidido y te has creado un personaje nuevo que llega a la ciudad. Elige la respuesta correcta.",answers:[{text:"Camino por la ciudad con el nuevo personaje reconociendo los lugares y las personas con las que interactúe con el personaje anterior.",isCorrect:false},{text:"Como el personaje es completamente nuevo no puedo acordarme de las personas o lugares que haya conocido con el anterior personaje.",isCorrect:true},{text:"Voy por la ciudad conociendo todo de nuevo y me acuerdo de algunos personajes de otros jugadores porque son mis amigos.",isCorrect:false}]},
+        {q:"Estás tranquilamente caminando cuando de repente recibes una llamada anónima, amenazándote y pidiéndote dinero. En medio de la llamada, reconoces que esa voz es la del dueño del casino. ¿Cómo continuarías el rol?",answers:[{text:"Me hago el loco y acato sus instrucciones.",isCorrect:true},{text:"Le insultaría, le mencionaría su nombre y le diría que le voy a mandar cuatro sicarios al casino a partirle las piernas.",isCorrect:false},{text:"Me hago el loco, espero un rato y voy al casino a preguntar a los trabajadores si han escuchado al jefe amenazar a alguien por teléfono.",isCorrect:false}]},
+        {q:"Hace nada has empezado un rol de pareja con otr@ jugador, como queréis ir a más y profundizar la relación IC, propones realizar un rol de carácter sexual con dicha persona.",answers:[{text:"No se puede realizar dicho rol ya que está prohibido realizar roles de carácter sexual.",isCorrect:false},{text:"Se puede realizar dicho rol siempre y cuando las dos personas estén de acuerdo en realizarlo.",isCorrect:true},{text:"Fuerzas indirectamente al otr@ jugador/a a realizar dicho rol sin tener su consentimiento.",isCorrect:false}]}]
+      },
       { title: "Situaciones de rol 4/5", questions: [
-        { q:"Tu y tu amigo estás roleando con otros jugadores en GC, sin querer, en medio de un rol, tu amigo se deja el micrófono encendido y se escuchan conversaciones OC.¿Qué haces en esta situación?", answers:[
-          {text:"Paramos el rol de inmediato y avisamos por voz saliendo del pj que se ha dejado el micrófono encendido.",isCorrect:false},
-          {text:"Tratáis de continuar con el rol haciendo caso omiso a lo que ha dicho tu amigo y mediante mensaje privado le avisas de que se ha dejado el micrófono abierto.posteriormente seguís el rol como si no hubiera pasado nada.",isCorrect:true},
-          {text:"Parais el rol momentáneamente y escribís por el chat oc para avisar a tu amigo. Os quedáis Afk hasta que solucione el problema hablando de vuestras cosas por discord. Posteriormente haceis regresión de rol y seguis.",isCorrect:false}
-        ]},
-        { q:"Te encuentras en un garaje sacando un vehículo, de repente aparece un enmascarado con una pistola, el cual te dice que estás secuestrado y que a la mínima tontería te pegará un tiro. ¿Cómo actuarías?", answers:[
-          {text:"Sacaría una pistola y le dispararía hasta dejarlo en el suelo en coma y luego me reiria de el.",isCorrect:false},
-          {text:"Le diría IC que en el garaje no me puede robar, que se vaya o, si no, rezaría para que lo deportaran de la ciudad por intentar robarme en una zona segura.",isCorrect:false},
-          {text:"Seguiría sus indicaciones.",isCorrect:true}
-        ]},
-        { q:"Estas en el hospital y te percatas de que un jugador nada mas entrar en el hospital empieza a dar puñetazos a todo el mundo sin mediar palabra. ¿Cómo no deberías actuar?", answers:[
-          {text:"Me uno a dar puñetazos, la culpa es del que empieza.",isCorrect:true},
-          {text:"Me escondo en algún lugar donde no pueda pegarme y aviso al staff con el comando /reporte",isCorrect:false},
-          {text:"Saco una SMG y le abro la cabeza para que deje de hacer antirol.",isCorrect:true}
-        ]}
-      ]},
+        {q:"Tu y tu amigo estás roleando con otros jugadores en GC, sin querer, en medio de un rol, tu amigo se deja el micrófono encendido y se escuchan conversaciones OC.¿Qué haces en esta situación?",answers:[{text:"Paramos el rol de inmediato y avisamos por voz saliendo del pj que se ha dejado el micrófono encendido.",isCorrect:false},{text:"Tratáis de continuar con el rol haciendo caso omiso a lo que ha dicho tu amigo y mediante mensaje privado le avisas de que se ha dejado el micrófono abierto.posteriormente seguís el rol como si no hubiera pasado nada.",isCorrect:true},{text:"Parais el rol momentáneamente y escribís por el chat oc para avisar a tu amigo. Os quedáis Afk hasta que solucione el problema hablando de vuestras cosas por discord. Posteriormente haceis regresión de rol y seguis.",isCorrect:false}]},
+        {q:"Te encuentras en un garaje sacando un vehículo, de repente aparece un enmascarado con una pistola, el cual te dice que estás secuestrado y que a la mínima tontería te pegará un tiro. ¿Cómo actuarías?",answers:[{text:"Sacaría una pistola y le dispararía hasta dejarlo en el suelo en coma y luego me reiria de el.",isCorrect:false},{text:"Le diría IC que en el garaje no me puede robar, que se vaya o, si no, rezaría para que lo deportaran de la ciudad por intentar robarme en una zona segura.",isCorrect:false},{text:"Seguiría sus indicaciones.",isCorrect:true}]},
+        {q:"Estas en el hospital y te percatas de que un jugador nada mas entrar en el hospital empieza a dar puñetazos a todo el mundo sin mediar palabra. ¿Cómo no deberías actuar?",answers:[{text:"Me uno a dar puñetazos, la culpa es del que empieza.",isCorrect:true},{text:"Me escondo en algún lugar donde no pueda pegarme y aviso al staff con el comando /reporte",isCorrect:false},{text:"Saco una SMG y le abro la cabeza para que deje de hacer antirol.",isCorrect:true}]}]
+      },
       { title: "Situaciones de rol 5/5", questions: [
-        { q:"Durante un rol de secuestro siendo tu el rehen empiezas a valorar que los secuestradores empiezan a ser excesivamente maleducados contigo ¿Cómo deberías actuar frente ese rol?", answers:[
-          {text:"Tomo mala actitud por el desagrado llegando a insultar pero manteniendo la cooperación.",isCorrect:true},
-          {text:"Insisto por el chat OOC que se están pasando y si no paran me desconecto.",isCorrect:false},
-          {text:"Continuo el rol pero reporto.",isCorrect:false}
-        ]},
-        { q:"Tu personaje es un médico y acudes a un aviso de un jugador inconsciente, y resulta que este te cae mal en el rol. ¿Qué no puedes hacer?", answers:[
-          {text:"Le atiendo pero no sin antes escupirle en la boca por payaso.",isCorrect:false},
-          {text:"Aprovecho la situación para dejar que se muera definitivamente y si puedo hago que sufra en el proceso.",isCorrect:true},
-          {text:"Le atiendo pero pongo una excusa para cobrarle 1.000$",isCorrect:false}
-        ]},
-        { q:"Estás en el metro esperando el tren, a los minutos otro jugador comienza a cantar rancheras mexicanas pidiendo limosna, pero los ideales racistas de tu personaje hacen que te sientas completamente incómodo. ¿Cuál de estas acciones no tendría consecuencias OOC? ", answers:[
-          {text:"Comienzas una batalla de miradas tensas y cuando llega el tren, mientras subes le gritas: cierra el pico chimpancé.",isCorrect:true},
-          {text:"Dejas caer un billete de 500$ junto a las vías y cuando este lo recoge del suelo aprovechas para darle una patada en el culo para que sea atropellado por el tren.",isCorrect:false},
-          {text:"Le acercas un cuchillo al cuello, comienzas a dar tu discurso xenófobo y sin intenciones de matarlo pero sí de herirlo lo apuñalas.",isCorrect:false},
-          {text:"Cualquier acción, comentario o comportamiento racista, xenófoba o discriminatoria IC está prohibida. Las ideologías de los personajes deben ser respetuosas.",isCorrect:false}
-        ]}
+        {q:"Durante un rol de secuestro siendo tu el rehen empiezas a valorar que los secuestradores empiezan a ser excesivamente maleducados contigo ¿Cómo deberías actuar frente ese rol?",answers:[{text:"Tomo mala actitud por el desagrado llegando a insultar pero manteniendo la cooperación.",isCorrect:true},{text:"Insisto por el chat OOC que se están pasando y si no paran me desconecto.",isCorrect:false},{text:"Continuo el rol pero reporto.",isCorrect:false}]},
+        {q:"Tu personaje es un médico y acudes a un aviso de un jugador inconsciente, y resulta que este te cae mal en el rol. ¿Qué no puedes hacer?",answers:[{text:"Le atiendo pero no sin antes escupirle en la boca por payaso.",isCorrect:false},{text:"Aprovecho la situación para dejar que se muera definitivamente y si puedo hago que sufra en el proceso.",isCorrect:true},{text:"Le atiendo pero pongo una excusa para cobrarle 1.000$",isCorrect:false}]},
+        {q:"Estás en el metro esperando el tren, a los minutos otro jugador comienza a cantar rancheras mexicanas pidiendo limosna, pero los ideales racistas de tu personaje hacen que te sientas completamente incómodo. ¿Cuál de estas acciones no tendría consecuencias OOC? ",answers:[{text:"Comienzas una batalla de miradas tensas y cuando llega el tren, mientras subes le gritas: cierra el pico chimpancé.",isCorrect:true},{text:"Dejas caer un billete de 500$ junto a las vías y cuando este lo recoge del suelo aprovechas para darle una patada en el culo para que sea atropellado por el tren.",isCorrect:false},{text:"Le acercas un cuchillo al cuello, comienzas a dar tu discurso xenófobo y sin intenciones de matarlo pero sí de herirlo lo apuñalas.",isCorrect:false},{text:"Cualquier acción, comentario o comportamiento racista, xenófoba o discriminatoria IC está prohibida. Las ideologías de los personajes deben ser respetuosas.",isCorrect:false}]}
       ]}
     ];
-    /* ------------ fin datos ------------- */
+    /* ---------------------------------------- */
 
     const TOTAL_STEPS = 11; // 1 de datos + 10 de test
 
@@ -383,13 +259,13 @@
     const cdn = (p) => `/cdn${p}`;
     const state = {
       step1:{},
-      quizChoice: {}, // pageIdx -> questionIdx chosen
-      quizAnswers: {}, // pageIdx -> array selected indices
+      quizChoice:{},        // pageIdx -> questionIdx chosen
+      quizAnswers:{},       // pageIdx -> selected indices
       score: 0,
-      currentQuizIndex: 0 // 0..9 (páginas 2..11)
+      currentQuizIndex: 0   // 0..9
     };
 
-    // Helpers
+    // Utils
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
     function show(el){ el.classList.remove("hidden"); }
     function hide(el){ el.classList.add("hidden"); }
@@ -398,10 +274,7 @@
     function revealAvatar(url){
       const done = () => { avatarEl.classList.remove("hidden"); requestAnimationFrame(()=>avatarEl.classList.add("revealed")); };
       avatarEl.addEventListener("load", done, { once:true });
-      avatarEl.addEventListener("error", () => {
-        avatarEl.addEventListener("load", done, { once:true });
-        avatarEl.src = cdn(`/embed/avatars/0.png?size=256`);
-      }, { once:true });
+      avatarEl.addEventListener("error", () => { avatarEl.addEventListener("load", done, { once:true }); avatarEl.src = cdn(`/embed/avatars/0.png?size=256`); }, { once:true });
       avatarEl.src = url;
     }
 
@@ -429,14 +302,14 @@
       }catch(e){ URL.revokeObjectURL(url); throw new Error(`sdk_import_failed: ${e?.message || e}`); }
     }
 
-    // Navegación inicio -> paso 1
+    // Bienvenida -> Paso 1
     startBtn?.addEventListener("click", () => {
       hide(viewWelcome);
       show(progress); setProgress(1);
       show(viewStep1); document.getElementById("edad").focus();
     });
 
-    // Validación paso 1
+    // Validación Paso 1
     form1.addEventListener("submit", (e) => {
       e.preventDefault();
       errEdad.textContent = ""; errPais.textContent = ""; errExp.textContent = "";
@@ -452,7 +325,6 @@
       if (!ok) return;
 
       state.step1 = { edad, pais, exp, conocido };
-      // Ir a página 2 (quiz index 0)
       startQuizPage(0);
     });
 
@@ -463,82 +335,62 @@
       hide(viewStep1); hide(viewResult); show(viewQuiz);
 
       const page = QUIZ_PAGES[idx];
-      quizTitle.textContent = page.title;
+      document.getElementById("quiz-title").textContent = page.title;
 
-      // Elegir al azar 1 pregunta si no se eligió antes
-      if (state.quizChoice[idx] === undefined) {
-        state.quizChoice[idx] = Math.floor(Math.random() * page.questions.length);
-      }
+      if (state.quizChoice[idx] === undefined) state.quizChoice[idx] = Math.floor(Math.random() * page.questions.length);
       const q = page.questions[state.quizChoice[idx]];
-      quizQ.textContent = q.q;
+      document.getElementById("quiz-q").textContent = q.q;
 
-      // Render opciones
-      quizOptions.innerHTML = "";
+      const box = document.getElementById("quiz-options");
+      box.innerHTML = "";
       q.answers.forEach((ans, i) => {
-        const id = `q${idx}-a${i}`;
-        const wrap = document.createElement("label");
-        wrap.className = "check";
+        const lbl = document.createElement("label");
+        lbl.className = "check";
         const input = document.createElement("input");
-        input.type = "checkbox"; input.value = String(i); input.id = id; input.name = "opt";
-        const span = document.createElement("span");
-        span.textContent = ans.text;
-        wrap.appendChild(input); wrap.appendChild(span);
-        quizOptions.appendChild(wrap);
+        input.type = "checkbox"; input.value = String(i); input.name = "opt";
+        const span = document.createElement("span"); span.textContent = ans.text;
+        lbl.appendChild(input); lbl.appendChild(span); box.appendChild(lbl);
       });
-      quizError.textContent = "";
+      document.getElementById("quiz-error").textContent = "";
     }
 
     // Validar y avanzar
-    quizForm.addEventListener("submit", (e) => {
+    document.getElementById("quiz-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const idx = state.currentQuizIndex;
       const page = QUIZ_PAGES[idx];
       const q = page.questions[state.quizChoice[idx]];
 
-      const selected = [...quizOptions.querySelectorAll('input[type="checkbox"]:checked')].map(i => Number(i.value));
-      if (selected.length === 0) { quizError.textContent = "Selecciona al menos una opción."; return; }
+      const selected = [...document.querySelectorAll('#quiz-options input[type="checkbox"]:checked')].map(i => Number(i.value));
+      if (selected.length === 0) { document.getElementById("quiz-error").textContent = "Selecciona al menos una opción."; return; }
 
       const correctIdx = q.answers.map((a, i) => a.isCorrect ? i : -1).filter(i => i !== -1);
-      const isExactly =
-        selected.length === correctIdx.length &&
-        selected.every(i => correctIdx.includes(i));
+      const isExactly = selected.length === correctIdx.length && selected.every(i => correctIdx.includes(i));
 
       state.quizAnswers[idx] = selected;
       if (isExactly) state.score++;
 
-      // Ir a la siguiente página del quiz o resultados
-      if (idx + 1 < QUIZ_PAGES.length) {
-        startQuizPage(idx + 1);
-      } else {
-        // Fin (página 11 completada)
-        hide(viewQuiz); setProgress(TOTAL_STEPS);
-        show(viewResult);
-        scoreText.textContent = `Has acertado ${state.score} de ${QUIZ_PAGES.length} preguntas.`;
-      }
+      if (idx + 1 < QUIZ_PAGES.length) startQuizPage(idx + 1);
+      else { hide(viewQuiz); setProgress(TOTAL_STEPS); show(viewResult); document.getElementById("scoreText").textContent = `Has acertado ${state.score} de ${QUIZ_PAGES.length} preguntas.`; }
     });
 
-    // Boot: auth + user
+    // Boot Discord
     (async () => {
       try {
-        hintEl.textContent = "Identificando usuario…";
+        document.getElementById("hint").textContent = "Identificando usuario…";
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
         await Promise.race([ sdk.ready(), new Promise((_,rej)=>setTimeout(()=>rej(new Error("timeout_ready")),10000)) ]);
 
-        const { code } = await sdk.commands.authorize({
-          client_id: CLIENT_ID, response_type: "code", scope: ["identify"], prompt: "none"
-        });
-
+        const { code } = await sdk.commands.authorize({ client_id: CLIENT_ID, response_type: "code", scope: ["identify"], prompt: "none" });
         const tres = await fetch("/api/token", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ code }) });
         const tok  = await tres.json();
         if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
         await sdk.commands.authenticate({ access_token: tok.access_token });
-
         const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${tok.access_token}` } });
         const me = await meRes.json();
         if (!meRes.ok) throw new Error("me_failed");
-
         showUser(me);
       } catch (e) {
         const msg = String(e?.message || e);
