@@ -30,6 +30,8 @@
 
   <script>
     const CLIENT_ID = "1383517896747126987";
+    // Redirect URI fijo (debe coincidir con el que añadas en el Developer Portal)
+    const REDIRECT_URI = `https://1383517896747126987.discordsays.com/oauth-complete`;
 
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
@@ -43,7 +45,6 @@
       logEl.textContent = `[${new Date().toISOString()}] ${title}\n` +
         (typeof obj === "string" ? obj : JSON.stringify(obj, null, 2));
     };
-
     const ok = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
       let avatar = cdn(`/embed/avatars/0.png`);
@@ -80,9 +81,9 @@
     (async () => {
       try {
         const DiscordSDK = await loadSDKViaBlob();
+
         hintEl.textContent = "Handshake con Discord…";
         const sdk = new DiscordSDK(CLIENT_ID);
-
         try {
           await Promise.race([
             sdk.ready(),
@@ -90,7 +91,7 @@
           ]);
         } catch (e) {
           return err("Sin handshake con Discord",
-            "Asegúrate de abrirlo como <b>Embedded Activity</b> de <b>esta app</b>.",
+            "Abre esto como <b>Embedded Activity</b> de <b>esta app</b>.",
             e?.message || e);
         }
 
@@ -100,15 +101,17 @@
           auth = await sdk.commands.authorize({
             client_id: CLIENT_ID,
             response_type: "code",
-            state: "",
+            scope: ["identify"],
             prompt: "none",
-            scope: ["identify"]
+            redirect_uri: REDIRECT_URI
           });
         } catch (e) {
-          return err("Fallo en authorize()", "El cliente no devolvió código (scope: <code>identify</code>).", e?.message || e);
+          return err("Fallo en authorize()", "El cliente devolvió un error.", e?.message || e);
         }
         if (!auth?.code) {
-          return err("Authorize sin código", "No se recibió <code>code</code> del cliente.", auth);
+          return err("Authorize sin código",
+            "No se recibió <code>code</code>. Si es la primera vez, acepta el diálogo y reintenta.",
+            auth);
         }
         showLog("authorize()", auth);
 
@@ -116,33 +119,27 @@
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ code: auth.code })
+          body: JSON.stringify({ code: auth.code, redirect_uri: REDIRECT_URI })
         });
-        const tokBodyText = await tres.text();
-        let tok;
-        try { tok = JSON.parse(tokBodyText); } catch { tok = { raw: tokBodyText }; }
+        const tokText = await tres.text();
+        let tok; try { tok = JSON.parse(tokText); } catch { tok = { raw: tokText }; }
         showLog("POST /api/token", { status: tres.status, body: tok });
         if (!tres.ok || !tok?.access_token) {
           return err("token_exchange_failed",
-            "Revisa el <b>DISCORD_CLIENT_SECRET</b> del Worker (rota el secreto en el portal y actualiza el Worker).",
+            "Verifica el <b>DISCORD_CLIENT_SECRET</b> del Worker y que el <b>redirect_uri</b> coincide con el del authorize y el Portal.",
             { status: tres.status, tok });
         }
 
-        hintEl.textContent = "Autenticando con el SDK…";
-        try {
-          await sdk.commands.authenticate({ access_token: tok.access_token });
-        } catch (e) {
-          return err("authenticate() falló", "El cliente no aceptó el access_token.", e?.message || e);
-        }
+        hintEl.textContent = "Autenticando SDK…";
+        try { await sdk.commands.authenticate({ access_token: tok.access_token }); }
+        catch (e) { return err("authenticate() falló", "El cliente no aceptó el token.", e?.message || e); }
 
         hintEl.textContent = "Cargando tu perfil…";
         const meRes = await fetch("/api/@me", { headers: { Authorization: `Bearer ${tok.access_token}` } });
         const meText = await meRes.text();
         let me; try { me = JSON.parse(meText); } catch { me = { raw: meText }; }
         showLog("GET /api/@me", { status: meRes.status, body: me });
-        if (!meRes.ok) {
-          return err("Error en /@me", "El token no es válido para <code>users/@me</code>.", { status: meRes.status, me });
-        }
+        if (!meRes.ok) return err("Error en /@me", "Token no válido para <code>users/@me</code>.", { status: meRes.status, me });
 
         ok(me);
       } catch (e) {
