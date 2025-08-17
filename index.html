@@ -14,7 +14,7 @@
   .card{ width:420px; padding:24px; border-radius:20px; background: linear-gradient(135deg,#5edae7,#885dfd); box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
   .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:18px; }
 
-  /* Avatar oculto hasta que cargue (sin círculo) */
+  /* Avatar oculto hasta que cargue */
   img.avatar{ width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transition:opacity .25s ease; }
   img.avatar.hidden{ display:none; }
   img.avatar.revealed{ display:block; opacity:1; }
@@ -29,17 +29,12 @@
   .hidden{ display:none !important; }
 
   /* Botones */
-  .btn{
-    appearance: none; border:0; cursor:pointer;
-    padding:12px 16px; border-radius:12px; font-weight:700; font-size:14px;
-    transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
-  }
-  .btn-primary{
-    color:#0b0f14; background:#fff;
-    box-shadow:0 8px 18px rgba(0,0,0,.25);
-  }
+  .btn{ appearance:none; border:0; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700; font-size:14px; transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease; }
+  .btn-primary{ background:#fff; color:#0b0f14; box-shadow:0 8px 18px rgba(0,0,0,.25); }
   .btn-primary:hover{ transform:translateY(-1px); }
   .btn-primary:active{ transform:translateY(0); }
+  /* Texto con degradado */
+  .btn-gradient-text{ color:transparent; background:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; }
 
   /* Formulario */
   .step-title{ font-size:16px; font-weight:700; margin:0 0 12px; opacity:.95; }
@@ -47,21 +42,34 @@
   .field{ margin:10px 0 14px; }
   .label{ display:block; font-size:13px; margin-bottom:6px; color:#eef2ff; }
   .req{ color:#ffd3d3; margin-left:6px; font-size:12px; }
-  .input, .textarea, .select{
-    width:100%; box-sizing:border-box; border-radius:12px; border:1px solid rgba(255,255,255,.25);
-    background: rgba(0,0,0,.25); color:#fff; padding:10px 12px; font-size:14px; outline:none;
-  }
-  .input:focus, .textarea:focus{ border-color:#fff; }
-  .textarea{ min-height:84px; resize:vertical; }
-  .radios{ display:grid; grid-template-columns: 1fr; gap:8px; }
-  .radio{
-    display:flex; align-items:center; gap:10px; padding:10px 12px; border:1px solid rgba(255,255,255,.25); border-radius:12px;
-    background: rgba(0,0,0,.18);
-  }
-  .radio input{ accent-color:#fff; transform:scale(1.1); }
-  .error{ color:#ffd3d3; font-size:12px; margin-top:6px; }
 
-  .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+  /* Inputs sin contorno por defecto; sólo blanco al enfocar */
+  .input, .textarea{
+    width:100%; box-sizing:border-box; border-radius:12px;
+    border:1px solid transparent; background: rgba(0,0,0,.18);
+    color:#fff; padding:10px 12px; font-size:14px; outline:none;
+  }
+  .input:focus, .textarea:focus{ border-color:#fff; background: rgba(255,255,255,.08); }
+
+  /* Radios: sin marcador/contorno si no están seleccionados */
+  .radios{ display:grid; grid-template-columns:1fr; gap:8px; }
+  .radio{
+    display:flex; align-items:center; gap:10px; padding:10px 12px;
+    border:1px solid transparent; border-radius:12px; background: rgba(0,0,0,.18);
+    transition:border-color .2s ease, background .2s ease;
+  }
+  .radio input{
+    appearance:none; width:18px; height:18px; border-radius:50%;
+    border:2px solid transparent; background:transparent; box-shadow: inset 0 0 0 9px transparent;
+  }
+  .radio:has(input:focus-visible){ border-color:#fff; }
+  .radio:has(input:checked){
+    border-color:#fff; background: rgba(255,255,255,.08);
+  }
+  .radio input:checked{ box-shadow: inset 0 0 0 9px #fff; } /* punto blanco al seleccionar */
+
+  .error{ color:#ffd3d3; font-size:12px; margin-top:6px; }
+  .actions{ display:flex; gap:10px; justify-content:center; margin-top:8px; } /* centrado */
 </style>
 </head>
 <body>
@@ -70,30 +78,30 @@
   <div class="card">
     <div class="inner">
 
-      <!-- Vista: bienvenida -->
+      <!-- Bienvenida -->
       <section id="welcome">
         <img id="avatar" class="avatar hidden" alt="" />
         <h1 id="name"></h1>
         <p id="hint">Identificando usuario…</p>
         <div class="spinner" id="spinner"></div>
         <div id="startWrap" class="hidden" style="margin-top:14px;">
-          <button id="startBtn" class="btn btn-primary">Comenzar whitelist</button>
+          <button id="startBtn" class="btn btn-primary btn-gradient-text">Comenzar whitelist</button>
         </div>
       </section>
 
-      <!-- Vista: Paso 1 del formulario -->
+      <!-- Paso 1 -->
       <section id="step1" class="hidden">
-        <p class="step-title">Formulario — Paso 1</p>
+        <p class="step-title">Datos del jugador</p>
         <form id="formStep1" class="form" novalidate>
           <div class="field">
             <label class="label" for="edad">Edad <span class="req">*</span></label>
-            <input id="edad" name="edad" class="input" type="text" inputmode="numeric" autocomplete="off" placeholder="Tu edad" required />
+            <input id="edad" name="edad" class="input" type="text" inputmode="numeric" autocomplete="off" required />
             <div class="error" id="err-edad"></div>
           </div>
 
           <div class="field">
             <label class="label" for="pais">País <span class="req">*</span></label>
-            <input id="pais" name="pais" class="input" type="text" autocomplete="country-name" placeholder="Tu país" required />
+            <input id="pais" name="pais" class="input" type="text" autocomplete="country-name" required />
             <div class="error" id="err-pais"></div>
           </div>
 
@@ -109,19 +117,19 @@
 
           <div class="field">
             <label class="label" for="conocido">¿Cómo nos has conocido? <span style="opacity:.7">(opcional)</span></label>
-            <textarea id="conocido" name="conocido" class="textarea" placeholder="Cuéntanos..."></textarea>
+            <textarea id="conocido" name="conocido" class="textarea"></textarea>
           </div>
 
           <div class="actions">
-            <button type="submit" class="btn btn-primary">Siguiente</button>
+            <button type="submit" class="btn btn-primary btn-gradient-text">Siguiente</button>
           </div>
         </form>
       </section>
 
-      <!-- Vista: Paso 2 (placeholder para validar la navegación) -->
+      <!-- Paso 2 (placeholder) -->
       <section id="step2" class="hidden">
         <p class="step-title">Formulario — Paso 2</p>
-        <p style="opacity:.9">¡Perfecto! La navegación funciona. Aquí colocaremos las siguientes preguntas.</p>
+        <p style="opacity:.9">¡Perfecto! Aquí añadimos el siguiente bloque de preguntas.</p>
       </section>
 
     </div>
@@ -210,7 +218,6 @@
 
     form1.addEventListener("submit", (e) => {
       e.preventDefault();
-      // limpiar errores
       errEdad.textContent = ""; errPais.textContent = ""; errExp.textContent = "";
 
       const edad = (document.getElementById("edad").value || "").trim();
