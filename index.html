@@ -7,13 +7,23 @@
 <style>
   :root { color-scheme: dark; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
+
+  /* Logo esquina */
+  .brand{
+    position:fixed; top:16px; left:16px; z-index:10;
+    width:64px; height:auto; user-select:none; -webkit-user-drag:none;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
+    opacity:.95; transition:opacity .15s ease, transform .15s ease;
+  }
+  .brand:hover{ opacity:1; transform:scale(1.03); }
+
   .card {
     width:380px; padding:24px; border-radius:20px;
     background: linear-gradient(135deg, #5edae7, #885dfd);
     box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none;
   }
   .inner { background: rgba(0,0,0,0.25); border-radius:16px; padding:16px; }
-  img { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); }
+  img.avatar { width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); }
   .hidden { display:none; }
   h1 { font-size:18px; margin:8px 0 0; color:#ffffff; font-weight:700; min-height:1.2em; }
   p  { font-size:13px; margin:6px 0 0; color:#eef2ff; min-height:1.2em; opacity:.9; }
@@ -23,9 +33,12 @@
 </style>
 </head>
 <body>
+  <!-- Logo (cámbialo si lo guardas en otra ruta, p. ej. /assets/logo.png) -->
+  <img class="brand" src="logo.png" alt="Proyecto Roleplay" title="Proyecto Roleplay" />
+
   <div class="card">
     <div class="inner">
-      <img id="avatar" alt="" class="hidden" />
+      <img id="avatar" class="avatar hidden" alt="" />
       <h1 id="name"></h1>
       <p id="hint">Identificando usuario…</p>
       <div class="spinner" id="spinner"></div>
@@ -45,9 +58,9 @@
       let avatar = cdn(`/embed/avatars/0.png`);
       if (u?.avatar) avatar = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       avatarEl.src = avatar;
-      avatarEl.classList.remove("hidden");      // ← mostrar avatar solo cuando ya está
+      avatarEl.classList.remove("hidden");
       nameEl.textContent = `Bienvenido al sistema de whitelist de Proyecto Roleplay ${display}`;
-      hintEl.textContent = "";                  // ← ocultar mensaje de carga
+      hintEl.textContent = "";
       spinnerEl.style.display = "none";
     };
     const fail = (title, detail) => {
@@ -55,7 +68,7 @@
       hintEl.textContent = detail || "";
       hintEl.classList.add("err");
       spinnerEl.style.display = "none";
-      avatarEl.classList.add("hidden");         // ← nada de círculo vacío si falla
+      avatarEl.classList.add("hidden");
     };
 
     async function loadSDKViaBlob() {
@@ -75,7 +88,6 @@
 
     (async () => {
       try {
-        // Mostrar solo “Identificando usuario…” mientras todo carga.
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
         await Promise.race([
@@ -87,7 +99,7 @@
           client_id: CLIENT_ID,
           response_type: "code",
           scope: ["identify"],
-          prompt: "none"              // RPC OAuth2 (sin redirect_uri)
+          prompt: "none"
         });
 
         const tres = await fetch("/api/token", {
