@@ -5,45 +5,62 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Discord Activity — Whitelist</title>
 <style>
-  :root { color-scheme: dark; }
+  :root { color-scheme: dark; --card-w: 420px; }
   body { margin:0; min-height:100dvh; display:grid; place-items:center; background:#0b0f14; font-family: system-ui, Segoe UI, Roboto, sans-serif; }
 
-  .brand{ position:fixed; top:16px; left:16px; z-index:10; width:64px; height:auto; user-select:none; -webkit-user-drag:none; filter: drop-shadow(0 6px 18px rgba(0,0,0,.35)); opacity:.95; transition:opacity .15s, transform .15s; }
-  .brand:hover{ opacity:1; transform:scale(1.03); }
+  /* Layout principal */
+  .stack{ display:grid; gap:16px; place-items:center; }
 
-  .card{ width:420px; padding:24px; border-radius:20px; background: linear-gradient(135deg,#5edae7,#885dfd); box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
+  /* Logo centrado arriba */
+  .brand-center{
+    width:72px; height:auto; user-select:none; -webkit-user-drag:none;
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,.35));
+  }
+
+  /* Progreso */
+  .progress{ width:var(--card-w); text-align:center; }
+  .progress-track{
+    height:10px; border-radius:9999px; overflow:hidden;
+    background: rgba(255,255,255,.15);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,.25);
+  }
+  .progress-fill{
+    height:100%; width:0%;
+    background: linear-gradient(135deg,#5edae7,#885dfd);
+    border-radius:9999px; transition:width .35s ease;
+  }
+  .progress-label{
+    font-size:12px; color:#e5e7eb; margin-top:6px; opacity:.9;
+  }
+  .hidden{ display:none !important; }
+
+  /* Tarjeta */
+  .card{ width:var(--card-w); padding:24px; border-radius:20px;
+    background: linear-gradient(135deg,#5edae7,#885dfd);
+    box-shadow:0 10px 30px rgba(0,0,0,.35); text-align:center; color:#fff; border:none; }
   .inner{ background: rgba(0,0,0,0.25); border-radius:16px; padding:18px; }
 
+  /* Avatar oculto hasta que cargue */
   img.avatar{ width:120px; height:120px; border-radius:50%; display:block; margin:0 auto 14px; object-fit:cover; box-shadow:0 6px 18px rgba(0,0,0,.25); opacity:0; transition:opacity .25s ease; }
   img.avatar.hidden{ display:none; }
   img.avatar.revealed{ display:block; opacity:1; }
 
+  /* Títulos/estado */
   h1{ font-size:20px; margin:8px 0 0; color:#ffffff; font-weight:700; min-height:1.2em; }
   #hint{ font-size:20px; font-weight:700; margin:6px 0 0; color:#ffffff; min-height:1.2em; opacity:.95; }
   .username{ color:#0c121e; }
 
+  /* Spinner */
   .spinner{ width:24px; height:24px; border:3px solid rgba(255,255,255,.35); border-top-color:#ffffff; border-radius:50%; margin:18px auto 0; animation:spin 1s linear infinite; }
   @keyframes spin{ to{ transform:rotate(360deg) } }
   .err{ color:#ffe1e1 }
-  .hidden{ display:none !important; }
 
   /* Botones */
-  .btn{
-    appearance:none; border:0; cursor:pointer;
-    padding:12px 16px; border-radius:12px; font-weight:700; font-size:14px;
-    transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease;
-  }
-  .btn-primary{
-    background:#fff; color:#0b0f14; box-shadow:0 8px 18px rgba(0,0,0,.25);
-  }
+  .btn{ appearance:none; border:0; cursor:pointer; padding:12px 16px; border-radius:12px; font-weight:700; font-size:14px; transition: transform .05s ease, box-shadow .2s ease, opacity .2s ease; }
+  .btn-primary{ background:#fff; color:#0b0f14; box-shadow:0 8px 18px rgba(0,0,0,.25); }
   .btn-primary:hover{ transform:translateY(-1px); }
   .btn-primary:active{ transform:translateY(0); }
-  /* Texto con degradado solo en el span interno (no pisa el fondo) */
-  .gtext{
-    background-image:linear-gradient(135deg,#5edae7,#885dfd);
-    -webkit-background-clip:text; background-clip:text;
-    color:transparent; display:inline-block;
-  }
+  .gtext{ background-image:linear-gradient(135deg,#5edae7,#885dfd); -webkit-background-clip:text; background-clip:text; color:transparent; display:inline-block; }
 
   /* Formulario */
   .step-title{ font-size:16px; font-weight:700; margin:0 0 12px; opacity:.95; }
@@ -65,10 +82,7 @@
     border:1px solid transparent; border-radius:12px; background: rgba(0,0,0,.18);
     transition:border-color .2s ease, background .2s ease;
   }
-  .radio input{
-    appearance:none; width:18px; height:18px; border-radius:50%;
-    border:2px solid transparent; background:transparent; box-shadow: inset 0 0 0 9px transparent;
-  }
+  .radio input{ appearance:none; width:18px; height:18px; border-radius:50%; border:2px solid transparent; background:transparent; box-shadow: inset 0 0 0 9px transparent; }
   .radio:has(input:focus-visible){ border-color:#fff; }
   .radio:has(input:checked){ border-color:#fff; background: rgba(255,255,255,.08); }
   .radio input:checked{ box-shadow: inset 0 0 0 9px #fff; }
@@ -78,74 +92,90 @@
 </style>
 </head>
 <body>
-  <img class="brand" src="logo.png" alt="Proyecto Roleplay" />
+  <div class="stack">
+    <!-- Logo centrado -->
+    <img class="brand-center" src="logo.png" alt="Proyecto Roleplay" />
 
-  <div class="card">
-    <div class="inner">
+    <!-- Barra de progreso (se muestra desde el Paso 1) -->
+    <div id="progress" class="progress hidden" aria-hidden="true">
+      <div class="progress-track"><div id="progressFill" class="progress-fill"></div></div>
+      <div id="progressLabel" class="progress-label">Paso 1 de 2</div>
+    </div>
 
-      <!-- Bienvenida -->
-      <section id="welcome">
-        <img id="avatar" class="avatar hidden" alt="" />
-        <h1 id="name"></h1>
-        <p id="hint">Identificando usuario…</p>
-        <div class="spinner" id="spinner"></div>
-        <div id="startWrap" class="hidden" style="margin-top:14px;">
-          <button id="startBtn" type="button" class="btn btn-primary">
-            <span class="gtext">Comenzar whitelist</span>
-          </button>
-        </div>
-      </section>
+    <!-- Tarjeta -->
+    <div class="card">
+      <div class="inner">
 
-      <!-- Paso 1 -->
-      <section id="step1" class="hidden">
-        <p class="step-title">Datos del jugador</p>
-        <form id="formStep1" class="form" novalidate>
-          <div class="field">
-            <label class="label" for="edad">Edad <span class="req">*</span></label>
-            <input id="edad" name="edad" class="input" type="text" inputmode="numeric" autocomplete="off" required />
-            <div class="error" id="err-edad"></div>
-          </div>
-
-          <div class="field">
-            <label class="label" for="pais">País <span class="req">*</span></label>
-            <input id="pais" name="pais" class="input" type="text" autocomplete="country-name" required />
-            <div class="error" id="err-pais"></div>
-          </div>
-
-          <div class="field">
-            <span class="label">Experiencia en rol <span class="req">*</span></span>
-            <div class="radios" role="radiogroup">
-              <label class="radio"><input type="radio" name="exp" value="principiante" required /> Principiante</label>
-              <label class="radio"><input type="radio" name="exp" value="intermedia" /> Intermedia</label>
-              <label class="radio"><input type="radio" name="exp" value="avanzada" /> Avanzada</label>
-            </div>
-            <div class="error" id="err-exp"></div>
-          </div>
-
-          <div class="field">
-            <label class="label" for="conocido">¿Cómo nos has conocido? <span style="opacity:.7">(opcional)</span></label>
-            <textarea id="conocido" name="conocido" class="textarea"></textarea>
-          </div>
-
-          <div class="actions">
-            <button type="submit" class="btn btn-primary">
-              <span class="gtext">Siguiente</span>
+        <!-- Bienvenida -->
+        <section id="welcome">
+          <img id="avatar" class="avatar hidden" alt="" />
+          <h1 id="name"></h1>
+          <p id="hint">Identificando usuario…</p>
+          <div class="spinner" id="spinner"></div>
+          <div id="startWrap" class="hidden" style="margin-top:14px;">
+            <button id="startBtn" type="button" class="btn btn-primary">
+              <span class="gtext">Comenzar whitelist</span>
             </button>
           </div>
-        </form>
-      </section>
+        </section>
 
-      <!-- Paso 2 (placeholder) -->
-      <section id="step2" class="hidden">
-        <p class="step-title">Formulario — Paso 2</p>
-        <p style="opacity:.9">¡Perfecto! Aquí añadimos el siguiente bloque de preguntas.</p>
-      </section>
+        <!-- Paso 1 -->
+        <section id="step1" class="hidden" aria-labelledby="step1-title">
+          <p id="step1-title" class="step-title">Datos del jugador</p>
+          <form id="formStep1" class="form" novalidate>
+            <div class="field">
+              <label class="label" for="edad">Edad <span class="req">*</span></label>
+              <input id="edad" name="edad" class="input" type="text" inputmode="numeric" autocomplete="off" required />
+              <div class="error" id="err-edad"></div>
+            </div>
 
+            <div class="field">
+              <label class="label" for="pais">País <span class="req">*</span></label>
+              <input id="pais" name="pais" class="input" type="text" autocomplete="country-name" required />
+              <div class="error" id="err-pais"></div>
+            </div>
+
+            <div class="field">
+              <span class="label">Experiencia en rol <span class="req">*</span></span>
+              <div class="radios" role="radiogroup">
+                <label class="radio"><input type="radio" name="exp" value="principiante" required /> Principiante</label>
+                <label class="radio"><input type="radio" name="exp" value="intermedia" /> Intermedia</label>
+                <label class="radio"><input type="radio" name="exp" value="avanzada" /> Avanzada</label>
+              </div>
+              <div class="error" id="err-exp"></div>
+            </div>
+
+            <div class="field">
+              <label class="label" for="conocido">¿Cómo nos has conocido? <span style="opacity:.7">(opcional)</span></label>
+              <textarea id="conocido" name="conocido" class="textarea"></textarea>
+            </div>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary">
+                <span class="gtext">Siguiente</span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Paso 2 (placeholder) -->
+        <section id="step2" class="hidden">
+          <p class="step-title">Formulario — Paso 2</p>
+          <p style="opacity:.9">¡Perfecto! Aquí añadimos el siguiente bloque de preguntas.</p>
+        </section>
+
+      </div>
     </div>
   </div>
 
   <script>
     const CLIENT_ID = "1383517896747126987";
+
+    // UI refs
+    const progress      = document.getElementById("progress");
+    const progressFill  = document.getElementById("progressFill");
+    const progressLabel = document.getElementById("progressLabel");
+
     const avatarEl  = document.getElementById("avatar");
     const nameEl    = document.getElementById("name");
     const hintEl    = document.getElementById("hint");
@@ -157,16 +187,28 @@
     const viewStep1   = document.getElementById("step1");
     const viewStep2   = document.getElementById("step2");
 
-    const form1 = document.getElementById("formStep1");
+    const form1   = document.getElementById("formStep1");
     const errEdad = document.getElementById("err-edad");
     const errPais = document.getElementById("err-pais");
     const errExp  = document.getElementById("err-exp");
 
+    const TOTAL_STEPS = 2; // ajustaremos cuando agreguemos más páginas
     const cdn = (p) => `/cdn${p}`;
     const state = { form: {} };
 
+    // Helpers
     function escapeHtml(s){ return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+    function show(el){ el.classList.remove("hidden"); }
+    function hide(el){ el.classList.add("hidden"); }
 
+    // Progreso
+    function setProgress(step){
+      const pct = Math.max(0, Math.min(100, Math.round(step / TOTAL_STEPS * 100)));
+      progressFill.style.width = pct + "%";
+      progressLabel.textContent = `Paso ${step} de ${TOTAL_STEPS}`;
+    }
+
+    // Avatar sólo cuando cargue
     function revealAvatar(url){
       const done = () => {
         avatarEl.classList.remove("hidden");
@@ -180,9 +222,6 @@
       avatarEl.src = url;
     }
 
-    function show(el){ el.classList.remove("hidden"); }
-    function hide(el){ el.classList.add("hidden"); }
-
     const showUser = (u) => {
       const display = u?.global_name || u?.username || "Usuario";
       let url = cdn(`/embed/avatars/0.png?size=256`);
@@ -192,7 +231,7 @@
       nameEl.innerHTML = `Bienvenido al sistema de whitelist de Proyecto Roleplay <span class="username">${escapeHtml(display)}</span>`;
       hintEl.textContent = "";
       spinnerEl.style.display = "none";
-      show(startWrap);
+      show(startWrap); // Mostrar botón "Comenzar"
     };
 
     const fail = (title, detail) => {
@@ -221,6 +260,7 @@
     // Navegación
     startBtn?.addEventListener("click", () => {
       hide(viewWelcome);
+      show(progress); setProgress(1);          // ← progreso comienza aquí
       show(viewStep1);
       document.getElementById("edad").focus();
     });
@@ -238,14 +278,15 @@
       if (!edad) { errEdad.textContent = "La edad es obligatoria."; ok = false; }
       if (!pais) { errPais.textContent = "El país es obligatorio."; ok = false; }
       if (!exp)  { errExp.textContent  = "Selecciona tu experiencia."; ok = false; }
-
       if (!ok) return;
 
       state.form.step1 = { edad, pais, exp, conocido };
       hide(viewStep1);
+      setProgress(2);
       show(viewStep2);
     });
 
+    // Boot
     (async () => {
       try {
         hintEl.textContent = "Identificando usuario…";
