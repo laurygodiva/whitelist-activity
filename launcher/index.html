@@ -152,7 +152,7 @@
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
             <a id="launchBtn"
                class="btn btn-primary"
-               href="fivem://connect/92.113.12.70:50133">
+               href="#">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
@@ -173,12 +173,10 @@
 
   <script>
     /* ====== CONFIG ====== */
-    // CLIENT_ID de la app del LAUNCHER
-    const CLIENT_ID = "1447776754646126716";
+    const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
 
-    // Guild y rol que quieres comprobar
-    const GUILD_ID         = "1383503690136162337";   // tu servidor principal
-    const REQUIRED_ROLE_ID = "1385255786879520930";   // rol whitelisted
+    const GUILD_ID         = "1383503690136162337";
+    const REQUIRED_ROLE_ID = "1385255786879520930";
 
     const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
@@ -192,10 +190,8 @@
     const welcomeNotes = document.getElementById("welcomeNotes");
     const noRoleMsg  = document.getElementById("noRoleMsg");
 
-    /* ====== Estado ====== */
     let currentUser = null;
 
-    /* ====== Utils UI ====== */
     const cdn = (p)=>`/cdn${p}`;
     function escapeHtml(s){
       return String(s).replace(/[&<>"']/g, m=>({
@@ -243,7 +239,7 @@
       hide(noRoleMsg);
     };
 
-    /* ====== SDK loader (desde tu Worker: /api/sdk-src) ====== */
+    // ====== SDK loader (desde tu Worker: /api/sdk-src) ======
     async function loadSDKViaBlob(){
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
       const txt = await r.text();
@@ -259,14 +255,17 @@
       }
     }
 
-    /* ====== Forzar navegación a FiveM también desde JS ====== */
-    if(launchBtn){
-      launchBtn.addEventListener("click", ()=>{
-        try { window.location.href = FIVEM_URL; } catch(_) {}
+    // ====== Botón: lanzar FiveM sin navegar el iframe ======
+    if (launchBtn) {
+      launchBtn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        try {
+          window.open(FIVEM_URL);
+        } catch (_) {}
       });
     }
 
-    /* ====== Chequear rol en el backend ====== */
+    // ====== Chequear rol en el backend ======
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
         headers: {
@@ -275,7 +274,6 @@
         }
       });
       if(res.status === 404){
-        // No está en el servidor
         return { inGuild:false, hasRole:false };
       }
       const data = await res.json().catch(()=>null);
@@ -287,7 +285,7 @@
       return { inGuild:true, hasRole };
     }
 
-    /* ====== Arranque: verificar usuario + rol ====== */
+    // ====== Arranque: verificar usuario + rol ======
     (async ()=>{
       try{
         hintEl.textContent = "Identificando usuario…";
@@ -300,27 +298,21 @@
           new Promise((_, rej)=>setTimeout(()=>rej(new Error("timeout_ready")), 10000))
         ]);
 
-        // Pedimos autorización con scopes identify + guilds.members.read
-        // IMPORTANTE: añadimos scope "guilds.members.read"
-const { code } = await sdk.commands.authorize({
-  client_id: CLIENT_ID,
-  response_type: "code",
-  scope: ["identify", "guilds.members.read"],
-  prompt: "none"
-});
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          scope: ["identify", "guilds.members.read"],
+          prompt: "none"
+        });
 
-const tres = await fetch("/api/token", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    code,
-    client_kind: "launcher"      // <- ESTA ES LA CLAVE
-  })
-});
+        const tres = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ code })
+        });
 
-const tok = await tres.json();
-if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
-
+        const tok = await tres.json();
+        if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
         await sdk.commands.authenticate({ access_token: tok.access_token });
 
@@ -332,7 +324,6 @@ if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
         showUser(me);
 
-        // Ahora comprobamos el rol
         hintEl.textContent = "Comprobando permisos en el servidor…";
         const { inGuild, hasRole } = await checkMemberRole(tok.access_token);
 
@@ -352,7 +343,6 @@ if (!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
           return;
         }
 
-        // Todo OK → mostrar botón
         hintEl.textContent = "Tienes permiso para usar el launcher.";
         hide(noRoleMsg);
         show(launchWrap);
