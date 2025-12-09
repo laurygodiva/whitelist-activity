@@ -134,7 +134,7 @@
 <body>
   <div class="stack">
     <!-- mismo logo que la whitelist -->
-    <img class="brand-center" src="./logo.png" alt="Proyecto Roleplay" />
+    <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
 
     <div class="card">
       <div class="inner">
@@ -143,6 +143,7 @@
           <h1 id="name"></h1>
 
           <p id="welcomeNotes" class="subtle-note hidden">
+            Estamos verificando si tienes la ficha de personaje aprobada.
           </p>
 
           <p id="hint">Identificando usuario…</p>
@@ -151,13 +152,13 @@
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
             <a id="launchBtn"
                class="btn btn-primary"
-               href="#">
+               href="fivem://connect/92.113.12.70:50133">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
             <p class="subtle-note" style="margin-top:10px;">
               Si el botón no funciona, asegúrate de tener FiveM instalado y Steam abierto
-              <code>fivem://</code>.
+              y que tu sistema reconoce el protocolo <code>fivem://</code>.
             </p>
           </div>
 
@@ -190,6 +191,7 @@
     const noRoleMsg  = document.getElementById("noRoleMsg");
 
     let currentUser = null;
+    let sdkGlobal = null;
 
     const cdn = (p)=>`/cdn${p}`;
     function escapeHtml(s){
@@ -254,13 +256,19 @@
       }
     }
 
-    // ====== Botón: lanzar FiveM sin navegar el iframe ======
+    // ====== Botón: lanzar FiveM usando el SDK si es posible ======
     if (launchBtn) {
       launchBtn.addEventListener("click", (e)=>{
         e.preventDefault();
         try {
-          window.open(FIVEM_URL);
-        } catch (_) {}
+          if (sdkGlobal && sdkGlobal.commands && sdkGlobal.commands.openExternalLink) {
+            sdkGlobal.commands.openExternalLink({ url: FIVEM_URL });
+          } else {
+            window.open(FIVEM_URL, "_blank");
+          }
+        } catch (err) {
+          try { window.open(FIVEM_URL, "_blank"); } catch (_) {}
+        }
       });
     }
 
@@ -291,6 +299,7 @@
 
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
+        sdkGlobal = sdk;
 
         await Promise.race([
           sdk.ready(),
@@ -305,13 +314,10 @@
         });
 
         const tres = await fetch("/api/token", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({
-    code,
-    app: "launcher"   // 👈 esto le dice al Worker que use LAUNCHER_CLIENT_*
-  })
-});
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ code })
+        });
 
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
