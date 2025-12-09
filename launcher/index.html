@@ -301,18 +301,7 @@
         ]);
 
         // IMPORTANTE: añadimos scope "guilds.members.read"
-        const { code } = await sdk.commands.authorize({
-          client_id: CLIENT_ID,
-          response_type: "code",
-          scope: ["identify", "guilds.members.read"],
-          prompt: "none"
-        });
-
-        const tres = await fetch("/api/token", {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ code })
-        });
+        
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
