@@ -242,16 +242,6 @@
       }
     }
 
-    // botón: intentar abrir fivem:// en nueva ventana (lo máximo que permite Discord)
-    if (launchBtn) {
-      launchBtn.addEventListener("click", (e)=>{
-        e.preventDefault();
-        try {
-          window.open(FIVEM_URL);
-        } catch (_) {}
-      });
-    }
-
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
         headers: {
@@ -331,6 +321,22 @@
         hintEl.textContent = "Tienes permiso para usar el launcher.";
         hide(noRoleMsg);
         show(launchWrap);
+
+        // 🔹 AQUÍ enganchamos el botón usando el SDK de Discord
+        if (launchBtn) {
+          launchBtn.onclick = async (e)=>{
+            e.preventDefault();
+            try {
+              await sdk.commands.openExternalLink({ url: FIVEM_URL });
+            } catch (err) {
+              console.error("Error al abrir FiveM con openExternalLink:", err);
+              // Fallback para cuando lo abras en navegador normal
+              try {
+                window.open(FIVEM_URL, "_blank");
+              } catch (_) {}
+            }
+          };
+        }
 
       }catch(e){
         const msg = String(e?.message || e);
