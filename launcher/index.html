@@ -149,17 +149,13 @@
           <div class="spinner" id="spinner"></div>
 
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
-            <a id="launchBtn"
-               class="btn btn-primary"
-               href="https://cfx.re/join/TU_CODIGO"
-               target="_blank"
-               rel="noopener noreferrer">
+            <a id="launchBtn" class="btn btn-primary" href="#">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
             <p class="subtle-note" style="margin-top:10px;">
-              Si el botón no funciona, asegúrate de tener FiveM instalado,
-              Steam abierto y que tu sistema reconoce el enlace <code>cfx.re</code>.
+              Si el botón no funciona, asegúrate de tener FiveM instalado y Steam abierto
+              y que tu sistema reconoce el protocolo <code>fivem://</code>.
             </p>
           </div>
 
@@ -176,12 +172,14 @@
     const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
     const GUILD_ID         = "1383503690136162337";
     const REQUIRED_ROLE_ID = "1402423125030867045";
+    const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
     const avatarEl   = document.getElementById("avatar");
     const nameEl     = document.getElementById("name");
     const hintEl     = document.getElementById("hint");
     const spinnerEl  = document.getElementById("spinner");
     const launchWrap = document.getElementById("launchWrap");
+    const launchBtn  = document.getElementById("launchBtn");
     const welcomeNotes = document.getElementById("welcomeNotes");
     const noRoleMsg  = document.getElementById("noRoleMsg");
 
@@ -209,7 +207,6 @@
 
     const showUser = (u)=>{
       const display = u?.global_name || u?.username || "Usuario";
-
       let url = cdn(`/embed/avatars/0.png?size=256`);
       if(u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       revealAvatar(url);
@@ -217,7 +214,6 @@
       nameEl.innerHTML =
         `Bienvenido al launcher de Proyecto Roleplay, ` +
         `<span class="username">${escapeHtml(display)}</span>`;
-
       show(welcomeNotes);
     };
 
@@ -244,6 +240,16 @@
         URL.revokeObjectURL(url);
         throw new Error(`sdk_import_failed: ${e?.message || e}`);
       }
+    }
+
+    // botón: intentar abrir fivem:// en nueva ventana (lo máximo que permite Discord)
+    if (launchBtn) {
+      launchBtn.addEventListener("click", (e)=>{
+        e.preventDefault();
+        try {
+          window.open(FIVEM_URL);
+        } catch (_) {}
+      });
     }
 
     async function checkMemberRole(accessToken){
@@ -287,7 +293,7 @@
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code, target: "launcher" })
         });
 
         const tok = await tres.json();
@@ -333,7 +339,7 @@
         }else if(msg.startsWith("sdk_")){
           fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         }else if(msg === "token_exchange_failed"){
-          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+          fail("Fallo de autorización","Comprueba las variables LAUNCHER_CLIENT_* en el Worker.");
         }else{
           fail("Error", msg);
         }
