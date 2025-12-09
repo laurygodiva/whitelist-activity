@@ -142,7 +142,6 @@
           <h1 id="name"></h1>
 
           <p id="welcomeNotes" class="subtle-note hidden">
-            Estamos verificando si tienes la ficha de personaje aprobada.
           </p>
 
           <p id="hint">Identificando usuario…</p>
@@ -155,7 +154,7 @@
 
             <p class="subtle-note" style="margin-top:10px;">
               Si el botón no funciona, asegúrate de tener FiveM instalado y Steam abierto
-              y que tu sistema reconoce el protocolo <code>fivem://</code>.
+              <code>fivem://</code>.
             </p>
           </div>
 
@@ -318,7 +317,7 @@
           return;
         }
 
-        hintEl.textContent = "Tienes permiso para usar el launcher.";
+        hintEl.textContent = "Usuario verificado para acceder a Proyecto Roleplay";
         hide(noRoleMsg);
         show(launchWrap);
 
@@ -329,7 +328,7 @@
             try {
               await sdk.commands.openExternalLink({ url: FIVEM_URL });
             } catch (err) {
-              console.error("Error al abrir FiveM con openExternalLink:", err);
+              console.error("Error al abrir FiveM", err);
               // Fallback para cuando lo abras en navegador normal
               try {
                 window.open(FIVEM_URL, "_blank");
