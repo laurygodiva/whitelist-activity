@@ -133,7 +133,6 @@
 
 <body>
   <div class="stack">
-    <!-- mismo logo que la whitelist -->
     <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
 
     <div class="card">
@@ -150,9 +149,7 @@
           <div class="spinner" id="spinner"></div>
 
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
-            <a id="launchBtn"
-               class="btn btn-primary"
-               href="fivem://connect/92.113.12.70:50133">
+            <a id="launchBtn" class="btn btn-primary" href="#">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
@@ -172,15 +169,11 @@
   </div>
 
   <script>
-    /* ====== CONFIG ====== */
     const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
-
     const GUILD_ID         = "1383503690136162337";
     const REQUIRED_ROLE_ID = "1402423125030867045";
-
     const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
-    /* ====== DOM ====== */
     const avatarEl   = document.getElementById("avatar");
     const nameEl     = document.getElementById("name");
     const hintEl     = document.getElementById("hint");
@@ -189,9 +182,6 @@
     const launchBtn  = document.getElementById("launchBtn");
     const welcomeNotes = document.getElementById("welcomeNotes");
     const noRoleMsg  = document.getElementById("noRoleMsg");
-
-    let currentUser = null;
-    let sdkGlobal = null;
 
     const cdn = (p)=>`/cdn${p}`;
     function escapeHtml(s){
@@ -216,9 +206,7 @@
     }
 
     const showUser = (u)=>{
-      currentUser = u;
       const display = u?.global_name || u?.username || "Usuario";
-
       let url = cdn(`/embed/avatars/0.png?size=256`);
       if(u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       revealAvatar(url);
@@ -226,7 +214,6 @@
       nameEl.innerHTML =
         `Bienvenido al launcher de Proyecto Roleplay, ` +
         `<span class="username">${escapeHtml(display)}</span>`;
-
       show(welcomeNotes);
     };
 
@@ -240,7 +227,6 @@
       hide(noRoleMsg);
     };
 
-    // ====== SDK loader (desde tu Worker: /api/sdk-src) ======
     async function loadSDKViaBlob(){
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
       const txt = await r.text();
@@ -256,23 +242,16 @@
       }
     }
 
-    // ====== Botón: lanzar FiveM usando el SDK si es posible ======
+    // botón: intentar abrir fivem:// en nueva ventana (lo máximo que permite Discord)
     if (launchBtn) {
       launchBtn.addEventListener("click", (e)=>{
         e.preventDefault();
         try {
-          if (sdkGlobal && sdkGlobal.commands && sdkGlobal.commands.openExternalLink) {
-            sdkGlobal.commands.openExternalLink({ url: FIVEM_URL });
-          } else {
-            window.open(FIVEM_URL, "_blank");
-          }
-        } catch (err) {
-          try { window.open(FIVEM_URL, "_blank"); } catch (_) {}
-        }
+          window.open(FIVEM_URL);
+        } catch (_) {}
       });
     }
 
-    // ====== Chequear rol en el backend ======
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
         headers: {
@@ -292,14 +271,12 @@
       return { inGuild:true, hasRole };
     }
 
-    // ====== Arranque: verificar usuario + rol ======
     (async ()=>{
       try{
         hintEl.textContent = "Identificando usuario…";
 
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
-        sdkGlobal = sdk;
 
         await Promise.race([
           sdk.ready(),
@@ -316,7 +293,7 @@
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({ code, target: "launcher" })
         });
 
         const tok = await tres.json();
@@ -362,7 +339,7 @@
         }else if(msg.startsWith("sdk_")){
           fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         }else if(msg === "token_exchange_failed"){
-          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+          fail("Fallo de autorización","Comprueba las variables LAUNCHER_CLIENT_* en el Worker.");
         }else{
           fail("Error", msg);
         }
