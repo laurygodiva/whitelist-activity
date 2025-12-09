@@ -306,10 +306,13 @@
         });
 
         const tres = await fetch("/api/token", {
-          method: "POST",
-          headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ code })
-        });
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({
+    code,
+    app: "launcher"   // 👈 esto le dice al Worker que use LAUNCHER_CLIENT_*
+  })
+});
 
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
