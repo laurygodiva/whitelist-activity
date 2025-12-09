@@ -174,6 +174,7 @@
     const REQUIRED_ROLE_ID = "1402423125030867045";
     const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
+    /* ====== DOM ====== */
     const avatarEl   = document.getElementById("avatar");
     const nameEl     = document.getElementById("name");
     const hintEl     = document.getElementById("hint");
@@ -182,6 +183,10 @@
     const launchBtn  = document.getElementById("launchBtn");
     const welcomeNotes = document.getElementById("welcomeNotes");
     const noRoleMsg  = document.getElementById("noRoleMsg");
+
+    let currentUser = null;
+    // SDK global para usar en el click
+    window.__discordSdk = null;
 
     const cdn = (p)=>`/cdn${p}`;
     function escapeHtml(s){
@@ -206,7 +211,9 @@
     }
 
     const showUser = (u)=>{
+      currentUser = u;
       const display = u?.global_name || u?.username || "Usuario";
+
       let url = cdn(`/embed/avatars/0.png?size=256`);
       if(u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
       revealAvatar(url);
@@ -214,6 +221,7 @@
       nameEl.innerHTML =
         `Bienvenido al launcher de Proyecto Roleplay, ` +
         `<span class="username">${escapeHtml(display)}</span>`;
+
       show(welcomeNotes);
     };
 
@@ -227,6 +235,7 @@
       hide(noRoleMsg);
     };
 
+    // ====== Cargar SDK desde tu Worker: /api/sdk-src ======
     async function loadSDKViaBlob(){
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
       const txt = await r.text();
@@ -242,16 +251,7 @@
       }
     }
 
-    // botón: intentar abrir fivem:// en nueva ventana (lo máximo que permite Discord)
-    if (launchBtn) {
-      launchBtn.addEventListener("click", (e)=>{
-        e.preventDefault();
-        try {
-          window.open(FIVEM_URL);
-        } catch (_) {}
-      });
-    }
-
+    // ====== Chequear rol en el backend ======
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
         headers: {
@@ -271,12 +271,28 @@
       return { inGuild:true, hasRole };
     }
 
+    // ====== Click del botón: lanzar FiveM ======
+    if (launchBtn) {
+      launchBtn.addEventListener("click", (ev)=>{
+        ev.preventDefault();
+        if (window.__discordSdk && window.__discordSdk.commands?.openExternalLink) {
+          // Forma correcta desde Activity
+          window.__discordSdk.commands.openExternalLink({ url: FIVEM_URL });
+        } else {
+          // Fallback por si alguien abre la página fuera de Discord
+          try { window.location.href = FIVEM_URL; } catch (_) {}
+        }
+      });
+    }
+
+    // ====== Arranque: verificar usuario + rol ======
     (async ()=>{
       try{
         hintEl.textContent = "Identificando usuario…";
 
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
+        window.__discordSdk = sdk;
 
         await Promise.race([
           sdk.ready(),
@@ -293,9 +309,8 @@
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type":"application/json" },
-          body: JSON.stringify({ code, target: "launcher" })
+          body: JSON.stringify({ code })
         });
-
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
@@ -339,7 +354,7 @@
         }else if(msg.startsWith("sdk_")){
           fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         }else if(msg === "token_exchange_failed"){
-          fail("Fallo de autorización","Comprueba las variables LAUNCHER_CLIENT_* en el Worker.");
+          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
         }else{
           fail("Error", msg);
         }
