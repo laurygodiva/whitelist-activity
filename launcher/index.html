@@ -133,6 +133,7 @@
 
 <body>
   <div class="stack">
+    <!-- mismo logo que la whitelist -->
     <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
 
     <div class="card">
@@ -149,9 +150,10 @@
           <div class="spinner" id="spinner"></div>
 
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
+            <!-- IMPORTANTE: href="#" para que no intente navegar el iframe -->
             <a id="launchBtn"
                class="btn btn-primary"
-               href="fivem://connect/92.113.12.70:50133">
+               href="#">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
@@ -172,8 +174,9 @@
 
   <script>
     /* ====== CONFIG ====== */
-    const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
+    const CLIENT_ID = "1447776754646126716";
 
+    // Guild y rol que quieres comprobar
     const GUILD_ID         = "1383503690136162337";
     const REQUIRED_ROLE_ID = "1385255786879520930";
 
@@ -191,6 +194,8 @@
 
     /* ====== Estado ====== */
     let currentUser = null;
+    // referencia global al SDK para usar en el click
+    window.__discordSdk = null;
 
     /* ====== Utils UI ====== */
     const cdn = (p)=>`/cdn${p}`;
@@ -256,13 +261,6 @@
       }
     }
 
-    /* ====== Forzar navegación a FiveM también desde JS ====== */
-    if(launchBtn){
-      launchBtn.addEventListener("click", ()=>{
-        try { window.location.href = FIVEM_URL; } catch(_) {}
-      });
-    }
-
     /* ====== Chequear rol en el backend ====== */
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
@@ -283,6 +281,20 @@
       return { inGuild:true, hasRole };
     }
 
+    /* ====== Click del botón: lanzar FiveM ====== */
+    if (launchBtn) {
+      launchBtn.addEventListener("click", (ev)=>{
+        ev.preventDefault();
+        // Si tenemos SDK, usamos openExternalLink
+        if (window.__discordSdk && window.__discordSdk.commands?.openExternalLink) {
+          window.__discordSdk.commands.openExternalLink({ url: FIVEM_URL });
+        } else {
+          // Fallback: intentar cambiar location (por si se abre en navegador normal)
+          try { window.location.href = FIVEM_URL; } catch (_) {}
+        }
+      });
+    }
+
     /* ====== Arranque: verificar usuario + rol ====== */
     (async ()=>{
       try{
@@ -290,13 +302,14 @@
 
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
+        // guardar SDK global para el click
+        window.__discordSdk = sdk;
 
         await Promise.race([
           sdk.ready(),
           new Promise((_, rej)=>setTimeout(()=>rej(new Error("timeout_ready")), 10000))
         ]);
 
-        // Pedimos el code con identify + guilds.members.read
         const { code } = await sdk.commands.authorize({
           client_id: CLIENT_ID,
           response_type: "code",
@@ -304,7 +317,6 @@
           prompt: "none"
         });
 
-        // Intercambiamos code -> token en el Worker
         const tres = await fetch("/api/token", {
           method: "POST",
           headers: { "Content-Type":"application/json" },
@@ -355,7 +367,7 @@
         }else if(msg.startsWith("sdk_")){
           fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         }else if(msg === "token_exchange_failed"){
-          fail("Fallo de autorización","Comprueba que DISCORD_CLIENT_ID y DISCORD_CLIENT_SECRET del Worker coinciden con esta app.");
+          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
         }else{
           fail("Error", msg);
         }
@@ -364,3 +376,4 @@
   </script>
 </body>
 </html>
+
