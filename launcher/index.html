@@ -133,7 +133,6 @@
 
 <body>
   <div class="stack">
-    <!-- mismo logo que la whitelist -->
     <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
 
     <div class="card">
@@ -143,29 +142,30 @@
           <h1 id="name"></h1>
 
           <p id="welcomeNotes" class="subtle-note hidden">
-            Esta Activity verifica tu usuario de Discord y comprueba si tienes acceso al launcher de Proyecto Roleplay.
+            Estamos verificando si tienes la ficha de personaje aprobada.
           </p>
 
           <p id="hint">Identificando usuario…</p>
           <div class="spinner" id="spinner"></div>
 
           <div id="launchWrap" class="hidden" style="margin-top:18px;">
-            <!-- IMPORTANTE: href="#" para no navegar el iframe -->
             <a id="launchBtn"
                class="btn btn-primary"
-               href="#">
+               href="https://cfx.re/join/TU_CODIGO"
+               target="_blank"
+               rel="noopener noreferrer">
               <span class="gtext">Entrar a Proyecto Roleplay</span>
             </a>
 
             <p class="subtle-note" style="margin-top:10px;">
-              Si el botón no funciona, asegúrate de tener FiveM instalado y que tu sistema reconoce el protocolo
-              <code>fivem://</code>.
+              Si el botón no funciona, asegúrate de tener FiveM instalado,
+              Steam abierto y que tu sistema reconoce el enlace <code>cfx.re</code>.
             </p>
           </div>
 
           <p id="noRoleMsg" class="subtle-note hidden" style="margin-top:14px;">
-            No tienes el rol necesario para usar el launcher de Proyecto Roleplay.<br>
-            Asegúrate de tener la whitelist aprobada en el servidor.
+            No tienes la ficha de personaje aprobada para usar el launcher de Proyecto Roleplay.<br>
+            Asegúrate de no estar baneado.
           </p>
         </section>
       </div>
@@ -173,27 +173,17 @@
   </div>
 
   <script>
-    /* ====== CONFIG ====== */
-    const CLIENT_ID = "1447776754646126716"; // App del LAUNCHER
+    const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
+    const GUILD_ID         = "1383503690136162337";
+    const REQUIRED_ROLE_ID = "1402423125030867045";
 
-    const GUILD_ID         = "1383503690136162337";   // servidor PR
-    const REQUIRED_ROLE_ID = "1385255786879520930";   // rol que quieras comprobar
-
-    const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
-
-    /* ====== DOM ====== */
     const avatarEl   = document.getElementById("avatar");
     const nameEl     = document.getElementById("name");
     const hintEl     = document.getElementById("hint");
     const spinnerEl  = document.getElementById("spinner");
     const launchWrap = document.getElementById("launchWrap");
-    const launchBtn  = document.getElementById("launchBtn");
     const welcomeNotes = document.getElementById("welcomeNotes");
     const noRoleMsg  = document.getElementById("noRoleMsg");
-
-    let currentUser = null;
-    // SDK global para usar en el click
-    window.__discordSdk = null;
 
     const cdn = (p)=>`/cdn${p}`;
     function escapeHtml(s){
@@ -218,7 +208,6 @@
     }
 
     const showUser = (u)=>{
-      currentUser = u;
       const display = u?.global_name || u?.username || "Usuario";
 
       let url = cdn(`/embed/avatars/0.png?size=256`);
@@ -242,7 +231,6 @@
       hide(noRoleMsg);
     };
 
-    // ====== Cargar SDK desde tu Worker: /api/sdk-src ======
     async function loadSDKViaBlob(){
       const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
       const txt = await r.text();
@@ -258,7 +246,6 @@
       }
     }
 
-    // ====== Chequear rol en el backend ======
     async function checkMemberRole(accessToken){
       const res = await fetch("/api/member", {
         headers: {
@@ -278,28 +265,12 @@
       return { inGuild:true, hasRole };
     }
 
-    // ====== Click del botón: lanzar FiveM ======
-    if (launchBtn) {
-      launchBtn.addEventListener("click", (ev)=>{
-        ev.preventDefault();
-        if (window.__discordSdk && window.__discordSdk.commands?.openExternalLink) {
-          // Forma correcta desde Activity
-          window.__discordSdk.commands.openExternalLink({ url: FIVEM_URL });
-        } else {
-          // Fallback por si alguien abre la página fuera de Discord
-          try { window.location.href = FIVEM_URL; } catch (_) {}
-        }
-      });
-    }
-
-    // ====== Arranque: verificar usuario + rol ======
     (async ()=>{
       try{
         hintEl.textContent = "Identificando usuario…";
 
         const DiscordSDK = await loadSDKViaBlob();
         const sdk = new DiscordSDK(CLIENT_ID);
-        window.__discordSdk = sdk;
 
         await Promise.race([
           sdk.ready(),
@@ -318,6 +289,7 @@
           headers: { "Content-Type":"application/json" },
           body: JSON.stringify({ code })
         });
+
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
