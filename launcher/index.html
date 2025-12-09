@@ -133,7 +133,6 @@
 
 <body>
   <div class="stack">
-    <!-- mismo logo que la whitelist -->
     <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
 
     <div class="card">
@@ -173,12 +172,10 @@
 
   <script>
     /* ====== CONFIG ====== */
-    // CLIENT_ID de la app del LAUNCHER
-    const CLIENT_ID = "1447776754646126716";
+    const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
 
-    // Guild y rol que quieres comprobar
-    const GUILD_ID         = "1383503690136162337";   // tu servidor principal (el de Proyecto Roleplay)
-    const REQUIRED_ROLE_ID = "1385255786879520930";   // rol whitelisted
+    const GUILD_ID         = "1383503690136162337";
+    const REQUIRED_ROLE_ID = "1385255786879520930";
 
     const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
@@ -275,7 +272,6 @@
         }
       });
       if(res.status === 404){
-        // No está en el servidor
         return { inGuild:false, hasRole:false };
       }
       const data = await res.json().catch(()=>null);
@@ -300,8 +296,20 @@
           new Promise((_, rej)=>setTimeout(()=>rej(new Error("timeout_ready")), 10000))
         ]);
 
-        // IMPORTANTE: añadimos scope "guilds.members.read"
-        
+        // Pedimos el code con identify + guilds.members.read
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          scope: ["identify", "guilds.members.read"],
+          prompt: "none"
+        });
+
+        // Intercambiamos code -> token en el Worker
+        const tres = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ code })
+        });
         const tok = await tres.json();
         if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
 
@@ -347,7 +355,7 @@
         }else if(msg.startsWith("sdk_")){
           fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
         }else if(msg === "token_exchange_failed"){
-          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+          fail("Fallo de autorización","Comprueba que DISCORD_CLIENT_ID y DISCORD_CLIENT_SECRET del Worker coinciden con esta app.");
         }else{
           fail("Error", msg);
         }
@@ -356,4 +364,3 @@
   </script>
 </body>
 </html>
-
