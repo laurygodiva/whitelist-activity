@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Discord Activity — Launcher Proyecto Roleplay</title>
+
+  <style>
+    :root{
+      color-scheme: dark;
+      --card-w-welcome: 560px;
+    }
+    body{
+      margin:0;
+      min-height:100dvh;
+      display:grid;
+      place-items:center;
+      background:#0b0f14;
+      font-family:system-ui, Segoe UI, Roboto, Inter, Arial, sans-serif;
+    }
+    .stack{ display:grid; gap:16px; place-items:center; }
+    .brand-center{
+      width:72px;
+      height:auto;
+      user-select:none;
+      -webkit-user-drag:none;
+      filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));
+    }
+
+    .card{
+      width:var(--card-w-welcome);
+      padding:24px;
+      border-radius:20px;
+      background:linear-gradient(135deg,#5edae7,#885dfd);
+      box-shadow:0 10px 30px rgba(0,0,0,.35);
+      text-align:center;
+      color:#fff;
+      transition:width .25s ease, padding .2s ease;
+    }
+    .inner{
+      background:rgba(0,0,0,.25);
+      border-radius:16px;
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+    }
+
+    img.avatar{
+      width:120px;
+      height:120px;
+      border-radius:50%;
+      display:block;
+      margin:0 auto 14px;
+      object-fit:cover;
+      box-shadow:0 6px 18px rgba(0,0,0,.25);
+      opacity:0;
+      transition:opacity .25s ease;
+    }
+    img.avatar.hidden{ display:none; }
+    img.avatar.revealed{ display:block; opacity:1; }
+
+    h1{
+      font-size:20px;
+      margin:8px 0 0;
+      color:#fff;
+      font-weight:700;
+      min-height:1.2em;
+    }
+    #hint{
+      font-size:18px;
+      font-weight:600;
+      margin:10px 0 0;
+      color:#fff;
+      opacity:.95;
+      min-height:1.2em;
+    }
+    .username{ color:#0c121e; }
+
+    .subtle-note{
+      font-size:12px;
+      color:#e5e7eb;
+      opacity:.85;
+      margin-top:6px;
+      max-width:46ch;
+      margin-left:auto;
+      margin-right:auto;
+    }
+
+    .spinner{
+      width:24px;
+      height:24px;
+      border:3px solid rgba(255,255,255,.35);
+      border-top-color:#fff;
+      border-radius:50%;
+      margin:14px auto 0;
+      animation:spin 1s linear infinite;
+    }
+    @keyframes spin{ to{ transform:rotate(360deg) } }
+    .err{ color:#ffe1e1 }
+
+    .btn{
+      appearance:none;
+      border:0;
+      cursor:pointer;
+      padding:14px 20px;
+      border-radius:12px;
+      font-weight:700;
+      font-size:15px;
+      transition:transform .05s ease, box-shadow .2s ease, opacity .2s ease;
+      text-decoration:none;
+      display:inline-block;
+    }
+    .btn-primary{
+      background:#fff;
+      color:#0b0f14;
+      box-shadow:0 8px 18px rgba(0,0,0,.25);
+    }
+    .btn-primary:hover{ transform:translateY(-1px); }
+    .btn-primary:active{ transform:translateY(0); }
+
+    .gtext{
+      background-image:linear-gradient(135deg,#5edae7,#885dfd);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+      display:inline-block;
+    }
+
+    .hidden{ display:none !important; }
+  </style>
+</head>
+
+<body>
+  <div class="stack">
+    <!-- mismo logo que la whitelist -->
+    <img class="brand-center" src="../logo.png" alt="Proyecto Roleplay" />
+
+    <div class="card">
+      <div class="inner">
+        <section id="welcome">
+          <img id="avatar" class="avatar hidden" alt="" />
+          <h1 id="name"></h1>
+
+          <p id="welcomeNotes" class="subtle-note hidden">
+            Esta Activity verifica tu usuario de Discord y comprueba si tienes acceso al launcher de Proyecto Roleplay.
+          </p>
+
+          <p id="hint">Identificando usuario…</p>
+          <div class="spinner" id="spinner"></div>
+
+          <div id="launchWrap" class="hidden" style="margin-top:18px;">
+            <a id="launchBtn"
+               class="btn btn-primary"
+               href="fivem://connect/92.113.12.70:50133">
+              <span class="gtext">Entrar a Proyecto Roleplay</span>
+            </a>
+
+            <p class="subtle-note" style="margin-top:10px;">
+              Si el botón no funciona, asegúrate de tener FiveM instalado y que tu sistema reconoce el protocolo
+              <code>fivem://</code>.
+            </p>
+          </div>
+
+          <p id="noRoleMsg" class="subtle-note hidden" style="margin-top:14px;">
+            No tienes el rol necesario para usar el launcher de Proyecto Roleplay.<br>
+            Asegúrate de tener la whitelist aprobada en el servidor.
+          </p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /* ====== CONFIG ====== */
+    // CLIENT_ID de la app del LAUNCHER
+    const CLIENT_ID = "PON_AQUI_TU_CLIENT_ID";
+
+    // Guild y rol que quieres comprobar
+    const GUILD_ID         = "1383503690136162337";   // tu servidor principal (el de Proyecto Roleplay)
+    const REQUIRED_ROLE_ID = "1385255786879520930";   // rol whitelisted
+
+    const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
+
+    /* ====== DOM ====== */
+    const avatarEl   = document.getElementById("avatar");
+    const nameEl     = document.getElementById("name");
+    const hintEl     = document.getElementById("hint");
+    const spinnerEl  = document.getElementById("spinner");
+    const launchWrap = document.getElementById("launchWrap");
+    const launchBtn  = document.getElementById("launchBtn");
+    const welcomeNotes = document.getElementById("welcomeNotes");
+    const noRoleMsg  = document.getElementById("noRoleMsg");
+
+    /* ====== Estado ====== */
+    let currentUser = null;
+
+    /* ====== Utils UI ====== */
+    const cdn = (p)=>`/cdn${p}`;
+    function escapeHtml(s){
+      return String(s).replace(/[&<>"']/g, m=>({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[m]));
+    }
+    function show(el){ el.classList.remove("hidden"); }
+    function hide(el){ el.classList.add("hidden"); }
+
+    function revealAvatar(url){
+      const done = ()=>{
+        avatarEl.classList.remove("hidden");
+        requestAnimationFrame(()=>avatarEl.classList.add("revealed"));
+      };
+      avatarEl.addEventListener("load", done, { once:true });
+      avatarEl.addEventListener("error", ()=>{
+        avatarEl.addEventListener("load", done, { once:true });
+        avatarEl.src = cdn(`/embed/avatars/0.png?size=256`);
+      }, { once:true });
+      avatarEl.src = url;
+    }
+
+    const showUser = (u)=>{
+      currentUser = u;
+      const display = u?.global_name || u?.username || "Usuario";
+
+      let url = cdn(`/embed/avatars/0.png?size=256`);
+      if(u?.avatar) url = cdn(`/avatars/${u.id}/${u.avatar}.png?size=256`);
+      revealAvatar(url);
+
+      nameEl.innerHTML =
+        `Bienvenido al launcher de Proyecto Roleplay, ` +
+        `<span class="username">${escapeHtml(display)}</span>`;
+
+      show(welcomeNotes);
+    };
+
+    const fail = (t,d)=>{
+      nameEl.textContent = t;
+      hintEl.textContent = d || "";
+      hintEl.classList.add("err");
+      spinnerEl.style.display = "none";
+      avatarEl.classList.add("hidden");
+      hide(launchWrap);
+      hide(noRoleMsg);
+    };
+
+    /* ====== SDK loader (desde tu Worker: /api/sdk-src) ====== */
+    async function loadSDKViaBlob(){
+      const r = await fetch(`/api/sdk-src?ts=${Date.now()}`, { cache:"no-store" });
+      const txt = await r.text();
+      if(!r.ok) throw new Error(`sdk_src_${r.status}: ${txt.slice(0,120)}`);
+      const url = URL.createObjectURL(new Blob([txt], { type:"text/javascript" }));
+      try{
+        const mod = await import(/* webpackIgnore: true */ url);
+        URL.revokeObjectURL(url);
+        return mod.DiscordSDK || (mod.default?.DiscordSDK || mod.default) || mod;
+      }catch(e){
+        URL.revokeObjectURL(url);
+        throw new Error(`sdk_import_failed: ${e?.message || e}`);
+      }
+    }
+
+    /* ====== Forzar navegación a FiveM también desde JS ====== */
+    if(launchBtn){
+      launchBtn.addEventListener("click", ()=>{
+        try { window.location.href = FIVEM_URL; } catch(_) {}
+      });
+    }
+
+    /* ====== Chequear rol en el backend ====== */
+    async function checkMemberRole(accessToken){
+      const res = await fetch("/api/member", {
+        headers: {
+          "Authorization": `Bearer ${accessToken}`,
+          "X-Guild-ID": GUILD_ID
+        }
+      });
+      if(res.status === 404){
+        // No está en el servidor
+        return { inGuild:false, hasRole:false };
+      }
+      const data = await res.json().catch(()=>null);
+      if(!res.ok || !data){
+        throw new Error(`member_failed_${res.status}`);
+      }
+      const roles = Array.isArray(data.roles) ? data.roles : [];
+      const hasRole = roles.includes(REQUIRED_ROLE_ID);
+      return { inGuild:true, hasRole };
+    }
+
+    /* ====== Arranque: verificar usuario + rol ====== */
+    (async ()=>{
+      try{
+        hintEl.textContent = "Identificando usuario…";
+
+        const DiscordSDK = await loadSDKViaBlob();
+        const sdk = new DiscordSDK(CLIENT_ID);
+
+        await Promise.race([
+          sdk.ready(),
+          new Promise((_, rej)=>setTimeout(()=>rej(new Error("timeout_ready")), 10000))
+        ]);
+
+        // IMPORTANTE: añadimos scope "guilds.members.read"
+        const { code } = await sdk.commands.authorize({
+          client_id: CLIENT_ID,
+          response_type: "code",
+          scope: ["identify", "guilds.members.read"],
+          prompt: "none"
+        });
+
+        const tres = await fetch("/api/token", {
+          method: "POST",
+          headers: { "Content-Type":"application/json" },
+          body: JSON.stringify({ code })
+        });
+        const tok = await tres.json();
+        if(!tres.ok || !tok?.access_token) throw new Error("token_exchange_failed");
+
+        await sdk.commands.authenticate({ access_token: tok.access_token });
+
+        const meRes = await fetch("/api/@me", {
+          headers: { Authorization:`Bearer ${tok.access_token}` }
+        });
+        const me = await meRes.json();
+        if(!meRes.ok) throw new Error("me_failed");
+
+        showUser(me);
+
+        // Ahora comprobamos el rol
+        hintEl.textContent = "Comprobando permisos en el servidor…";
+        const { inGuild, hasRole } = await checkMemberRole(tok.access_token);
+
+        spinnerEl.style.display = "none";
+
+        if(!inGuild){
+          hintEl.textContent = "No estás en el servidor de Proyecto Roleplay.";
+          show(noRoleMsg);
+          hide(launchWrap);
+          return;
+        }
+
+        if(!hasRole){
+          hintEl.textContent = "No tienes el rol necesario para usar el launcher.";
+          show(noRoleMsg);
+          hide(launchWrap);
+          return;
+        }
+
+        // Todo OK → mostrar botón
+        hintEl.textContent = "Tienes permiso para usar el launcher.";
+        hide(noRoleMsg);
+        show(launchWrap);
+
+      }catch(e){
+        const msg = String(e?.message || e);
+        if(msg.includes("timeout_ready")){
+          fail("Sin handshake con Discord","Ábrelo como Embedded Activity de esta app dentro de Discord.");
+        }else if(msg.startsWith("sdk_")){
+          fail("No carga el SDK","Revisa el mapping /api y que /api/sdk-src responda 200.");
+        }else if(msg === "token_exchange_failed"){
+          fail("Fallo de autorización","Comprueba el DISCORD_CLIENT_SECRET en el Worker.");
+        }else{
+          fail("Error", msg);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
+
