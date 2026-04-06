@@ -323,17 +323,13 @@
         // 🔹 AQUÍ enganchamos el botón usando el SDK de Discord
         if (launchBtn) {
           launchBtn.onclick = async (e)=>{
-            e.preventDefault();
-            try {
-              await sdk.commands.openExternalLink({ url: FIVEM_URL });
-            } catch (err) {
-              console.error("Error al abrir FiveM", err);
-              // Fallback para cuando lo abras en navegador normal
-              try {
-                window.open(FIVEM_URL, "_blank");
-              } catch (_) {}
-            }
-          };
+  e.preventDefault();
+  try {
+    await sdk.commands.openExternalLink({ url: FIVEM_URL });
+  } catch {
+    window.location.href = FIVEM_URL;
+  }
+};
         }
 
       }catch(e){
