@@ -171,7 +171,7 @@
     const CLIENT_ID = "1447776754646126716"; // app del LAUNCHER
     const GUILD_ID         = "1383503690136162337";
     const REQUIRED_ROLE_ID = "1402423125030867045";
-    const FIVEM_URL = "https://cfx.re/join/92.113.12.70:50133";
+    const FIVEM_URL = "fivem://connect/92.113.12.70:50133";
 
     const avatarEl   = document.getElementById("avatar");
     const nameEl     = document.getElementById("name");
@@ -323,13 +323,17 @@
         // 🔹 AQUÍ enganchamos el botón usando el SDK de Discord
         if (launchBtn) {
           launchBtn.onclick = async (e)=>{
-  e.preventDefault();
-  try {
-    await sdk.commands.openExternalLink({ url: FIVEM_URL });
-  } catch {
-    window.location.href = FIVEM_URL;
-  }
-};
+            e.preventDefault(); 
+            try {
+              await sdk.commands.openExternalLink({ url:
+                FIVEM_URL });
+            } catch (err) {
+              console.error("Error al abrir FiveM", err);
+              try {
+                window.open(FIVEM_URL, "_blank");
+              } catch (_) {}
+            } 
+          }; 
         }
 
       }catch(e){
