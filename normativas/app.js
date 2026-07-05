@@ -1,31 +1,32 @@
-const menu=document.getElementById("menu");
+const menu = document.getElementById("menu");
+const viewer = document.getElementById("viewer");
+const iframe = document.getElementById("flipbook");
+const back = document.getElementById("back");
 
-const viewer=document.getElementById("viewer");
+const books = {
+    general: "flipbooks/general/index.html"
+};
 
-const iframe=document.getElementById("flipbook");
+document.querySelectorAll(".card").forEach(card => {
 
-document.querySelectorAll(".card").forEach(card=>{
+    card.addEventListener("click", () => {
 
-    card.onclick=()=>{
+        const id = card.dataset.book;
 
-        const book=card.dataset.book;
+        iframe.src = books[id];
 
-        iframe.src=`flipbooks/${book}/index.html`;
+        menu.style.display = "none";
+        viewer.style.display = "block";
 
-        menu.style.display="none";
-
-        viewer.style.display="block";
-
-    };
+    });
 
 });
 
-document.getElementById("back").onclick=()=>{
+back.addEventListener("click", () => {
 
-    viewer.style.display="none";
+    iframe.src = "";
 
-    menu.style.display="flex";
+    viewer.style.display = "none";
+    menu.style.display = "flex";
 
-    iframe.src="";
-
-};
+});
