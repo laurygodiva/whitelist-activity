@@ -16,6 +16,16 @@ const books = {
     playmaker: "flipbooks/playmaker/index.html"
 };
 
+const loadingHint = document.getElementById("loadingHint");
+let loadWatchdog = null;
+
+function clearWatchdog() {
+    if (loadWatchdog) {
+        clearTimeout(loadWatchdog);
+        loadWatchdog = null;
+    }
+}
+
 document.querySelectorAll(".card").forEach(card => {
 
     card.addEventListener("click", () => {
@@ -31,12 +41,23 @@ document.querySelectorAll(".card").forEach(card => {
             menu.style.display = "none";
 
             loading.classList.add("show");
+            if (loadingHint) loadingHint.textContent = "";
 
             viewer.style.display = "block";
             viewer.style.opacity = "1";
 
             iframe.style.opacity = "0";
             iframe.src = books[book];
+
+            // Si en 15s no llega ni "load" ni el mensaje de la normativa,
+            // avisamos en vez de dejar el spinner girando para siempre.
+            clearWatchdog();
+            loadWatchdog = setTimeout(() => {
+                if (loadingHint) {
+                    loadingHint.textContent =
+                        "Esto está tardando más de lo normal. Puede que el recurso externo no haya cargado. Vuelve atrás e inténtalo de nuevo.";
+                }
+            }, 15000);
 
         }, 250);
 
@@ -48,14 +69,24 @@ iframe.addEventListener("load", () => {
 
     console.log("IFRAME LOAD");
 
-    loading.classList.remove("show");
+    // El "load" del iframe solo confirma que el HTML del flipbook cargó,
+    // no que el PDF ya se haya renderizado, así que no quitamos aún
+    // la pantalla de carga aquí: esperamos al "flipbook-ready".
 
-    iframe.style.opacity = "1";
+});
 
+// El propio flipbook avisa con postMessage cuando ya renderizó la primera página
+window.addEventListener("message", (event) => {
+    if (event.data === "flipbook-ready") {
+        clearWatchdog();
+        loading.classList.remove("show");
+        iframe.style.opacity = "1";
+    }
 });
 
 back.addEventListener("click", () => {
 
+    clearWatchdog();
     viewer.style.opacity = "0";
 
     setTimeout(() => {
