@@ -2,6 +2,7 @@ const menu = document.getElementById("menu");
 const viewer = document.getElementById("viewer");
 const iframe = document.getElementById("flipbook");
 const back = document.getElementById("back");
+const loading = document.getElementById("loadingScreen");
 
 const books = {
     general: "flipbooks/general/index.html",
@@ -23,25 +24,33 @@ document.querySelectorAll(".card").forEach(card => {
 
         if (!books[book]) return;
 
-        iframe.src = books[book];
-
         menu.style.opacity = "0";
 
         setTimeout(() => {
 
             menu.style.display = "none";
 
+            loading.classList.add("show");
+
             viewer.style.display = "block";
+            viewer.style.opacity = "1";
 
-            requestAnimationFrame(() => {
-
-                viewer.style.opacity = "1";
-
-            });
+            iframe.style.opacity = "0";
+            iframe.src = books[book];
 
         }, 250);
 
     });
+
+});
+
+window.addEventListener("message", (event) => {
+
+    if (event.data !== "flipbook-ready") return;
+
+    loading.classList.remove("show");
+
+    iframe.style.opacity = "1";
 
 });
 
@@ -55,13 +64,10 @@ back.addEventListener("click", () => {
 
         viewer.style.display = "none";
 
+        loading.classList.remove("show");
+
         menu.style.display = "flex";
-
-        requestAnimationFrame(() => {
-
-            menu.style.opacity = "1";
-
-        });
+        menu.style.opacity = "1";
 
     }, 250);
 
