@@ -78,25 +78,23 @@ body {
 
 .card {
 
-    width: 300px;
-
-    border-radius: 22px;
+    width: 240px;
 
     cursor: pointer;
 
-    transition:
-        transform .25s ease,
-        box-shadow .25s ease;
+    border-radius: 22px;
 
-    box-shadow:
-        0 10px 35px rgba(0, 0, 0, .45);
+    transition: transform .25s ease;
+
+    background: transparent;
+
+    box-shadow: none;
 
 }
 
 .card:hover {
 
-    transform:
-        translateY(-6px) scale(1.03);
+    transform: translateY(-6px) scale(1.03);
 
 }
 
@@ -134,35 +132,65 @@ body {
 
     position: absolute;
 
-    top: 25px;
+    top: 24px;
 
-    left: 25px;
+    left: 24px;
 
     z-index: 999;
 
-    padding: 14px 24px;
+    padding: 5px;
 
-    border: none;
+    border-radius: 16px;
 
-    border-radius: 14px;
+    background: linear-gradient(135deg,#5edbe7,#875dfc);
 
-    background: rgba(255, 255, 255, .08);
-
-    backdrop-filter: blur(16px);
-
-    color: white;
-
-    font-size: 15px;
-
-    cursor: pointer;
-
-    transition: .2s;
+    box-shadow: 0 12px 30px rgba(0,0,0,.35);
 
 }
 
-#back:hover {
+#back button{
 
-    background: rgba(96, 213, 232, .25);
+    all: unset;
+
+}
+
+#back{
+
+    color: #fff;
+
+    font-size: 15px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+}
+
+#back::before{
+
+    content:"";
+
+    position:absolute;
+
+    inset:5px;
+
+    border-radius:12px;
+
+    background:rgba(0,0,0,.22);
+
+    z-index:-1;
+
+}
+
+#back:hover{
+
+    transform:translateY(-2px);
+
+}
+
+#back:active{
+
+    transform:scale(.98);
 
 }
 
