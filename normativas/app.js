@@ -44,9 +44,9 @@ document.querySelectorAll(".card").forEach(card => {
 
 });
 
-window.addEventListener("message", (event) => {
+iframe.addEventListener("load", () => {
 
-    if (event.data !== "flipbook-ready") return;
+    console.log("IFRAME LOAD");
 
     loading.classList.remove("show");
 
