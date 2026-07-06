@@ -191,6 +191,7 @@ body {
     }
 
 }
+
 /*==========================
     PANTALLA DE CARGA
 ==========================*/
@@ -208,9 +209,9 @@ body {
 
     gap:18px;
 
-    z-index:500;
-
     background:#0b0f14;
+
+    z-index:9999;
 
 }
 
@@ -234,31 +235,30 @@ body {
 
 }
 
-.card{
+.loading-card{
 
     width:560px;
 
-    padding:24px;
+    padding:18px;
 
-    border-radius:20px;
+    border-radius:22px;
 
-    background:linear-gradient(135deg,#5edae7,#885dfd);
+    background:linear-gradient(135deg,#5edbe7,#875dfc);
 
-    box-shadow:0 10px 30px rgba(0,0,0,.35);
-
-    text-align:center;
-
-    color:#fff;
+    box-shadow:
+        0 20px 45px rgba(0,0,0,.45);
 
 }
 
-.inner{
+.loading-inner{
 
-    background:rgba(0,0,0,.25);
+    background:rgba(0,0,0,.20);
 
-    border-radius:16px;
+    border-radius:18px;
 
-    padding:18px;
+    padding:28px;
+
+    text-align:center;
 
 }
 
@@ -266,33 +266,37 @@ body {
 
     margin:0;
 
-    font-size:20px;
+    color:#fff;
+
+    font-size:18px;
+
+    font-weight:700;
 
 }
 
 #loadingHint{
 
-    margin-top:8px;
+    margin-top:10px;
 
-    color:#fff;
+    color:rgba(255,255,255,.92);
 
-    opacity:.95;
+    font-size:15px;
 
 }
 
 .spinner{
 
-    width:24px;
+    width:28px;
 
-    height:24px;
+    height:28px;
 
-    border:3px solid rgba(255,255,255,.35);
+    margin:18px auto 0;
+
+    border:4px solid rgba(255,255,255,.25);
 
     border-top-color:#fff;
 
     border-radius:50%;
-
-    margin:16px auto 0;
 
     animation:spin 1s linear infinite;
 
