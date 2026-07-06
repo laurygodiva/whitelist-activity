@@ -218,9 +218,9 @@
       <button id="btn-full" class="tool-btn" title="Pantalla completa">⛶</button>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="/api/proxy?url=https%3A%2F%2Fcdnjs.cloudflare.com%2Fajax%2Flibs%2Fpdf.js%2F3.11.174%2Fpdf.min.js"></script>
     <script>
-      const PDF_URL = "https://docs.google.com/document/d/1-ixWZyGsRDNUJu3N-pwcu3B36H9enYg8O8ef184Rbak/export?format=pdf";
+      const PDF_URL = "/api/proxy?url=" + encodeURIComponent("https://docs.google.com/document/d/1-ixWZyGsRDNUJu3N-pwcu3B36H9enYg8O8ef184Rbak/export?format=pdf");
 
       let pdfDoc = null, currentPage = 1, active = 'A', animating = false;
       let zoomed = false, Z = 1.6; // factor de zoom con doble clic
@@ -242,7 +242,7 @@
       const btnFull = document.getElementById('btn-full');
 
       pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+        "/api/proxy?url=" + encodeURIComponent("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js");
 
       function getActiveElems() {
         const isA = active === 'A';
