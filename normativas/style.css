@@ -17,12 +17,7 @@ body{
     position:fixed;
     inset:0;
 
-    background:url("assets/background.png") center center;
-    background-size:cover;
-
-    filter:blur(10px) brightness(.35);
-
-    transform:scale(1.1);
+    background:#1b1d24;
 
 }
 
