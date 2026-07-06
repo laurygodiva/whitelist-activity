@@ -17,7 +17,7 @@ body{
     position:fixed;
     inset:0;
 
-    background:url("assets/background.webp") center center;
+    background:url("assets/background.png") center center;
     background-size:cover;
 
     filter:blur(10px) brightness(.35);
