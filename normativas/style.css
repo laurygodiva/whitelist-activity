@@ -1,197 +1,195 @@
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
 
 html,
-body{
+body {
 
-    width:100%;
-    height:100%;
+    width: 100%;
+    height: 100%;
 
-    overflow:hidden;
+    overflow: hidden;
 
-    font-family:Inter,Segoe UI,sans-serif;
+    font-family: Inter, Segoe UI, sans-serif;
 
-    background:#10131c;
+    background: #10131c;
 
 }
 
-#background{
+#background {
 
-    position:fixed;
+    position: fixed;
 
-    inset:0;
+    inset: 0;
 
     background:
-    radial-gradient(circle at top,#273553 0%,#131924 45%,#0d1018 100%);
+        radial-gradient(circle at top, #273553 0%, #131924 45%, #0d1018 100%);
 
-    filter:blur(10px);
+    filter: blur(10px);
 
-    transform:scale(1.08);
-
-}
-
-#menu{
-
-    position:relative;
-
-    z-index:5;
-
-    width:100%;
-    height:100%;
-
-    display:flex;
-
-    flex-direction:column;
-
-    justify-content:center;
-
-    align-items:center;
-
-    gap:45px;
-
-    padding:40px;
+    transform: scale(1.08);
 
 }
 
-#logo{
+#menu {
 
-    width:320px;
+    position: relative;
 
-    user-select:none;
+    z-index: 5;
 
-    pointer-events:none;
+    width: 100%;
+    height: 100%;
 
-    filter:drop-shadow(0 0 18px rgba(96,213,232,.25));
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: center;
+
+    gap: 45px;
+
+    padding: 40px;
 
 }
 
-.cards{
+#logo {
+    width: 72px;
+    height: auto;
+    display: block;
+    margin: 0 auto 32px;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .35));
+}
 
-    display:grid;
+.cards {
 
-    grid-template-columns:repeat(3,300px);
+    display: grid;
 
-    gap:28px;
+    grid-template-columns: repeat(3, 300px);
+
+    gap: 28px;
 
 }
 
-.card{
+.card {
 
-    width:300px;
+    width: 300px;
 
-    border-radius:22px;
+    border-radius: 22px;
 
-    cursor:pointer;
+    cursor: pointer;
 
-    transition:.25s;
+    transition: .25s;
 
     box-shadow:
-        0 10px 35px rgba(0,0,0,.45);
+        0 10px 35px rgba(0, 0, 0, .45);
 
 }
 
-.card:hover{
+.card:hover {
 
     transform:
-        translateY(-6px)
-        scale(1.03);
+        translateY(-6px) scale(1.03);
 
     box-shadow:
-        0 0 30px rgba(96,213,232,.35);
+        0 0 30px rgba(96, 213, 232, .35);
 
 }
 
-.card:active{
+.card:active {
 
-    transform:scale(.98);
-
-}
-
-#viewer{
-
-    position:fixed;
-
-    inset:0;
-
-    display:none;
-
-    background:#0b0d12;
-
-    z-index:20;
+    transform: scale(.98);
 
 }
 
-#flipbook{
+#viewer {
 
-    width:100%;
+    position: fixed;
 
-    height:100%;
+    inset: 0;
 
-    border:none;
+    display: none;
 
-}
+    background: #0b0d12;
 
-#back{
-
-    position:absolute;
-
-    top:25px;
-
-    left:25px;
-
-    z-index:999;
-
-    padding:14px 24px;
-
-    border:none;
-
-    border-radius:14px;
-
-    background:rgba(255,255,255,.08);
-
-    backdrop-filter:blur(16px);
-
-    color:white;
-
-    font-size:15px;
-
-    cursor:pointer;
-
-    transition:.2s;
+    z-index: 20;
 
 }
 
-#back:hover{
+#flipbook {
 
-    background:rgba(96,213,232,.25);
+    width: 100%;
 
-}
+    height: 100%;
 
-@media(max-width:1200px){
-
-.cards{
-
-grid-template-columns:repeat(2,300px);
+    border: none;
 
 }
 
+#back {
+
+    position: absolute;
+
+    top: 25px;
+
+    left: 25px;
+
+    z-index: 999;
+
+    padding: 14px 24px;
+
+    border: none;
+
+    border-radius: 14px;
+
+    background: rgba(255, 255, 255, .08);
+
+    backdrop-filter: blur(16px);
+
+    color: white;
+
+    font-size: 15px;
+
+    cursor: pointer;
+
+    transition: .2s;
+
 }
 
-@media(max-width:760px){
+#back:hover {
 
-.cards{
-
-grid-template-columns:300px;
+    background: rgba(96, 213, 232, .25);
 
 }
 
-#logo{
+@media(max-width:1200px) {
 
-width:250px;
+    .cards {
+
+        grid-template-columns: repeat(2, 300px);
+
+    }
 
 }
+
+@media(max-width:760px) {
+
+    .cards {
+
+        grid-template-columns: 300px;
+
+    }
+
+    #logo {
+
+        width: 250px;
+
+    }
 
 }
