@@ -4,19 +4,42 @@ const iframe = document.getElementById("flipbook");
 const back = document.getElementById("back");
 
 const books = {
-    general: "flipbooks/general/index.html"
+    general: "flipbooks/general/index.html",
+    leo: "flipbooks/leo/index.html",
+    comercios: "flipbooks/comercios/index.html",
+    gobierno: "flipbooks/gobierno/index.html",
+    ilegales: "flipbooks/ilegales/index.html",
+    ems: "flipbooks/ems/index.html",
+    staff: "flipbooks/staff/index.html",
+    streamers: "flipbooks/streamers/index.html",
+    playmaker: "flipbooks/playmaker/index.html"
 };
 
 document.querySelectorAll(".card").forEach(card => {
 
     card.addEventListener("click", () => {
 
-        const id = card.dataset.book;
+        const book = card.dataset.book;
 
-        iframe.src = books[id];
+        if (!books[book]) return;
 
-        menu.style.display = "none";
-        viewer.style.display = "block";
+        iframe.src = books[book];
+
+        menu.style.opacity = "0";
+
+        setTimeout(() => {
+
+            menu.style.display = "none";
+
+            viewer.style.display = "block";
+
+            requestAnimationFrame(() => {
+
+                viewer.style.opacity = "1";
+
+            });
+
+        }, 250);
 
     });
 
@@ -24,9 +47,22 @@ document.querySelectorAll(".card").forEach(card => {
 
 back.addEventListener("click", () => {
 
-    iframe.src = "";
+    viewer.style.opacity = "0";
 
-    viewer.style.display = "none";
-    menu.style.display = "flex";
+    setTimeout(() => {
+
+        iframe.src = "";
+
+        viewer.style.display = "none";
+
+        menu.style.display = "flex";
+
+        requestAnimationFrame(() => {
+
+            menu.style.opacity = "1";
+
+        });
+
+    }, 250);
 
 });
