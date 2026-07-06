@@ -64,7 +64,6 @@ body {
     user-select: none;
     -webkit-user-drag: none;
     pointer-events: none;
-    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .35));
 }
 
 .cards {
@@ -85,7 +84,9 @@ body {
 
     cursor: pointer;
 
-    transition: .25s;
+    transition:
+        transform .25s ease,
+        box-shadow .25s ease;
 
     box-shadow:
         0 10px 35px rgba(0, 0, 0, .45);
@@ -96,9 +97,6 @@ body {
 
     transform:
         translateY(-6px) scale(1.03);
-
-    box-shadow:
-        0 0 30px rgba(96, 213, 232, .35);
 
 }
 
