@@ -191,119 +191,118 @@ body {
     }
 
 }
-
 /*==========================
     PANTALLA DE CARGA
 ==========================*/
 
-#loadingScreen {
+#loadingScreen{
 
-    position: fixed;
-    inset: 0;
+    position:fixed;
+    inset:0;
 
-    display: none;
+    display:none;
 
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
+    justify-content:center;
+    align-items:center;
+    flex-direction:column;
 
-    gap: 18px;
+    gap:18px;
 
-    z-index: 500;
+    z-index:500;
 
-    background: #0b0f14;
-
-}
-
-#loadingScreen.show {
-
-    display: flex;
+    background:#0b0f14;
 
 }
 
-.brand-center {
+#loadingScreen.show{
 
-    width: 72px;
-
-    height: auto;
-
-    user-select: none;
-
-    -webkit-user-drag: none;
-
-    filter: drop-shadow(0 6px 18px rgba(0, 0, 0, .35));
+    display:flex;
 
 }
 
-.card {
+.brand-center{
 
-    width: 560px;
+    width:72px;
 
-    padding: 24px;
+    height:auto;
 
-    border-radius: 20px;
+    user-select:none;
 
-    background: linear-gradient(135deg, #5edae7, #885dfd);
+    -webkit-user-drag:none;
 
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .35);
-
-    text-align: center;
-
-    color: #fff;
+    filter:drop-shadow(0 6px 18px rgba(0,0,0,.35));
 
 }
 
-.inner {
+.loading-card{
 
-    background: rgba(0, 0, 0, .25);
+    width:560px;
 
-    border-radius: 16px;
+    padding:24px;
 
-    padding: 18px;
+    border-radius:20px;
 
-}
+    background:linear-gradient(135deg,#5edae7,#885dfd);
 
-#loadingScreen h1 {
+    box-shadow:0 10px 30px rgba(0,0,0,.35);
 
-    margin: 0;
+    text-align:center;
 
-    font-size: 20px;
-
-}
-
-#loadingHint {
-
-    margin-top: 8px;
-
-    color: #fff;
-
-    opacity: .95;
+    color:#fff;
 
 }
 
-.spinner {
+.loading-inner{
 
-    width: 24px;
+    background:rgba(0,0,0,.25);
 
-    height: 24px;
+    border-radius:16px;
 
-    border: 3px solid rgba(255, 255, 255, .35);
-
-    border-top-color: #fff;
-
-    border-radius: 50%;
-
-    margin: 16px auto 0;
-
-    animation: spin 1s linear infinite;
+    padding:18px;
 
 }
 
-@keyframes spin {
+#loadingScreen h1{
 
-    to {
+    margin:0;
 
-        transform: rotate(360deg);
+    font-size:20px;
+
+}
+
+#loadingHint{
+
+    margin-top:8px;
+
+    color:#fff;
+
+    opacity:.95;
+
+}
+
+.spinner{
+
+    width:24px;
+
+    height:24px;
+
+    border:3px solid rgba(255,255,255,.35);
+
+    border-top-color:#fff;
+
+    border-radius:50%;
+
+    margin:16px auto 0;
+
+    animation:spin 1s linear infinite;
+
+}
+
+@keyframes spin{
+
+    to{
+
+        transform:rotate(360deg);
 
     }
 
