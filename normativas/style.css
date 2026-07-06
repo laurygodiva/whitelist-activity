@@ -128,57 +128,35 @@ body {
 
 }
 
-#back {
-
-    position: absolute;
-
-    top: 24px;
-
-    left: 24px;
-
-    z-index: 999;
-
-    padding: 5px;
-
-    border-radius: 16px;
-
-    background: linear-gradient(135deg,#5edbe7,#875dfc);
-
-    box-shadow: 0 12px 30px rgba(0,0,0,.35);
-
-}
-
-#back button{
-
-    all: unset;
-
-}
-
 #back{
-
-    color: #fff;
-
-    font-size: 15px;
-
-    font-weight: 600;
-
-    cursor: pointer;
-
-}
-
-#back::before{
-
-    content:"";
 
     position:absolute;
 
-    inset:5px;
+    top:24px;
 
-    border-radius:12px;
+    left:24px;
 
-    background:rgba(0,0,0,.22);
+    z-index:999;
 
-    z-index:-1;
+    padding:10px 22px;
+
+    border:none;
+
+    border-radius:16px;
+
+    background:linear-gradient(135deg,#5edbe7,#875dfc);
+
+    color:#fff;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    box-shadow:0 12px 30px rgba(0,0,0,.35);
+
+    transition:.2s;
 
 }
 
@@ -186,11 +164,13 @@ body {
 
     transform:translateY(-2px);
 
+    box-shadow:0 18px 35px rgba(0,0,0,.45);
+
 }
 
 #back:active{
 
-    transform:scale(.98);
+    transform:scale(.97);
 
 }
 
