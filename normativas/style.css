@@ -4,25 +4,32 @@
     box-sizing:border-box;
 }
 
+html,
 body{
 
+    width:100%;
+    height:100%;
+
     overflow:hidden;
-    background:#16181f;
-    font-family:sans-serif;
+
+    font-family:Inter,Segoe UI,sans-serif;
+
+    background:#10131c;
 
 }
 
 #background{
 
     position:fixed;
+
     inset:0;
 
-    background:url("assets/background.webp") center center;
-    background-size:cover;
+    background:
+    radial-gradient(circle at top,#273553 0%,#131924 45%,#0d1018 100%);
 
-    filter:blur(10px) brightness(.35);
+    filter:blur(10px);
 
-    transform:scale(1.1);
+    transform:scale(1.08);
 
 }
 
@@ -32,73 +39,95 @@ body{
 
     z-index:5;
 
-    width:100vw;
-    height:100vh;
+    width:100%;
+    height:100%;
 
     display:flex;
+
     flex-direction:column;
 
     justify-content:center;
+
     align-items:center;
 
-    gap:60px;
+    gap:45px;
+
+    padding:40px;
 
 }
 
 #logo{
 
-    width:340px;
+    width:320px;
+
+    user-select:none;
+
+    pointer-events:none;
+
+    filter:drop-shadow(0 0 18px rgba(96,213,232,.25));
 
 }
 
-.grid{
+.cards{
 
     display:grid;
 
-    grid-template-columns:repeat(3,270px);
+    grid-template-columns:repeat(3,300px);
 
-    gap:30px;
+    gap:28px;
 
 }
 
 .card{
 
-    width:270px;
+    width:300px;
+
+    border-radius:22px;
 
     cursor:pointer;
 
     transition:.25s;
 
-    border-radius:18px;
+    box-shadow:
+        0 10px 35px rgba(0,0,0,.45);
 
 }
 
 .card:hover{
 
-    transform:translateY(-6px) scale(1.03);
+    transform:
+        translateY(-6px)
+        scale(1.03);
 
     box-shadow:
-    0 0 30px rgba(255,255,255,.15);
+        0 0 30px rgba(96,213,232,.35);
+
+}
+
+.card:active{
+
+    transform:scale(.98);
 
 }
 
 #viewer{
 
-    position:absolute;
+    position:fixed;
 
     inset:0;
 
     display:none;
 
-    z-index:10;
+    background:#0b0d12;
 
-    background:#0f1116;
+    z-index:20;
 
 }
 
 #flipbook{
 
     width:100%;
+
     height:100%;
 
     border:none;
@@ -109,19 +138,60 @@ body{
 
     position:absolute;
 
-    left:30px;
     top:25px;
+
+    left:25px;
 
     z-index:999;
 
-    padding:12px 22px;
+    padding:14px 24px;
 
     border:none;
 
-    border-radius:10px;
+    border-radius:14px;
+
+    background:rgba(255,255,255,.08);
+
+    backdrop-filter:blur(16px);
+
+    color:white;
+
+    font-size:15px;
 
     cursor:pointer;
 
-    background:white;
+    transition:.2s;
+
+}
+
+#back:hover{
+
+    background:rgba(96,213,232,.25);
+
+}
+
+@media(max-width:1200px){
+
+.cards{
+
+grid-template-columns:repeat(2,300px);
+
+}
+
+}
+
+@media(max-width:760px){
+
+.cards{
+
+grid-template-columns:300px;
+
+}
+
+#logo{
+
+width:250px;
+
+}
 
 }

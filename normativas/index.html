@@ -1,47 +1,63 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centro de Normativas</title>
+
+    <title>Proyecto Roleplay | Normativas</title>
 
     <link rel="stylesheet" href="style.css">
+
 </head>
+
 <body>
 
-<div id="background"></div>
+    <div id="background"></div>
 
-<div id="menu">
+    <main id="menu">
 
-    <img id="logo" src="assets/logo.png">
+        <img id="logo" src="../logo.png" alt="Proyecto Roleplay">
 
-    <div class="grid">
+        <div class="cards">
 
-        <img class="card" data-book="general" src="assets/general.png">
-        <img class="card" data-book="leo" src="assets/leo.png">
-        <img class="card" data-book="comercios" src="assets/comercios.png">
+            <img class="card" src="assets/general.png" data-book="general">
 
-        <img class="card" data-book="gobierno" src="assets/gobierno.png">
-        <img class="card" data-book="ilegales" src="assets/ilegales.png">
-        <img class="card" data-book="ems" src="assets/ems.png">
+            <img class="card" src="assets/leo.png" data-book="leo">
 
-        <img class="card" data-book="staff" src="assets/staff.png">
-        <img class="card" data-book="streamers" src="assets/streamers.png">
-        <img class="card" data-book="playmakers" src="assets/playmakers.png">
+            <img class="card" src="assets/comercios.png" data-book="comercios">
 
-    </div>
+            <img class="card" src="assets/gobierno.png" data-book="gobierno">
 
-</div>
+            <img class="card" src="assets/ilegales.png" data-book="ilegales">
 
-<div id="viewer">
+            <img class="card" src="assets/ems.png" data-book="ems">
 
-    <button id="back">← Volver</button>
+            <img class="card" src="assets/staff.png" data-book="staff">
 
-    <iframe id="flipbook"></iframe>
+            <img class="card" src="assets/streamers.png" data-book="streamers">
 
-</div>
+            <img class="card" src="assets/playmaker.png" data-book="playmaker">
 
-<script type="module" src="app.js"></script>
+        </div>
+
+    </main>
+
+    <section id="viewer">
+
+        <button id="back">
+
+            ← Volver
+
+        </button>
+
+        <iframe id="flipbook"></iframe>
+
+    </section>
+
+    <script type="module" src="app.js"></script>
 
 </body>
+
 </html>
